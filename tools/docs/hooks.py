@@ -11,14 +11,15 @@ import re
 from urllib.parse import urljoin
 
 REPO = "https://github.com/TwinRobo/TwinRobo-Core"
+SITE = "https://twinrobo.github.io/TwinRobo-Core/"  # the README links the published site
 SITE_PAGES = {"README.md": "index.md", "CONTRIBUTING.md": "contributing.md"}
+GENERATED = {"contributing.md": "CONTRIBUTING.md"}  # site page -> its repo source
 LINK = re.compile(r"(\]\()([^)\s]+)(\))")
 
 
 def _repo_path(src_uri: str) -> str:
     """Where a site page's Markdown lives in the repo."""
-    inverse = {v: k for k, v in SITE_PAGES.items()}
-    return inverse.get(src_uri, f"docs/{src_uri}")
+    return GENERATED.get(src_uri, f"docs/{src_uri}")
 
 
 def on_page_markdown(markdown, page, config, files):
@@ -28,6 +29,16 @@ def on_page_markdown(markdown, page, config, files):
 
     def fix(m):
         target = m.group(2)
+        if target.startswith(SITE):  # a link to this site: keep it on the site being viewed
+            page_path, _, frag = target[len(SITE) :].partition("#")
+            stem = page_path.rstrip("/")
+            dest = "index.md"
+            if stem:  # "catalog/" -> catalog.md, "api/" -> api/index.md
+                dest = (
+                    f"{stem}.md" if files.get_file_from_path(f"{stem}.md") else f"{stem}/index.md"
+                )
+            rel = posixpath.relpath(dest, here or ".")
+            return f"{m.group(1)}{rel}{'#' + frag if frag else ''}{m.group(3)}"
         if re.match(r"^[a-z]+:", target) or target.startswith("#"):
             return m.group(0)
         path, _, frag = target.partition("#")

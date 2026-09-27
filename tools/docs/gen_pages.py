@@ -1,7 +1,7 @@
 """Generate site pages at build time (mkdocs-gen-files): one source for each page.
 
-- ``index.md`` from ``README.md`` and ``contributing.md`` from ``CONTRIBUTING.md``
-  (their repo-relative links are rewritten by ``docs/hooks.py``);
+- ``contributing.md`` from ``CONTRIBUTING.md`` (its repo-relative links are rewritten
+  by ``tools/docs/hooks.py``); the home page is the hand-made ``docs/index.md``;
 - ``catalog.md``: every camera and stereo module in ``twinrobo/catalog``, read
   from their YAML files, so a contributed camera appears without editing docs.
 """
@@ -22,7 +22,7 @@ STATUS = {
     "manufacturer_verified": "manufacturer verified",
 }
 
-for src, dst in (("README.md", "index.md"), ("CONTRIBUTING.md", "contributing.md")):
+for src, dst in (("CONTRIBUTING.md", "contributing.md"),):
     with mkdocs_gen_files.open(dst, "w") as f:
         f.write((ROOT / src).read_text())
     mkdocs_gen_files.set_edit_path(dst, f"../{src}")

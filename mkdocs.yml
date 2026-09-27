@@ -7,35 +7,59 @@ copyright: TwinRobo contributors · Apache-2.0
 
 theme:
   name: material
+  logo: assets/logo.svg
+  favicon: assets/logo.svg
+  font:
+    text: Inter
+    code: JetBrains Mono
+  icon:
+    repo: fontawesome/brands/github
   features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.instant
+    - navigation.instant.progress
     - navigation.sections
+    - navigation.indexes
     - navigation.top
     - navigation.footer
     - content.code.copy
+    - content.tabs.link
     - search.suggest
+    - search.highlight
     - toc.follow
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: indigo
+      primary: custom
+      accent: custom
       toggle: {icon: material/weather-night, name: Dark mode}
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: indigo
+      primary: custom
+      accent: custom
       toggle: {icon: material/weather-sunny, name: Light mode}
+
+extra_css:
+  - stylesheets/extra.css
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/TwinRobo/TwinRobo-Core
+      name: TwinRobo on GitHub
+  generator: false
 
 nav:
   - Home: index.md
+  - Get started: getting-started.md
   - Guide:
       - Optics and rendering: rendering.md
       - Cameras and stereo: cameras.md
       - Simulators: simulators.md
   - Camera catalog: catalog.md
-  - Get involved:
-      - Contributing: contributing.md
-      - Camera partners: partners.md
   - API reference:
-      - Overview: api/index.md
+      - api/index.md
       - Core: api/core.md
       - Optics: api/optics.md
       - Sensor and ISP: api/sensor_isp.md
@@ -43,6 +67,9 @@ nav:
       - Isaac Sim: api/isaac.md
       - LIBERO and RoboCasa: api/robot_learning.md
       - Validation: api/validation.md
+  - Community:
+      - Contributing: contributing.md
+      - Camera partners: partners.md
   - Development:
       - Layout and tests: development.md
       - Optics benchmark: benchmarks/phase1_optics.md
@@ -69,6 +96,8 @@ plugins:
             merge_init_into_class: true
             filters: ["!^_"]
             heading_level: 2
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
 
 hooks:
   - tools/docs/hooks.py   # repo-relative links (GitHub) -> site links
@@ -76,7 +105,13 @@ hooks:
 markdown_extensions:
   - admonition
   - attr_list
+  - md_in_html
   - tables
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.tabbed:
+      alternate_style: true
   - toc: {permalink: true}
   - pymdownx.details
   - pymdownx.highlight: {anchor_linenums: true}
