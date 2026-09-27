@@ -1,10 +1,10 @@
-"""NVIDIA Isaac Sim adapter (Phase 2).
+"""NVIDIA Isaac Sim adapter.
 
-Nothing in this package imports Isaac Sim at module import time; Isaac modules
-are imported lazily inside functions so ``import twinrobo.isaac`` works
-without Isaac installed.
+`IsaacCameraTwin` renders a USD camera's view through a CameraTwin. Nothing here
+imports Isaac Sim at module import time, so ``import twinrobo.isaac`` works
+without Isaac installed; run it inside Isaac (see ``docker/isaac/``).
 """
 
-from .camera import CameraTwin
+from .camera import IsaacCameraTwin
 
-__all__ = ["CameraTwin"]
+__all__ = ["IsaacCameraTwin"]

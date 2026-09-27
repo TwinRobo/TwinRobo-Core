@@ -1,10 +1,4 @@
-"""Isaac Sim <-> CameraTwin tensor bridge.
-
-Converts Isaac annotator outputs (RGB, metric depth) into CameraTwin tensor
-conventions (`twinrobo.frame`) while staying on the GPU.
-
-Status: not implemented (Phase 2).
-"""
+"""Isaac Sim availability check."""
 
 from __future__ import annotations
 
@@ -16,5 +10,8 @@ def require_isaac():
     try:
         import isaacsim
     except ImportError as e:
-        raise SimulatorError("NVIDIA Isaac Sim is not available in this Python environment.") from e
+        raise SimulatorError(
+            "NVIDIA Isaac Sim is not available in this Python environment "
+            "(run inside Isaac, e.g. docker/isaac/run.sh)"
+        ) from e
     return isaacsim

@@ -309,28 +309,8 @@ class MujocoCameraTwin:
         ideal = srgb_to_linear(
             torch.from_numpy(ideal8).to(rgb.device).permute(2, 0, 1)[None].float() / 255.0
         )
-        raw = self.twin.sensor.capture(rgb, 1.0, None)
-        out = self.twin.isp.process(raw, None)
-        if self.rectify:  # undistort with the lens' own chief rays (what stereo SDKs deliver)
-            grid = lr.rays.rectify_grid()
-            out = F.grid_sample(
-                out, grid, mode="bilinear", padding_mode="zeros", align_corners=False
-            )
-            depth = F.grid_sample(
-                depth, grid, mode="nearest", padding_mode="zeros", align_corners=False
-            )
-        return CameraFrame(
-            rgb=out,
-            rgb_ideal=ideal,
-            rgb_optical=rgb,
-            raw=raw,
-            depth=depth,
-            timestamp=timestamp,
-            metadata={
-                "camera": self.camera,
-                "camera_id": self.twin.spec.id if self.twin.spec else None,
-                "render": self.render_method,
-                "rectified": bool(self.rectify),
-                **lr.stats,
-            },
+        from ..optics.lensrender import lens_frame
+
+        return lens_frame(
+            self.twin, lr, rgb, depth, ideal, self.rectify, timestamp, {"camera": self.camera}
         )

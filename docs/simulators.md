@@ -5,7 +5,7 @@
 | MuJoCo | any MJCF model; `mujoco.Renderer` or robosuite backends | supported |
 | LIBERO (robosuite 1.4) | LIBERO tasks and HDF5 demo datasets, 9 robot options | supported |
 | RoboCasa (robosuite 1.5) | procedurally generated kitchens, LeRobot demo datasets | supported |
-| Isaac Sim 6.x | USD scenes | planned (the adapter is a stub) |
+| Isaac Sim 6.x | any USD stage, RTX rendering | supported: `psf`, `pupil`, `raycast` |
 
 ## MuJoCo
 
@@ -109,10 +109,105 @@ env.sim.set_state_from_flattened(states[t])  # then render any camera at frame t
   triangles); pupil raster costs the same as in LIBERO.
 - Robot: PandaOmron, the robot the demos were recorded with.
 
+## Isaac Sim
+
+![A USD tabletop seen by the Isaac pinhole camera (left) and through the ZED X 2.2 mm lens (right)](images/isaac-zed-x.jpg)
+
+`twinrobo.isaac.IsaacCameraTwin` renders a USD camera's view through a twin,
+with the same interface as the MuJoCo adapter:
+
+```python
+from twinrobo import CameraTwin
+from twinrobo.isaac import IsaacCameraTwin
+
+twin = CameraTwin.from_catalog("stereolabs/zed-x/2.2mm")
+cam = IsaacCameraTwin(twin, "/World/Camera")  # any UsdGeom.Camera prim
+frame = cam.get_frame()                       # renders, then runs the optics
+frame.rgb, frame.depth                        # linear RGB and metric z-depth, on the GPU
+cam.close()                                   # removes what it added to the stage
+```
+
+- **Non-invasive:** your camera is not changed. The adapter adds a child camera
+  (`<camera>/TwinRoboView`) with the twin's intrinsics (focal length over
+  aperture = fx over width) and a Replicator render product with `rgb` and
+  `distance_to_image_plane` annotators. `match_fov=False` keeps your camera's
+  own lens and applies only the optics.
+- **GPU end to end:** annotator data is read as Warp arrays and viewed as torch
+  tensors without a copy; depth is converted from stage units to meters.
+- **Rendering:** `get_frame()` renders a frame with
+  `rep.orchestrator.step` (the timeline is not advanced). In your own loop,
+  after `world.step(render=True)`, call `get_frame(step=False)`.
+  `rt_subframes` trades speed for less RTX ghosting after large motions.
+- **Near clip:** USD's default near clip is 1 scene unit, 1 m on a meter stage,
+  which hides what a robot camera sees up close; the view uses
+  `near_clip_m=0.01` instead.
+- **Lens-ray methods:** `render="pupil"` or `render="raycast"` trace every
+  pixel's rays through the real lens, as in MuJoCo:
+
+  ```python
+  twin = CameraTwin.from_catalog("stereolabs/zed-x/2.2mm", build_psf=False)
+  cam = IsaacCameraTwin(twin, "/World/Camera", render="raycast")
+  ```
+
+  The pupil views are child cameras (`<camera>/TwinRoboPupil<i>`) shifted across
+  the lens' entrance pupil; they render in the same Replicator step as the main
+  view. Ray cast intersects every ray with the stage's triangles: every visible
+  mesh, cube, sphere, cylinder, capsule, cone and plane (instance proxies
+  included), posed each frame from USD and converted to meters, in one NVIDIA
+  Warp BVH. `build_psf=False` skips the PSF bank, which only `psf` uses.
+- **Tested** (`tests/isaac/`):
+  - `psf`: a marker lands within 1 px of the pixel the twin's intrinsics
+    predict; depth is metric (the wall 2.99 m away, an object 30 cm away);
+    `match_fov=False` keeps the camera's lens; `close()` leaves the stage as it
+    was.
+  - `raycast` and `pupil`: a marker lands within 0.1 px of where the lens' chief
+    ray points (a paraxial pinhole would put it ~5 px away).
+  - `raycast`: the blurred edges of a 6 mm post 0.3 m away (the lens focused at
+    3 m) match the exact coverage computed from the traced rays to ~0.03;
+    pinhole + PSF errs by ~0.13.
+
+### Running in Docker
+
+Isaac Sim ships its own Python 3.12 and torch (2.11 in 6.1), and DeepLens pins
+torch 2.10, so a plain `pip install` would pull a second torch. The image in
+`docker/isaac/` installs DeepLens without dependencies on Isaac's torch (tested
+with Isaac Sim 6.1.0 on an RTX 3090):
+
+```bash
+docker pull nvcr.io/nvidia/isaac-sim:6.1.0   # needs the NVIDIA Container Toolkit
+docker/isaac/run.sh examples/01_isaac_camera.py        # -> outputs/isaac/isaac_camera.png
+docker/isaac/run.sh -m pytest -q tests/isaac
+```
+
+`run.sh` builds the `twinrobo-isaac` image on first use and mounts this repo
+read-only, so edits apply without a rebuild. Output written to
+`/workspace/outputs` appears in `outputs/isaac/`. Shader, Warp and PSF caches
+persist in named volumes (`twinrobo-isaac-*`). The first run compiles Isaac's
+shaders (about 2 minutes); later runs start in under a minute.
+
+### Isaac performance and limits
+
+| 1920×1200, ZED X 2.2 mm, RTX 3090 | Time per frame | GPU memory (whole process) |
+|---|---|---|
+| `psf` | ~0.2 s of optics after the RTX render | not measured |
+| `raycast`, 7 pupil views | ~1.5 s (0.9 s of it lens rays) | ~16 GB |
+
+- Each pupil view is a full RTX render product (2594×1662 for this wide lens),
+  so memory grows with `pupil_views`; use `pupil_views=3` or a lower sensor
+  resolution on smaller GPUs. The one-time lens trace needs ~4 GB of scratch,
+  released before rendering.
+- Poses for ray casting are read from USD, so a simulation must write them
+  there (the default for scripted prims; for physics, keep USD updates on).
+  Deforming meshes keep their first shape; point instancers are not ray cast;
+  prims added after the first frame are not ray cast until a new
+  `IsaacCameraTwin` is made.
+- The render is centered with square pixels, as in MuJoCo; an off-center
+  principal point in calibrated intrinsics is not rendered.
+
 ## Known constraints
 
 - DeepLens requires Python 3.12 and pins `torch`. Isaac Sim 6.x also targets
-  Python 3.12; older Isaac releases cannot import DeepLens. The torch build
-  Isaac bundles may conflict with the pin.
+  Python 3.12 and runs DeepLens on its own torch 2.11 (see above); older Isaac
+  releases cannot import DeepLens.
 - LIBERO officially predates numpy 2; it works on this stack in the tests, but
   it is outside LIBERO's supported configuration.

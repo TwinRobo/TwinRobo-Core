@@ -1,8 +1,9 @@
 """Simulator-independent CameraTwin runtime object.
 
-`CameraTwin` composes optics -> sensor -> ISP for one camera module. Simulator
-adapters (e.g. `twinrobo.isaac.CameraTwin`) subclass it and implement
-``attach`` / ``get_frame``; the core only needs ideal RGB-D input via `process`.
+`CameraTwin` composes optics -> sensor -> ISP for one camera module. It only needs
+ideal RGB-D input via `process`; simulator adapters wrap it and render that input
+from a simulator camera (`twinrobo.mujoco.MujocoCameraTwin`,
+`twinrobo.isaac.IsaacCameraTwin`).
 """
 
 from __future__ import annotations
@@ -147,9 +148,14 @@ class CameraTwin:
         registry: CatalogRegistry | None = None,
         device: str | torch.device | None = None,
         cache: PSFCache | None = None,
+        build_psf: bool = True,
     ) -> CameraTwin:
+        """A catalog camera (``vendor/model/...``). ``build_psf=False`` skips the PSF bank,
+        which only the ``psf`` rendering method needs (the lens-ray methods trace the lens)."""
         registry = registry if registry is not None else CatalogRegistry()
-        return cls.from_spec(registry.load(camera_id), device=device, cache=cache)
+        return cls.from_spec(
+            registry.load(camera_id), device=device, cache=cache, build_psf=build_psf
+        )
 
     @property
     def render_intrinsics(self) -> CameraIntrinsics | None:
@@ -206,13 +212,15 @@ class CameraTwin:
             metadata={"camera_id": self.spec.id if self.spec else None, **(metadata or {})},
         )
 
-    # Simulator adapters implement these.
+    # Rendering from a simulator camera is done by adapters that wrap the twin.
     def attach(self, simulator_camera: Any) -> None:
         raise NotImplementedError(
-            "attach() is provided by a simulator adapter, e.g. twinrobo.isaac"
+            "wrap the twin in a simulator adapter: twinrobo.mujoco.MujocoCameraTwin "
+            "or twinrobo.isaac.IsaacCameraTwin"
         )
 
     def get_frame(self) -> CameraFrame:
         raise NotImplementedError(
-            "get_frame() is provided by a simulator adapter, e.g. twinrobo.isaac"
+            "wrap the twin in a simulator adapter: twinrobo.mujoco.MujocoCameraTwin "
+            "or twinrobo.isaac.IsaacCameraTwin"
         )

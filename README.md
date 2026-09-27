@@ -14,6 +14,24 @@ deployment. TwinRobo closes that gap: it renders simulated scenes through the
 actual optics of the camera you will deploy, as a drop-in for the simulators
 robot learning already uses.
 
+![An Isaac Sim tabletop: the simulator's pinhole (left) and the Stereolabs ZED X 2.2 mm, every pixel ray-traced through its lens (right)](docs/images/isaac-raycast.jpg)
+
+## At a glance
+
+| | MuJoCo (incl. LIBERO, RoboCasa) | NVIDIA Isaac Sim 6.x |
+|---|---|---|
+| Adapter | `twinrobo.mujoco.MujocoCameraTwin` | `twinrobo.isaac.IsaacCameraTwin` |
+| `psf`: pinhole + lens blur and distortion | ✅ | ✅ |
+| `pupil`: lens rays across the aperture | ✅ | ✅ |
+| `raycast`: lens rays cast into the scene | ✅ | ✅ |
+| RGB + metric depth, on the GPU | ✅ | ✅ |
+| Cameras on robot links, stereo modules | ✅ | any USD camera prim |
+| Setup | `pip install` | Docker recipe included |
+
+**Cameras:** Stereolabs ZED X (2.2 mm, 4 mm) and ZED X Mini, as single eyes or
+stereo pairs with rectified output, plus a teaching example lens. Every camera
+works in every simulator and rendering method. [Add yours](CONTRIBUTING.md#adding-a-camera).
+
 ## Features
 
 - **Real lens optics.** Lenses are traced with
@@ -24,18 +42,20 @@ robot learning already uses.
   lens-ray renderers that trace every pixel's rays through the lens into the
   scene: *pupil raster* and GPU *ray cast* (NVIDIA Warp), exact even for
   defocused foreground objects. [More](docs/rendering.md)
-- **Drop-in for robot simulators.** MuJoCo, LIBERO (robosuite 1.4) and
-  RoboCasa kitchens (robosuite 1.5). `CameraTwinLiberoEnv` swaps a camera's
-  observations in place, so policies and eval scripts run unchanged; recorded
-  demos replay exactly, so any camera can be placed in an existing episode.
-  [More](docs/simulators.md)
+- **Drop-in for robot simulators.** MuJoCo, LIBERO (robosuite 1.4), RoboCasa
+  kitchens (robosuite 1.5) and NVIDIA Isaac Sim (any USD stage, RTX rendering).
+  `CameraTwinLiberoEnv` swaps a camera's observations in place, so policies and
+  eval scripts run unchanged; recorded demos replay exactly, so any camera can
+  be placed in an existing episode. [More](docs/simulators.md)
 - **Camera catalog and stereo.** Real products such as the Stereolabs ZED X
   family, stereo modules with rectified output, and cameras mountable on any
   robot link. Adding a camera is a YAML file and a lens file.
   [More](docs/cameras.md)
-- **Validated.** The PSF renderer matches DeepLens' reference renderer at about
-  46 dB. On a defocused foreground object, ray cast reproduces the exact
-  partially covered edge to within ~0.05, where pinhole + PSF errs by 0.2–0.4.
+- **Validated, in both simulators.** The PSF renderer matches DeepLens' reference
+  renderer at about 46 dB. Points land within a pixel of where the lens' chief
+  rays point (within 0.1 px in Isaac). On a defocused foreground object, ray cast
+  reproduces the exact partially covered edge to within ~0.03 (Isaac) and ~0.05
+  (MuJoCo), where pinhole + PSF errs by 0.13–0.4.
 
 ## Installation
 
@@ -51,7 +71,13 @@ pip install -e ".[libero]"       # + MuJoCo, NVIDIA Warp and LIBERO support
 
 LIBERO itself is used from a checkout (`LIBERO_ROOT`). RoboCasa needs
 robosuite 1.5 and gets its own environment; see
-[simulators](docs/simulators.md#robocasa).
+[simulators](docs/simulators.md#robocasa). **Isaac Sim** runs in NVIDIA's
+container, with TwinRobo installed on Isaac's own Python and torch:
+
+```bash
+docker pull nvcr.io/nvidia/isaac-sim:6.1.0        # needs the NVIDIA Container Toolkit
+docker/isaac/run.sh examples/01_isaac_camera.py   # builds the image on first use
+```
 
 ## Quick start: mount a real camera on a robot
 
@@ -121,6 +147,18 @@ Read it top to bottom:
 - **Other rendering methods:** pass `render="pupil"` or `render="raycast"` to
   `MujocoCameraTwin` to trace real lens rays into the scene (see
   [Rendering methods](#rendering-methods)).
+- **Isaac Sim:** the same twin on any USD camera prim:
+
+  ```python
+  from twinrobo.isaac import IsaacCameraTwin
+
+  twin = CameraTwin.from_catalog("stereolabs/zed-x/2.2mm", build_psf=False)
+  cam = IsaacCameraTwin(twin, "/World/Camera", render="raycast")
+  frame = cam.get_frame()  # frame.rgb, frame.depth: the ZED X's view, on the GPU
+  ```
+
+  `docker/isaac/run.sh examples/01_isaac_camera.py --render raycast` renders the
+  image at the top of this page. [More](docs/simulators.md#isaac-sim)
 - **A LIBERO policy's camera:** wrap an env so its observations come from the
   twin, and eval scripts run unchanged:
 
@@ -143,18 +181,22 @@ Read it top to bottom:
 |---|---|---|---|
 | `psf` | pinhole render + depth- and field-dependent PSF blur | ~0.1–0.4 s | fast training data |
 | `pupil` | lens rays looked up in views rendered across the aperture | ~0.5 s | real distortion, chromatic aberration, vignetting |
-| `raycast` | lens rays intersected with the scene on the GPU | ~0.9 s | exact defocus around occluders |
+| `raycast` | lens rays intersected with the scene on the GPU | ~0.9 s (MuJoCo), ~1.5 s (Isaac) | exact defocus around occluders |
+
+The methods are simulator independent (`twinrobo.optics.lensrender`): a
+simulator supplies the camera pose, views rendered from points on the lens'
+aperture, and the scene's triangles.
 
 [Details and validation](docs/rendering.md)
 
 ## Supported simulators
 
-| Simulator | Data | Status |
+| Simulator | Scenes and data | Rendering methods |
 |---|---|---|
-| MuJoCo | any MJCF scene | ✅ |
-| LIBERO | LIBERO tasks and demos; Panda, Sawyer, UR5e, iiwa, Jaco, Gen3, multi-camera variants | ✅ |
-| RoboCasa | procedurally generated kitchens, LeRobot demo datasets, PandaOmron | ✅ |
-| Isaac Sim 6.x | USD scenes | planned |
+| MuJoCo | any MJCF scene | `psf`, `pupil`, `raycast` |
+| LIBERO | LIBERO tasks and demos; Panda, Sawyer, UR5e, iiwa, Jaco, Gen3, multi-camera variants | `psf`, `pupil`, `raycast` |
+| RoboCasa | procedurally generated kitchens, LeRobot demo datasets, PandaOmron | `psf`, `pupil`, `raycast` |
+| NVIDIA Isaac Sim 6.x | any USD stage, RTX rendering (Docker recipe included) | `psf`, `pupil`, `raycast` |
 
 ## Camera catalog
 
@@ -175,7 +217,7 @@ Stereo modules: ZED X (2.2 mm, 4 mm; 120 mm baseline) and ZED X Mini (2.2 mm;
 |---|---|
 | [Optics and rendering](docs/rendering.md) | PSF pipeline, distortion, the three rendering methods, validation |
 | [Cameras and stereo](docs/cameras.md) | CameraSpec, catalog, stereo modules, spec overrides |
-| [Simulators](docs/simulators.md) | MuJoCo, LIBERO and RoboCasa setup and behavior |
+| [Simulators](docs/simulators.md) | MuJoCo, LIBERO, RoboCasa and Isaac Sim: setup, behavior, limits |
 | [Development](docs/development.md) | layout, tests, status |
 
 ## Contributing
@@ -183,12 +225,13 @@ Stereo modules: ZED X (2.2 mm, 4 mm; 120 mm baseline) and ZED X Mini (2.2 mm;
 Contributions are welcome, and **new cameras** are the most valuable: a
 catalog entry is a `camera.yaml` plus a lens file, checked by
 `tests/test_catalog.py`. Also wanted: `measured` calibrations of real units,
-new simulator adapters (Isaac Sim next), and sensor noise and ISP models. See
+new simulator adapters (a lens scene is three methods; see
+`twinrobo.optics.lensrender`), and sensor noise and ISP models. See
 [CONTRIBUTING](CONTRIBUTING.md).
 
 ## Roadmap
 
-- Isaac Sim adapter (the lens-ray methods are simulator independent)
+- Faster lens-ray rendering in Isaac Sim (fewer, shared pupil views)
 - Sensor noise and ISP models (interfaces are in place)
 - `measured` catalog entries from calibration captures of real units
 - More cameras and lenses in the catalog
@@ -197,6 +240,7 @@ new simulator adapters (Isaac Sim next), and sensor noise and ISP models. See
 
 TwinRobo builds on [DeepLens](https://github.com/vccimaging/DeepLens) for
 lens modeling, [MuJoCo](https://mujoco.org),
+[NVIDIA Isaac Sim](https://developer.nvidia.com/isaac/sim),
 [robosuite](https://robosuite.ai), [LIBERO](https://libero-project.github.io),
 [RoboCasa](https://robocasa.ai) and [NVIDIA Warp](https://github.com/NVIDIA/warp).
 Third-party files and their licenses are listed in [`NOTICE`](NOTICE).

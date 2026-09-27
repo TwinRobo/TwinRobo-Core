@@ -19,7 +19,7 @@ twinrobo/          the SDK (simulator independent core + simulator adapters)
   mujoco/            MuJoCo adapter, lens-ray renderers (pupil raster, ray cast), camera mounts
   libero/            LIBERO env wrapper, robots, exact replay
   robocasa/          RoboCasa env setup and episode replay
-  isaac/             Isaac Sim adapter (planned), imports Isaac lazily
+  isaac/             Isaac Sim adapter (IsaacCameraTwin), imports Isaac lazily
   validation/        renderer vs reference
 examples/  tests/  tools/  docs/
 ```
@@ -40,6 +40,10 @@ Simulator tests need their data, set by environment variables:
 | `ROBOCASA_ASSETS`, `ROBOCASA_DEMOS` | RoboCasa tests (in a robosuite 1.5 environment) |
 | `MUJOCO_GL=egl` | headless rendering |
 
+Isaac Sim tests run inside the Isaac container:
+`docker/isaac/run.sh -m pytest -q tests/isaac` (see
+[simulators](simulators.md#running-in-docker)).
+
 To develop against a local DeepLens checkout:
 
 ```bash
@@ -55,7 +59,7 @@ pip install -e ".[dev]" --no-deps && pip install numpy pyyaml pytest ruff
 | MuJoCo, LIBERO and RoboCasa adapters | working |
 | Camera catalog | Stereolabs ZED X family, `estimated` (datasheet geometry, surrogate lenses) |
 | Sensor noise and ISP models | interfaces with ideal pass-throughs |
-| Isaac Sim adapter | planned |
+| Isaac Sim adapter | working (`psf`); lens-ray methods planned |
 | Real-camera validation (`measured` catalog entries) | planned |
 
 ## Notes on DeepLens

@@ -108,8 +108,8 @@ frame = cam.get_frame()  # frame.metadata has the render stats
   - Objects thinner than a sensor pixel: MuJoCo multisamples color, so their
     silhouettes are blends in every view. Raise `view_oversample` for them.
   - Height fields and SDF geoms are not ray cast.
-  - The method is simulator-independent (lens rays + pupil views + a ray
-    caster), but only the MuJoCo adapter exists today.
+  - Scenes come from a simulator's *lens scene* (`twinrobo.optics.lensrender`):
+    MuJoCo (`twinrobo.mujoco.lensrender`) and Isaac Sim (`twinrobo.isaac.lens`).
 - **Lens files matter:** ray-based methods trace the lens file literally. The
   ZED X lens in the catalog is a blur surrogate (a scaled Canon RF16mm
   prescription); its image circle does not cover the full ZED X sensor, so its
