@@ -1,0 +1,74 @@
+# CameraSpec (schema 0.1; pre-1.0, may change).
+#
+# Stereolabs ZED X / ZED X Mini, 2.2 mm lens (X22 / X22P / XM22 / XM22P): one eye. The stereo
+# products (baseline, housing) are the modules that use it: see module.yaml files.
+# Provenance: estimated from the vendor datasheet (ZED X datasheet rev 2.1, 2023, whose
+# 2.2 mm column covers the ZED X and ZED X Mini alike):
+#   sensor 1/2.6in, 1920x1200, 3 um, global shutter; lens 2.2 mm f/2.2,
+#   FoV max 110 (H) x 80 (V) x 120 (D) deg, TV distortion < 4.9 %.
+# Geometry: fx and k1, k2 (OpenCV model) fitted to the three FoV figures (exact
+#   fit, implied TV distortion -4.1 %). A ZED factory calibration (per serial)
+#   replaces these without schema changes: fx fy cx cy k1 k2 p1 p2 k3.
+# Blur: no lens prescription is published. `lens.json` is a surrogate: a glass
+#   9-element-class wide-angle design (DeepLens rf16mm_f2.8) scaled to f 2.2368 mm
+#   and stopped to f/2.2 (tools/catalog/make_surrogate_lens.py).
+# Focus: fixed and unpublished; set near the hyperfocal distance (CoC 2 px).
+schema_version: 0.1
+
+id: stereolabs/zed-x/2.2mm
+
+manufacturer: Stereolabs
+product: ZED X / X Mini 2.2 mm eye
+
+sensor:
+  manufacturer: null
+  model: 1/2.6in 2.3 MP
+  resolution:
+    width: 1920
+    height: 1200
+  pixel_pitch_um: 3.0
+  shutter:
+    type: global
+  bit_depth: null
+
+lens:
+  manufacturer: Stereolabs
+  model: 2.2 mm f/2.2
+  focal_length_mm: 2.2
+  f_number: 2.2
+  focus_distance_m: 0.4
+  deeplens_model:
+    path: lens.json
+
+calibration:
+  intrinsic:
+    fx: 745.60
+    fy: 745.60
+    cx: 959.5
+    cy: 599.5
+  distortion:
+    model: opencv
+    k1: -0.06343
+    k2: 0.00743
+    p1: 0.0
+    p2: 0.0
+    k3: 0.0
+  psf:
+    model: deeplens
+    field_samples: [17, 11]
+    depth_samples: 16
+    near_m: 0.1
+    far_m: 20.0
+    ks: 65
+
+sensor_model:
+  shot_noise: false
+  read_noise: false
+  dark_current: false
+
+isp:
+  enabled: false
+
+validation:
+  status: estimated
+  version: 1

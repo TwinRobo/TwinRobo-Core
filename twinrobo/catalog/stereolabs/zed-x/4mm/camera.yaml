@@ -1,0 +1,74 @@
+# CameraSpec (schema 0.1; pre-1.0, may change).
+#
+# Stereolabs ZED X, 4 mm lens (ZED X40 / X40P): one eye. The stereo product (baseline,
+# housing) is module.yaml.
+# Provenance: estimated from the vendor datasheet (ZED X datasheet rev 2.1, 2023):
+#   sensor 1/2.6in, 1920x1200, 3 um, global shutter; lens 4 mm f/2.2,
+#   FoV max 75 (H) x 50 (V) x 83 (D) deg, TV distortion < 4.9 %.
+# Geometry: fx and k1 (OpenCV model) least-squares fitted to the three FoV figures
+#   (residual <= 0.8 deg: the integer-degree figures cannot resolve distortion for
+#   a narrow lens, so k1 ~ 0; f = 3.81 mm matches Stereolabs' 3.8 mm narrow lens).
+#   A ZED factory calibration (per serial) replaces these without schema changes.
+# Blur: no lens prescription is published. `lens.json` is a surrogate: a glass
+#   design of matching FoV (DeepLens rf24mm_f1.8) scaled to f 3.8064 mm and
+#   stopped to f/2.2 (tools/catalog/make_surrogate_lens.py).
+# Focus: fixed and unpublished; set near the hyperfocal distance (CoC 2 px).
+schema_version: 0.1
+
+id: stereolabs/zed-x/4mm
+
+manufacturer: Stereolabs
+product: ZED X 4 mm eye
+
+sensor:
+  manufacturer: null
+  model: 1/2.6in 2.3 MP
+  resolution:
+    width: 1920
+    height: 1200
+  pixel_pitch_um: 3.0
+  shutter:
+    type: global
+  bit_depth: null
+
+lens:
+  manufacturer: Stereolabs
+  model: 4 mm f/2.2
+  focal_length_mm: 4.0
+  f_number: 2.2
+  focus_distance_m: 1.1
+  deeplens_model:
+    path: lens.json
+
+calibration:
+  intrinsic:
+    fx: 1268.81
+    fy: 1268.81
+    cx: 959.5
+    cy: 599.5
+  distortion:
+    model: opencv
+    k1: 0.00148
+    k2: 0.0
+    p1: 0.0
+    p2: 0.0
+    k3: 0.0
+  psf:
+    model: deeplens
+    field_samples: [17, 11]
+    depth_samples: 16
+    near_m: 0.1
+    far_m: 20.0
+    ks: 65
+
+sensor_model:
+  shot_noise: false
+  read_noise: false
+  dark_current: false
+
+isp:
+  enabled: false
+
+validation:
+  status: estimated
+  version: 1

@@ -1,0 +1,15 @@
+# Stereo camera module (schema 0.1): two eyes in one housing. Poses of the module are
+# those of the LEFT eye (Stereolabs convention); the right eye sits at `translation_m` in
+# the left eye's camera frame (+x = image right). A per-serial factory calibration
+# replaces the baseline and adds a small rotation without schema changes.
+schema_version: 0.1
+id: stereolabs/zed-x/2.2mm
+type: stereo
+manufacturer: Stereolabs
+product: ZED X (2.2 mm)
+reference: left
+eyes:
+  left: {spec: camera.yaml}
+  right: {spec: camera.yaml, translation_m: [0.12, 0.0, 0.0], rotation_rpy_deg: [0.0, 0.0, 0.0]}
+housing_mm: [163, 30, 37]   # width, height, depth (for drawing)
+output: rectified         # what the SDK delivers by default: rectified | raw

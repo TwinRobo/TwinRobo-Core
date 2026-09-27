@@ -1,0 +1,64 @@
+# Example CameraSpec (schema 0.1; pre-1.0, may change).
+#
+# NOT a real deployed camera: this pairs a hypothetical sensor with the DeepLens
+# "cellphone80deg" lens design to exercise the pipeline. Provenance: estimated.
+schema_version: 0.1
+
+id: example.cellphone80deg.v0
+
+manufacturer: Example
+product: Cellphone80-Example
+
+sensor:
+  manufacturer: Example
+  model: example-sensor
+  resolution:
+    width: 1920
+    height: 1200
+  # Derived by DeepLens from the lens-file sensor diagonal at this resolution
+  # (~3.38 um); informational only.
+  pixel_pitch_um: null
+  shutter:
+    type: global
+  bit_depth: 12
+
+lens:
+  manufacturer: DeepLens
+  model: cellphone80deg
+  # Paraxial values computed by DeepLens (real-ray EFL near axis ~5.05 mm).
+  # The lens file header (foclen 4.35, fnum 2.0) matches image_height / tan(field)
+  # at the ~42 deg field edge, i.e. it includes strong barrel distortion.
+  focal_length_mm: 5.16
+  f_number: 2.37
+  # The lens file's sensor sits slightly in front of infinity focus, so focus explicitly.
+  focus_distance_m: 2.0
+  deeplens_model:
+    path: lens.json
+
+calibration:
+  intrinsic:
+    fx: null
+    fy: null
+    cx: null
+    cy: null
+  distortion:
+    model: physical
+  psf:
+    model: deeplens
+    field_samples: [17, 11]  # [grid_w, grid_h] PSF nodes, edge to edge across the sensor
+    depth_samples: 16        # depth layers, uniform in disparity incl. the focal plane
+    near_m: 0.3
+    far_m: 20.0              # also used for invalid / infinite depth
+    ks: 65                   # PSF kernel size [px]; odd, see DeepLensOptics
+
+sensor_model:
+  shot_noise: false
+  read_noise: false
+  dark_current: false
+
+isp:
+  enabled: false
+
+validation:
+  status: estimated
+  version: 0

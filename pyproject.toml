@@ -1,0 +1,70 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "twinrobo-core"
+dynamic = ["version"]
+description = "TwinRobo: physically grounded digital twins of real cameras for robot learning in simulation."
+readme = "README.md"
+authors = [{name = "TwinRobo contributors"}]
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+# DeepLens (deeplens-core) requires Python 3.12 and pins torch; TwinRobo inherits both.
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    # DeepLens v2.5.4. Pin by commit SHA; never depend on DeepLens main.
+    "deeplens-core @ git+https://github.com/vccimaging/DeepLens@278e4f720a4549187a51edaea57bb658548911ce",
+    "numpy>=1.24",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+]
+# MuJoCo adapter
+mujoco = [
+    "mujoco==3.3.2",
+    "warp-lang>=1.17",  # GPU ray casting for render="raycast"
+]
+# LIBERO plugin (LIBERO itself: set LIBERO_ROOT to a checkout, see twinrobo/libero)
+libero = [
+    "mujoco==3.3.2",
+    "robosuite==1.4.1",
+    "bddl==1.0.1",
+    "gym==0.25.2",
+    "easydict",
+    "future",
+    "h5py",
+    "warp-lang>=1.17",
+]
+
+[tool.setuptools.dynamic]
+version = {attr = "twinrobo.version.__version__"}
+
+[tool.setuptools.packages.find]
+include = ["twinrobo*"]
+
+[tool.setuptools.package-data]
+# the built-in camera catalog: specs, lens files, stereo modules
+twinrobo = ["catalog/**/*.yaml", "catalog/**/*.json", "catalog/**/*.md"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "deeplens: requires the DeepLens optics engine",
+    "gpu: requires a CUDA device",
+    "isaac: requires NVIDIA Isaac Sim",
+    "gl: requires an offscreen OpenGL backend (EGL/OSMesa) for MuJoCo rendering",
+    "libero: requires LIBERO (LIBERO_ROOT and LIBERO_CONFIG_PATH)",
+    "robocasa: requires RoboCasa (robosuite 1.5; the twinrobo-robocasa env)",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]

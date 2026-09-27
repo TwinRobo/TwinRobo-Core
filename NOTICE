@@ -1,0 +1,24 @@
+TwinRobo
+Copyright 2026 TwinRobo contributors
+
+This product includes third-party material, listed below.
+
+
+DeepLens (https://github.com/vccimaging/DeepLens)
+  Copyright 2026 KAUST Computational Imaging Group, Xinge Yang and DeepLens contributors.
+  Licensed under the Apache License, Version 2.0.
+  Used as an installed dependency (pinned commit, see pyproject.toml); not vendored.
+
+  Redistributed file:
+    twinrobo/catalog/examples/cellphone80deg/lens.json
+      Copied unmodified from DeepLens datasets/lenses/cellphone/cellphone80deg.json
+      (commit 278e4f720a4549187a51edaea57bb658548911ce, tag v2.5.4).
+
+  Modified files (uniformly scaled and re-stopped by tools/catalog/make_surrogate_lens.py):
+    twinrobo/catalog/stereolabs/zed-x/2.2mm/lens.json
+      From DeepLens datasets/lenses/camera/rf16mm_f2.8.json (same commit).
+    twinrobo/catalog/stereolabs/zed-x/4mm/lens.json
+      From DeepLens datasets/lenses/camera/rf24mm_f1.8.json (same commit).
+    DeepLens notes these designs are transcribed from published patents
+    (JP 2022-085382 Ex. 3; US 2022/0019061 Ex. 3).
+
