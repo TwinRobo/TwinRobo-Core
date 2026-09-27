@@ -53,49 +53,89 @@ LIBERO itself is used from a checkout (`LIBERO_ROOT`). RoboCasa needs
 robosuite 1.5 and gets its own environment; see
 [simulators](docs/simulators.md#robocasa).
 
-## Quick start
+## Quick start: mount a real camera on a robot
 
-**Render an RGB-D frame through a real camera:**
-
-```python
-from twinrobo import CameraTwin
-
-twin = CameraTwin.from_catalog("stereolabs/zed-x/2.2mm")
-frame = twin.process(rgb, depth)  # linear RGB [B,3,H,W] + metric depth [B,1,H,W], on GPU
-frame.rgb  # what the camera records
-```
-
-**Put it in a LIBERO environment:**
+Pick a camera from the catalog, mount it on a robot link, and render what it
+would record. This runs in robosuite's PickPlace scene (`pip install -e ".[libero]"`
+brings robosuite; no LIBERO checkout needed):
 
 ```python
-from twinrobo.libero import CameraTwinLiberoEnv, make_env
+import robosuite
 
-env, task, init_states = make_env("libero_spatial", 0, resolution=128)
-env = CameraTwinLiberoEnv(env, {"agentview": twin})
-obs = env.reset()  # obs["agentview_image"] now comes from the twin
-```
+from twinrobo import CameraSpec, CameraTwin, CatalogRegistry
+from twinrobo.mujoco import MujocoCameraTwin, RobosuiteRenderer, to_uint8
+from twinrobo.mujoco.mounts import CameraMount, mounted
 
-**Trace real lens rays into a MuJoCo scene:**
-
-```python
-from twinrobo.mujoco import MujocoCameraTwin, MujocoRenderer
-
-cam = MujocoCameraTwin(twin, MujocoRenderer(model, data), camera="front", render="raycast")
-frame = cam.get_frame()  # frame.rgb, frame.depth, frame.metadata (render stats)
-```
-
-**Reconfigure a camera without editing its file:**
-
-```python
-from twinrobo import CameraSpec, CatalogRegistry
-
-spec = CameraSpec.from_yaml(
-    CatalogRegistry().resolve("stereolabs/zed-x/2.2mm"), width=960, height=600, focus_distance_m=0.6
+env = robosuite.make(
+    "PickPlace",
+    robots="Panda",
+    has_renderer=False,
+    has_offscreen_renderer=True,
+    use_camera_obs=False,
 )
+env.reset()
+
+# 1. Pick a real camera from the catalog (here read out at 960x600).
+path = CatalogRegistry().resolve("stereolabs/zed-x/2.2mm")
+twin = CameraTwin.from_spec(CameraSpec.from_yaml(path, width=960, height=600))
+
+# 2. Mount it on a robot link: position (m) and yaw/pitch/roll (deg) in the link's frame.
+wrist = CameraMount("wrist", body="robot0_right_hand", pos=(0.08, 0, 0), rpy_deg=(67, -48, 173))
+
+# 3. Render what that camera would record.
+with mounted(env.sim.model._model, env.sim.data._data, wrist) as host:
+    frame = MujocoCameraTwin(twin, RobosuiteRenderer(env), camera=host).get_frame()
+
+image = to_uint8(frame.rgb)  # the real camera's image, uint8 [H, W, 3]
+pinhole = to_uint8(frame.rgb_ideal)  # the simulator's ideal pinhole, same camera
+depth = frame.depth[0, 0]  # metric z-depth (m), aligned to the image
 ```
 
-More in [`examples/`](examples): PSFs of a lens, RGB-D optics against the DeepLens
-reference, and a LIBERO camera.
+The first call builds the lens's PSF bank with DeepLens (about 20 s on a GPU)
+and caches it; after that a frame takes a fraction of a second. The mount moves
+with the link, so it follows the robot as it acts or replays a demo.
+
+[`examples/05_mount_camera_on_robot.py`](examples/05_mount_camera_on_robot.py)
+does this for three catalog cameras on the same wrist mount and draws what each
+one gives you:
+
+```bash
+MUJOCO_GL=egl python examples/05_mount_camera_on_robot.py   # writes outputs/05_mount_camera.jpg
+```
+
+![Three catalog cameras on the same wrist mount: pinhole vs TwinRobo image, close-up, difference and depth](docs/images/quickstart_cameras.jpg)
+
+Read it top to bottom:
+
+- **Simulator pinhole / TwinRobo camera:** the field of view is each lens's
+  own. The ZED X 2.2 mm's wide lens shows its barrel distortion, which a
+  pinhole cannot.
+- **Close-up:** the same patch at native resolution; the real lens softens the
+  lettering, as the camera would.
+- **Difference ×4:** where the optics change the image: distortion shifts
+  edges for the 2.2 mm lens; blur changes edges and texture for the others.
+- **Depth:** metric z-depth, aligned pixel for pixel with the camera's image.
+
+### Next steps
+
+- **Other rendering methods:** pass `render="pupil"` or `render="raycast"` to
+  `MujocoCameraTwin` to trace real lens rays into the scene (see
+  [Rendering methods](#rendering-methods)).
+- **A LIBERO policy's camera:** wrap an env so its observations come from the
+  twin, and eval scripts run unchanged:
+
+  ```python
+  from twinrobo.libero import CameraTwinLiberoEnv, make_env
+
+  env, task, init_states = make_env("libero_spatial", 0, resolution=128)
+  env = CameraTwinLiberoEnv(env, {"agentview": twin})
+  obs = env.reset()  # obs["agentview_image"] now comes from the twin
+  ```
+
+- **An RGB-D frame from any source:** `twin.process(rgb, depth)` takes linear
+  RGB `[B,3,H,W]` and metric depth `[B,1,H,W]` on the GPU.
+- **Your own camera:** copy a catalog spec, or add one for everyone; see
+  [Cameras](docs/cameras.md) and [CONTRIBUTING](CONTRIBUTING.md#adding-a-camera).
 
 ## Rendering methods
 
