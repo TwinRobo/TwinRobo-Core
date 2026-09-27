@@ -45,6 +45,27 @@ def _rx(a):
 _R0 = np.array([[0, 0, -1], [-1, 0, 0], [0, 1, 0]], dtype=float)
 
 
+def mat_to_quat(R: np.ndarray) -> np.ndarray:
+    """Unit quaternion ``(w, x, y, z)`` of rotation matrix ``R`` (Shepperd's method), ``w >= 0``."""
+    R = np.asarray(R, dtype=np.float64)
+    t = np.trace(R)
+    if t > 0:
+        s = 2.0 * math.sqrt(t + 1.0)
+        q = [0.25 * s, (R[2, 1] - R[1, 2]) / s, (R[0, 2] - R[2, 0]) / s, (R[1, 0] - R[0, 1]) / s]
+    elif R[0, 0] >= R[1, 1] and R[0, 0] >= R[2, 2]:
+        s = 2.0 * math.sqrt(1.0 + R[0, 0] - R[1, 1] - R[2, 2])
+        q = [(R[2, 1] - R[1, 2]) / s, 0.25 * s, (R[0, 1] + R[1, 0]) / s, (R[0, 2] + R[2, 0]) / s]
+    elif R[1, 1] >= R[2, 2]:
+        s = 2.0 * math.sqrt(1.0 + R[1, 1] - R[0, 0] - R[2, 2])
+        q = [(R[0, 2] - R[2, 0]) / s, (R[0, 1] + R[1, 0]) / s, 0.25 * s, (R[1, 2] + R[2, 1]) / s]
+    else:
+        s = 2.0 * math.sqrt(1.0 + R[2, 2] - R[0, 0] - R[1, 1])
+        q = [(R[1, 0] - R[0, 1]) / s, (R[0, 2] + R[2, 0]) / s, (R[1, 2] + R[2, 1]) / s, 0.25 * s]
+    q = np.asarray(q)
+    q /= np.linalg.norm(q)
+    return -q if q[0] < 0 else q
+
+
 @dataclass
 class CameraMount:
     name: str
@@ -71,12 +92,11 @@ class CameraMount:
         return _rz(yaw) @ _ry(pitch) @ _rx(roll) @ _R0
 
     def quat(self) -> np.ndarray:
-        """Body-frame orientation as a MuJoCo quaternion (w, x, y, z)."""
-        import mujoco
+        """Body-frame orientation as a MuJoCo quaternion (w, x, y, z), ``w >= 0``.
 
-        q = np.zeros(4)
-        mujoco.mju_mat2Quat(q, self.rotation().reshape(-1))
-        return q
+        Plain numpy (no MuJoCo needed): rigs are saved and shown without a simulator.
+        """
+        return mat_to_quat(self.rotation())
 
     def to_json(self) -> dict:
         d = asdict(self)

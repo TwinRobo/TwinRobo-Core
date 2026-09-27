@@ -1,0 +1,90 @@
+site_name: TwinRobo
+site_description: Physically grounded digital twins of real cameras for robot learning in simulation
+repo_url: https://github.com/TwinRobo/TwinRobo-Core
+repo_name: TwinRobo/TwinRobo-Core
+edit_uri: edit/main/docs/
+copyright: TwinRobo contributors · Apache-2.0
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - content.code.copy
+    - search.suggest
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      toggle: {icon: material/weather-night, name: Dark mode}
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      toggle: {icon: material/weather-sunny, name: Light mode}
+
+nav:
+  - Home: index.md
+  - Guide:
+      - Optics and rendering: rendering.md
+      - Cameras and stereo: cameras.md
+      - Simulators: simulators.md
+  - Camera catalog: catalog.md
+  - Get involved:
+      - Contributing: contributing.md
+      - Camera partners: partners.md
+  - API reference:
+      - Overview: api/index.md
+      - Core: api/core.md
+      - Optics: api/optics.md
+      - Sensor and ISP: api/sensor_isp.md
+      - MuJoCo: api/mujoco.md
+      - Isaac Sim: api/isaac.md
+      - LIBERO and RoboCasa: api/robot_learning.md
+      - Validation: api/validation.md
+  - Development:
+      - Layout and tests: development.md
+      - Optics benchmark: benchmarks/phase1_optics.md
+
+plugins:
+  - search
+  - gen-files:
+      scripts:
+        - tools/docs/gen_pages.py   # home (README), contributing, camera catalog
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          paths: [.]
+          options:
+            docstring_style: google
+            show_root_heading: true
+            show_root_full_path: false
+            show_source: false
+            show_signature_annotations: true
+            separate_signature: true
+            signature_crossrefs: true
+            members_order: source
+            merge_init_into_class: true
+            filters: ["!^_"]
+            heading_level: 2
+
+hooks:
+  - tools/docs/hooks.py   # repo-relative links (GitHub) -> site links
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - toc: {permalink: true}
+  - pymdownx.details
+  - pymdownx.highlight: {anchor_linenums: true}
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+
+validation:
+  omitted_files: warn
+  absolute_links: info
+  unrecognized_links: warn
+  anchors: warn

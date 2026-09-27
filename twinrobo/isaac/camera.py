@@ -53,8 +53,12 @@ class IsaacCameraTwin:
             scene unit (1 m on a meter stage), which would hide what a robot camera
             sees up close, so the view uses this instead of the camera's.
         render: ``"psf"``, ``"pupil"`` or ``"raycast"`` (see the module docs).
-        rays_per_pixel, pupil_views, shading, view_oversample: settings of the
-            lens-ray methods (see `twinrobo.optics.lensrender.LensRayRenderer`).
+        rays_per_pixel: Rays traced per pixel and wavelength (lens-ray methods).
+        pupil_views: Views rendered across the lens' entrance pupil (lens-ray methods).
+        shading: ``"corrected"`` (ISP lens-shading correction) or ``"raw"`` (sensor
+            vignetting and cos^4 falloff kept); lens-ray methods.
+        view_oversample: Resolution of the pupil views relative to the sensor; above
+            1 resolves detail thinner than a pixel (lens-ray methods).
     """
 
     def __init__(

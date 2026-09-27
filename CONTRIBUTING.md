@@ -57,6 +57,9 @@ The same body with a different lens is a different entry.
    The second command builds the PSF bank with DeepLens (GPU recommended) and
    is the real end-to-end check.
 
+   The documentation's camera catalog page is generated from the catalog
+   files, so your camera appears there without editing any docs.
+
 **Stereo products** add a `module.yaml` next to the eye's spec (see
 `twinrobo/catalog/stereolabs/zed-x-mini/2.2mm/module.yaml`): the per-eye
 specs, the right eye's pose in the left eye's frame (baseline), the housing
@@ -78,6 +81,18 @@ vignetting), and describe the procedure in the header.
 - **Optics, sensor noise and ISP models:** interfaces live in
   `twinrobo/optics/base.py`, `twinrobo/sensor/base.py` and
   `twinrobo/isp/base.py`.
+
+## Documentation
+
+The site is built with MkDocs; the API reference comes from the docstrings
+(Google style: `Args:`, `Returns:`, one entry per parameter).
+
+```bash
+pip install -e ".[docs]"
+mkdocs serve          # http://127.0.0.1:8000, rebuilds on save
+mkdocs build --strict # what CI runs: warnings (e.g. a docstring parameter that
+                      # is not in the signature) fail the build
+```
 
 ## Pull requests
 

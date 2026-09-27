@@ -528,9 +528,10 @@ class DeepLensOptics(OpticsModel):
                 ``self.sensor_resolution``.
             depth: ``[B, 1, H, W]`` depth in meters.
             psf_grid: ``(grid_w, grid_h)`` PSF map blocks.
-            near_m, far_m, num_layers: Depth layers via `sample_depths`, unless
-                ``depths_m`` (far -> near) is given. Use the same values as the
-                `PSFBank` being compared.
+            near_m: Nearest depth layer (m), via `sample_depths` unless ``depths_m``
+                is given. Use the same values as the `PSFBank` being compared.
+            far_m: Farthest depth layer (m).
+            num_layers: Number of depth layers.
 
         Returns:
             ``[B, 3, H, W]`` optically rendered image.

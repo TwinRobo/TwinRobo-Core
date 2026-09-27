@@ -35,3 +35,4 @@ captures/
 
 # Simulator logs
 MUJOCO_LOG.TXT
+site/

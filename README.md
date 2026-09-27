@@ -6,6 +6,7 @@
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 ![Python 3.12](https://img.shields.io/badge/python-3.12-blue)
 ![Status: alpha](https://img.shields.io/badge/status-alpha-orange)
+[![Docs](https://img.shields.io/badge/docs-API%20reference-indigo)](https://twinrobo.github.io/TwinRobo-Core/)
 
 Simulators render through a perfect pinhole. Robots see through real cameras:
 lenses that blur, distort and vignette, with fixed focus and a specific field
@@ -13,6 +14,14 @@ of view. Policies trained on pinhole images meet a different image at
 deployment. TwinRobo closes that gap: it renders simulated scenes through the
 actual optics of the camera you will deploy, as a drop-in for the simulators
 robot learning already uses.
+
+**One environment, any real camera.** TwinRobo is an open environment for aligning
+perception with off-the-shelf cameras: pick a camera from the
+[catalog](https://twinrobo.github.io/TwinRobo-Core/catalog/), and every simulator, rendering method and dataset
+replay in TwinRobo sees through it. The catalog grows with the community:
+[add a camera](#add-your-camera) and it works everywhere at once; camera makers
+can [become partners](#for-camera-makers-become-a-partner) and ship verified
+models of their products.
 
 ![An Isaac Sim tabletop: the simulator's pinhole (left) and the Stereolabs ZED X 2.2 mm, every pixel ray-traced through its lens (right)](docs/images/isaac-raycast.jpg)
 
@@ -30,7 +39,7 @@ robot learning already uses.
 
 **Cameras:** Stereolabs ZED X (2.2 mm, 4 mm) and ZED X Mini, as single eyes or
 stereo pairs with rectified output, plus a teaching example lens. Every camera
-works in every simulator and rendering method. [Add yours](CONTRIBUTING.md#adding-a-camera).
+works in every simulator and rendering method. [Add yours](#add-your-camera).
 
 ## Features
 
@@ -207,27 +216,67 @@ aperture, and the scene's triangles.
 | `examples/cellphone80deg` | a DeepLens design lens on a hypothetical sensor (teaching example) | estimated |
 
 Stereo modules: ZED X (2.2 mm, 4 mm; 120 mm baseline) and ZED X Mini (2.2 mm;
-50 mm baseline). **Your camera is missing?**
-[Add it](CONTRIBUTING.md#adding-a-camera) or
-[request it](../../issues/new?template=new_camera.md).
+50 mm baseline). The [catalog page](https://twinrobo.github.io/TwinRobo-Core/catalog/) lists every entry with its
+sensor, lens and field of view, generated from the catalog files.
+
+## Add your camera
+
+**The catalog is the heart of TwinRobo, and it is open.** Every camera added
+becomes available to everyone, in every simulator, rendering method and dataset
+replay, with no simulator-specific work. If your robot uses a camera that is
+not here, it is the most valuable contribution you can make:
+
+1. Create `twinrobo/catalog/<vendor>/<model>/<lens>/` with a `camera.yaml`
+   (sensor, lens, focus, calibration; copy an existing entry) and a DeepLens
+   `lens.json`. No prescription published? Build a surrogate of the same field
+   of view and f-number with `tools/catalog/make_surrogate_lens.py`.
+2. Run `pytest tests/test_catalog.py` and render it once:
+   `CameraTwin.from_catalog("<vendor>/<model>/<lens>")`.
+3. Open a pull request, with where each number came from.
+
+Calibrated a real unit? Upgrading an entry from `estimated` to `measured` is
+just as welcome. The full guide is in
+[CONTRIBUTING](CONTRIBUTING.md#adding-a-camera); to ask for a camera instead,
+[open a camera request](../../issues/new?template=new_camera.md).
+
+## For camera makers: become a partner
+
+**Put your camera in every robot-learning simulator.** Robot teams now choose
+and validate cameras in simulation before they buy hardware. The TwinRobo
+Camera Partner program lets camera and lens makers ship
+`manufacturer_verified` models of their products, and lets companies sponsor
+the open environment their customers use:
+
+- **You contribute** any of: optical data (a lens prescription or measured
+  PSFs), factory calibration, sample units, or sponsorship of compute and
+  maintenance. Data you cannot publish can stay private.
+- **You get** a verified catalog entry that works in MuJoCo, Isaac Sim and
+  every rendering method, your company listed as a partner here and on the
+  docs site, a showcase example with your camera, and early integration of
+  new products.
+
+[Read about the program](docs/partners.md) or
+[open a partner inquiry](../../issues/new?template=camera_partner.md).
 
 ## Documentation
+
+The documentation site, with the API reference, is at
+**[twinrobo.github.io/TwinRobo-Core](https://twinrobo.github.io/TwinRobo-Core/)**. Build it locally with
+`pip install -e ".[docs]" && mkdocs serve`.
 
 | | |
 |---|---|
 | [Optics and rendering](docs/rendering.md) | PSF pipeline, distortion, the three rendering methods, validation |
 | [Cameras and stereo](docs/cameras.md) | CameraSpec, catalog, stereo modules, spec overrides |
 | [Simulators](docs/simulators.md) | MuJoCo, LIBERO, RoboCasa and Isaac Sim: setup, behavior, limits |
+| [API reference](https://twinrobo.github.io/TwinRobo-Core/api/) | every public class and function, from the docstrings |
 | [Development](docs/development.md) | layout, tests, status |
 
 ## Contributing
 
-Contributions are welcome, and **new cameras** are the most valuable: a
-catalog entry is a `camera.yaml` plus a lens file, checked by
-`tests/test_catalog.py`. Also wanted: `measured` calibrations of real units,
-new simulator adapters (a lens scene is three methods; see
-`twinrobo.optics.lensrender`), and sensor noise and ISP models. See
-[CONTRIBUTING](CONTRIBUTING.md).
+Beyond cameras, also wanted: new simulator adapters (a lens scene is three
+methods; see `twinrobo.optics.lensrender`), sensor noise and ISP models, and
+documentation. See [CONTRIBUTING](CONTRIBUTING.md).
 
 ## Roadmap
 

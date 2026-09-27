@@ -172,8 +172,12 @@ class MujocoCameraTwin:
         render: ``"psf"`` (pinhole render + PSF optics, fast), or trace every pixel
             through the real lens: ``"pupil"`` (pupil-sampled rasterization) or
             ``"raycast"`` (per-ray ray casting). See `twinrobo.mujoco.lensrender`.
-        rays_per_pixel, pupil_views, shading, view_oversample: settings of the
-            lens-ray methods (see `LensRayRenderer`).
+        rays_per_pixel: Rays traced per pixel and wavelength (lens-ray methods).
+        pupil_views: Views rendered across the lens' entrance pupil (lens-ray methods).
+        shading: ``"corrected"`` (ISP lens-shading correction) or ``"raw"`` (sensor
+            vignetting and cos^4 falloff kept); lens-ray methods.
+        view_oversample: Resolution of the pupil views relative to the sensor; above
+            1 resolves detail thinner than a pixel (lens-ray methods).
     """
 
     def __init__(

@@ -27,7 +27,7 @@ class CameraTwinLiberoEnv:
     Code downstream of the env is unchanged.
 
     Args:
-        env: LIBERO env, e.g. from `twinrobo.libero.make_env`.
+        env (OffScreenRenderEnv): LIBERO env, e.g. from `twinrobo.libero.make_env`.
         cameras: ``{robosuite camera name: CameraTwin}``.
         crop: How the twin frame (e.g. 16:10) becomes the observation (e.g.
             square): ``"center"`` crops the centered region with the output
