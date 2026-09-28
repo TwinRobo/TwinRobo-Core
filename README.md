@@ -9,7 +9,7 @@
 ![Python 3.12](https://img.shields.io/badge/python-3.12-blue)
 ![Status: alpha](https://img.shields.io/badge/status-alpha-orange)
 [![Docs](https://img.shields.io/badge/docs-API%20reference-indigo)](https://twinrobo.github.io/TwinRobo-Core/)
-[![Playground](https://img.shields.io/badge/docs-playground-teal)](https://twinrobo.github.io/TwinRobo-Core/playground/)
+[![Demo](https://img.shields.io/badge/demo-TwinRobo%20Preview-teal)](https://twinrobo.github.io/TwinRobo-Preview/)
 
 Simulators render through a perfect pinhole. Robots see through real cameras:
 lenses that blur, distort and vignette, with fixed focus and a specific field
@@ -224,7 +224,6 @@ aperture, and the scene's triangles.
 | Luxonis | OAK-D color and mono | OAK-D (75 mm) |
 | Logitech | C920 HD Pro Webcam | |
 | Raspberry Pi | Camera Module 3, Camera Module 3 Wide | |
-| Example | `examples/cellphone80deg` (a DeepLens design lens, teaching example) | |
 
 All entries are `estimated` today: geometry fitted to the datasheet fields of
 view, blur from a surrogate lens of matching field, every number sourced in the

@@ -1,11 +1,14 @@
 """Generate site pages at build time (mkdocs-gen-files): one source for each page.
 
-- ``contributing.md`` from ``CONTRIBUTING.md`` (its repo-relative links are rewritten
-  by ``tools/docs/hooks.py``); the home page is the hand-made ``docs/index.md``;
-- ``catalog.md``: every camera and stereo module in ``twinrobo/catalog``, read
-  from their YAML files, so a contributed camera appears without editing docs.
+- ``contributing.md`` from ``CONTRIBUTING.md`` and ``cla.md`` from ``CLA.md`` (their
+  repo-relative links are rewritten by ``tools/docs/hooks.py``); ``license.md``: the
+  licenses at a glance and ``COMMERCIAL.md``; the home page is ``docs/index.md``;
+- ``catalog.md`` and ``assets/catalog.json``: every camera and stereo module in
+  ``twinrobo/catalog``, read from their YAML files (the page's camera browser loads
+  the JSON), so a contributed camera appears without editing docs.
 """
 
+import json
 import math
 from pathlib import Path
 
@@ -22,10 +25,18 @@ STATUS = {
     "manufacturer_verified": "manufacturer verified",
 }
 
-for src, dst in (("CONTRIBUTING.md", "contributing.md"),):
+for src, dst in (("CONTRIBUTING.md", "contributing.md"), ("CLA.md", "cla.md")):
     with mkdocs_gen_files.open(dst, "w") as f:
         f.write((ROOT / src).read_text())
     mkdocs_gen_files.set_edit_path(dst, f"../{src}")
+
+# license.md: the licensing at a glance, then COMMERCIAL.md (one source for the terms)
+commercial = (
+    (ROOT / "COMMERCIAL.md").read_text().replace("# Commercial license", "## Commercial license", 1)
+)
+with mkdocs_gen_files.open("license.md", "w") as f:
+    f.write((Path(__file__).parent / "license_head.md").read_text().format(repo=REPO) + commercial)
+mkdocs_gen_files.set_edit_path("license.md", "../COMMERCIAL.md")
 
 
 def pinhole_fov(spec: dict) -> tuple[float, float] | None:
@@ -45,74 +56,118 @@ def pinhole_fov(spec: dict) -> tuple[float, float] | None:
 
 cameras, modules = [], []
 for path in sorted(CATALOG.rglob("camera.yaml")):
-    spec = yaml.safe_load(path.read_text())
-    cameras.append((path, spec))
+    cameras.append((path, yaml.safe_load(path.read_text())))
 for path in sorted(CATALOG.rglob("module.yaml")):
     modules.append((path, yaml.safe_load(path.read_text())))
 
-lines = [
-    "# Camera catalog",
-    "",
-    "Every camera below works in every simulator and rendering method: load it with",
-    '`CameraTwin.from_catalog("<id>")`. This page is generated from the catalog files',
-    "in [`twinrobo/catalog`](" + REPO + "/tree/main/twinrobo/catalog), so it always",
-    "lists what the installed package ships.",
-    "",
-    '!!! tip "Your camera is missing?"',
-    "    [Add it](contributing.md#adding-a-camera): an entry is a `camera.yaml` and a lens",
-    "    file. Camera makers can [partner with us](partners.md) for verified entries.",
-    "",
-    "## Cameras",
-    "",
-    "| ID | Camera | Sensor | Lens | Pinhole FoV (H × V) | Status |",
-    "|---|---|---|---|---|---|",
-]
-for path, spec in cameras:
-    rel = path.relative_to(ROOT).as_posix()
-    s, lens = spec["sensor"], spec["lens"]
-    res = s["resolution"]
-    shutter = (s.get("shutter") or {}).get("type") or ""
-    pitch = s.get("pixel_pitch_um")
-    sensor = ", ".join(
-        x for x in (f"{res['width']}×{res['height']}", f"{pitch} µm" if pitch else "", shutter) if x
-    )
-    fnum = lens.get("f_number")
-    lens_txt = f"{lens.get('focal_length_mm', '?')} mm" + (f" f/{fnum}" if fnum else "")
-    fov = pinhole_fov(spec)
-    fov_txt = f"{fov[0]:.0f}° × {fov[1]:.0f}°" if fov else "from the lens file"
-    status = STATUS.get((spec.get("validation") or {}).get("status"), "–")
-    name = f"{spec.get('manufacturer', '')} {spec.get('product', '')}".strip()
-    lines.append(
-        f"| [`{spec['id']}`]({REPO}/blob/main/{rel}) | {name} | {sensor} | {lens_txt} "
-        f"| {fov_txt} | {status} |"
-    )
-lines += [
-    "",
-    "Pinhole FoV is the undistorted field of view from the focal length; wide lenses",
-    "see more at the edges (their distortion is modeled). *Estimated* entries follow",
-    "the datasheet with a surrogate lens design; *measured* entries are fitted to",
-    "captures of a real unit.",
-    "",
-    "## Stereo modules",
-    "",
-    "| ID | Product | Baseline | Eyes | Output |",
-    "|---|---|---|---|---|",
-]
-for path, mod in modules:
-    rel = path.relative_to(ROOT).as_posix()
+# Pre-rendered views of the cameras (tools/docs/playground): which catalog ids have them.
+VIEWS = ROOT / "docs" / "assets" / "playground" / "manifest.json"
+viewable = set()
+if VIEWS.exists():
+    for sc in json.loads(VIEWS.read_text())["scenes"]:
+        viewable |= {c["id"] for c in sc["cameras"]}
+
+
+def module_entry(path: Path, mod: dict) -> dict:
     eyes = mod.get("eyes") or {}
     t = (eyes.get("right") or {}).get("translation_m") or [0, 0, 0]
     baseline = math.dist(t, (eyes.get("left") or {}).get("translation_m") or [0, 0, 0]) * 1000
-    eye = (eyes.get("left") or {}).get("spec", "")
-    eye_id = (path.parent / eye).resolve().relative_to(CATALOG).parent.as_posix() if eye else "–"
-    name = f"{mod.get('manufacturer', '')} {mod.get('product', '')}".strip()
+    eye_ids = []
+    for side in ("left", "right"):
+        eye = (eyes.get(side) or {}).get("spec")
+        if eye:
+            eye_ids.append((path.parent / eye).resolve().relative_to(CATALOG).parent.as_posix())
+    return {
+        "id": mod["id"],
+        "name": f"{mod.get('manufacturer', '')} {mod.get('product', '')}".strip(),
+        "baseline_mm": round(baseline, 1),
+        "eyes": sorted(set(eye_ids)),
+        "output": mod.get("output", "rectified"),
+        "yaml": f"{REPO}/blob/main/{path.relative_to(ROOT).as_posix()}",
+    }
+
+
+mods = [module_entry(p, m) for p, m in modules]
+
+
+def camera_entry(path: Path, spec: dict) -> dict:
+    s, lens = spec["sensor"], spec["lens"]
+    res = s["resolution"]
+    fov = pinhole_fov(spec)
+    words = f"{s.get('model') or ''} {spec.get('product') or ''}".lower()
+    calib = spec.get("calibration") or {}
+    return {
+        "id": spec["id"],
+        "maker": spec.get("manufacturer") or "",
+        "product": spec.get("product") or "",
+        "sensor": s.get("model") or "",
+        "width": res["width"],
+        "height": res["height"],
+        "pitch_um": s.get("pixel_pitch_um"),
+        "shutter": (s.get("shutter") or {}).get("type") or "",
+        "mono": "mono" in words,
+        "focal_mm": lens.get("focal_length_mm"),
+        "f_number": lens.get("f_number"),
+        "focus_m": lens.get("focus_distance_m"),
+        "fov": [round(fov[0], 1), round(fov[1], 1)] if fov else None,
+        "distortion": bool(calib.get("distortion")),
+        "status": (spec.get("validation") or {}).get("status") or "estimated",
+        "yaml": f"{REPO}/blob/main/{path.relative_to(ROOT).as_posix()}",
+        "modules": [m["id"] for m in mods if spec["id"] in m["eyes"]],
+        "views": spec["id"] in viewable,
+    }
+
+
+cams = [camera_entry(p, c) for p, c in cameras]
+with mkdocs_gen_files.open("assets/catalog.json", "w") as f:
+    json.dump({"cameras": cams, "modules": mods, "status": STATUS}, f, indent=1)
+
+BROWSER = (Path(__file__).parent / "catalog_browser.html").read_text()
+
+lines = [
+    "---",
+    "hide:",
+    "  - navigation",
+    "  - toc",
+    "nav_icon: material/camera-iris",
+    "---",
+    "",
+    "# Camera catalog",
+    "",
+    BROWSER,
+    "",
+    "## Stereo modules",
+    "",
+    "| Module | Product | Baseline | Eyes | Output |",
+    "|---|---|---|---|---|",
+]
+for m in mods:
+    # the page script shows the eye in the viewer (#cam=... is its state, not a heading)
+    link = '<a href="#cam={0}" data-camera="{0}"><code>{0}</code></a>'
+    eyes = ", ".join(link.format(e) for e in m["eyes"])
     lines.append(
-        f"| [`{mod['id']}`]({REPO}/blob/main/{rel}) | {name} | {baseline:.0f} mm "
-        f"| `{eye_id}` | {mod.get('output', 'rectified')} |"
+        f"| [`{m['id']}`]({m['yaml']}) | {m['name']} | {m['baseline_mm']:.0f} mm "
+        f"| {eyes or '–'} | {m['output']} |"
     )
 lines += [
     "",
-    f"{len(cameras)} cameras and {len(modules)} stereo modules.",
+    '??? info "About the images"',
+    "    Each camera is seen from the same pose in two scenes, through its own lens, field",
+    "    of view and focus: MuJoCo (robosuite PickPlace, from the Panda's wrist) and Isaac",
+    "    Sim 6.1 (a random tabletop). *Pinhole* is what the simulator renders by itself;",
+    "    *PSF bank* blurs it with the lens' point-spread functions and applies distortion",
+    "    and vignetting (fastest); *pupil views* combine renders from points on the lens'",
+    "    pupil along each pixel's traced rays; *ray cast* traces every pixel's rays",
+    "    through the lens into the scene (most exact). There is no depth view: TwinRobo",
+    "    simulates what cameras image, not yet what depth cameras measure",
+    "    ([depth output](cameras.md#depth-output)). Images are 640 px wide, rendered",
+    "    offline with [`tools/docs/playground`](" + REPO + "/tree/main/tools/docs/playground).",
+    "    For cameras on a robot, see the [simulator demo](playground.md).",
+    "",
+    '!!! tip "Your camera is missing?"',
+    "    [Add it](contributing.md#adding-a-camera): an entry is a `camera.yaml` and a lens",
+    "    file, and this page picks it up. Camera makers can [partner with us](partners.md)",
+    "    for verified entries.",
     "",
 ]
 with mkdocs_gen_files.open("catalog.md", "w") as f:

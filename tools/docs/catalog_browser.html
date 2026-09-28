@@ -1,0 +1,62 @@
+<!-- The camera catalog page's browser and viewer (tools/docs/gen_pages.py puts it on
+     catalog.md; docs/javascripts/catalog.js fills it from assets/catalog.json). -->
+<div id="tr-catalog" data-base="../assets/playground/" data-catalog="../assets/catalog.json" markdown="0">
+<div class="trc-layout">
+  <aside class="trc-browser" aria-label="Cameras">
+    <div class="trc-search">
+      <input class="trc-q" type="search" placeholder="Search cameras, sensors, lenses" aria-label="Search">
+      <select class="trc-sort" aria-label="Sort">
+        <option value="maker">Sort: maker</option><option value="hfov">Sort: widest FoV</option>
+        <option value="res">Sort: resolution</option><option value="focal">Sort: focal length</option>
+      </select>
+    </div>
+    <div class="trc-filters">
+      <select class="trc-maker" aria-label="Maker"><option value="">All makers</option></select>
+      <select class="trc-kind" aria-label="Color or mono"><option value="">Color and mono</option>
+        <option value="color">Color</option><option value="mono">Mono</option></select>
+      <select class="trc-status" aria-label="Status"><option value="">Any status</option></select>
+      <label class="trc-check"><input type="checkbox" class="trc-previews"> With preview</label>
+      <label class="trc-num">HFoV ≥ <input type="number" class="trc-hfov" min="0" max="200" step="5" placeholder="0">°</label>
+    </div>
+    <div class="trc-count"></div>
+    <div class="trc-list" role="listbox"></div>
+  </aside>
+  <section class="trc-view">
+    <div class="trp-bar">
+      <div class="trp-group" role="tablist" aria-label="Scene" data-key="scene"></div>
+      <div class="trp-group" aria-label="Rendering method" data-key="method"></div>
+      <div class="trp-group" aria-label="View" data-key="view"></div>
+      <div class="trp-use">
+        <button type="button" class="trp-usebtn" aria-haspopup="dialog" aria-expanded="false">Use this camera</button>
+        <div class="trp-usepop" role="dialog" aria-label="Use this camera" hidden>
+          <p class="trp-usetitle">Use this camera</p>
+          <div class="trp-snip"><pre><code class="trp-usepip">pip install "twinrobo-core @ git+https://github.com/TwinRobo/TwinRobo-Core"</code></pre>
+            <button type="button" class="trp-copy" aria-label="Copy">Copy</button></div>
+          <div class="trp-snip"><pre><code class="trp-usecode"></code></pre>
+            <button type="button" class="trp-copy" aria-label="Copy">Copy</button></div>
+          <p class="trp-usenote"><a class="trp-useyaml" target="_blank" rel="noopener">Catalog entry (YAML)</a> ·
+            <a href="../playground/#supported-simulators">Try in Simulator</a></p>
+        </div>
+      </div>
+    </div>
+    <div class="trp-main">
+      <div class="trp-stage">
+        <div class="trp-box">
+        <div class="trp-frame">
+          <img class="trp-under" alt="">
+          <div class="trp-over"><img alt=""></div>
+          <canvas class="trp-diff" hidden></canvas>
+          <input class="trp-slider" type="range" min="0" max="100" value="50" aria-label="Compare">
+          <span class="trp-tag trp-tag-l"></span><span class="trp-tag trp-tag-r"></span>
+          <div class="trp-none" hidden>No preview rendered for this camera yet.</div>
+        </div>
+        </div>
+        <p class="trp-note"></p>
+      </div>
+      <aside class="trp-info"></aside>
+    </div>
+  </section>
+</div>
+<noscript>The camera catalog needs JavaScript; the entries are in
+<a href="https://github.com/TwinRobo/TwinRobo-Core/tree/main/twinrobo/catalog">twinrobo/catalog</a>.</noscript>
+</div>

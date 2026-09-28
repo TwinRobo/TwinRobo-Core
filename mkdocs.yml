@@ -7,6 +7,7 @@ copyright: TwinRobo contributors · AGPL-3.0 or commercial license · camera cat
 
 theme:
   name: material
+  custom_dir: overrides   # header with the tabs in the logo row
   logo: assets/logo.svg
   favicon: assets/logo.svg
   font:
@@ -44,7 +45,8 @@ extra_css:
   - stylesheets/extra.css
 
 extra_javascript:
-  - javascripts/playground.js
+  - javascripts/catalog.js
+
 
 extra:
   social:
@@ -54,15 +56,16 @@ extra:
   generator: false
 
 nav:
-  - Home: index.md
-  - Get started: getting-started.md
-  - Playground: playground.md
-  - Guide:
+  - Home: index.md   # the logo links home; no tab
+  - Get started:
+      - Getting started: getting-started.md
+      - Camera catalog: catalog.md
+      - Try in Simulator: playground.md
+  - Learn:
       - Optics and rendering: rendering.md
       - Cameras and stereo: cameras.md
       - Simulators: simulators.md
       - Calibrate a real camera: calibration.md
-  - Camera catalog: catalog.md
   - API reference:
       - api/index.md
       - Core: api/core.md
@@ -73,12 +76,15 @@ nav:
       - LIBERO and RoboCasa: api/robot_learning.md
       - Calibration: api/calibration.md
       - Validation: api/validation.md
-  - Community:
-      - Contributing: contributing.md
-      - Camera partners: partners.md
+  - License: license.md
   - Development:
-      - Layout and tests: development.md
+      - Project structure: development.md
       - Optics benchmark: benchmarks/phase1_optics.md
+      - Adding cameras: contributing.md
+      - Contributor agreement (CLA): cla.md
+
+not_in_nav: |
+  /partners.md
 
 plugins:
   - search
