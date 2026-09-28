@@ -296,7 +296,8 @@ The documentation site, with the API reference, is at
 
 Beyond cameras, also wanted: new simulator adapters (a lens scene is three
 methods; see `twinrobo.optics.lensrender`), sensor noise and ISP models, and
-documentation. See [CONTRIBUTING](CONTRIBUTING.md).
+documentation. See [CONTRIBUTING](CONTRIBUTING.md), and the [ROADMAP](ROADMAP.md)
+for what is planned (simulated depth cameras first).
 
 ## Roadmap
 

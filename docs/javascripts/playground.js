@@ -100,7 +100,6 @@
         ["Lens", cam.lens],
         ["Field of view", `${fov.h}° H · ${fov.v}° V · ${fov.d}° D`],
         ["Focus", cam.focus_m ? `${cam.focus_m} m` : "infinity"],
-        ["Depth output", cam.outputs_depth ? "Yes" : "No (image only)"],
         ["Catalog status", STATUS[cam.status] || cam.status],
       ];
       for (const [k, v] of rows) dl.append(el("dt", {}, k), el("dd", {}, v));

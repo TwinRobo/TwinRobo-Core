@@ -159,7 +159,9 @@ class CameraTwin:
 
     @property
     def outputs_depth(self) -> bool:
-        """Whether the real camera delivers depth (``outputs.depth``; true without a spec)."""
+        """Whether the camera's depth output is simulated (``outputs.depth``).
+
+        True without a spec (nothing says otherwise)."""
         return self.spec.outputs.depth if self.spec is not None else True
 
     @property

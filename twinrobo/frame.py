@@ -8,10 +8,11 @@ Tensor conventions (the single source of truth for all TwinRobo modules):
   positive**, measured along the optical axis (z-depth, not ray distance).
   Values that are non-finite (``inf``/``nan``, e.g. simulator background) or
   ``<= 0`` are **invalid**; consumers must mask or clamp them explicitly.
-  Only cameras that output depth (``outputs.depth`` in their spec, e.g. the
-  RealSense D400 series) expose it: reading ``frame.depth`` of any other camera
-  raises `DepthUnavailableError`, unless the frame was made with
-  ``force_depth=True`` (simulator ground truth).
+  Only cameras whose depth output is simulated (``outputs.depth`` in their spec)
+  expose it; none of the catalog does yet (see ROADMAP.md). Reading ``frame.depth``
+  of any other camera raises `DepthUnavailableError`, unless the frame was made
+  with ``force_depth=True``: the simulator's ground truth (labels, evaluation),
+  not a depth sensor's reading.
 - Image coordinates: row 0 is the top of the image, column 0 is the left.
 - Device: tensors stay on the producing device (normally CUDA). TwinRobo never
   moves per-frame data to the CPU unless the caller explicitly asks for it.
@@ -77,9 +78,9 @@ def _get_depth(self: CameraFrame) -> Tensor | None:
     if not self.has_depth:
         cam = (self.metadata or {}).get("camera_id") or "this camera"
         raise DepthUnavailableError(
-            f"{cam} does not output depth (outputs.depth is false in its spec): a real "
-            "camera of this kind measures none. Pass force_depth=True to get_frame() or "
-            "process() to get the simulator's ground-truth depth anyway."
+            f"{cam} has no simulated depth output (outputs.depth is false in its spec). "
+            "Pass force_depth=True to get_frame() or process() for the simulator's "
+            "ground-truth depth (labels, evaluation): it is not what a depth sensor measures."
         )
     return self._depth
 

@@ -60,7 +60,9 @@ class LensSpec:
 class OutputsSpec:
     """What the real camera delivers besides its image."""
 
-    depth: bool = False  # a depth map aligned to this camera (e.g. RealSense D400 streams)
+    # The camera delivers a depth map *as TwinRobo simulates it*. None of the catalog does yet:
+    # simulated ground truth is not a depth camera's output (see ROADMAP.md).
+    depth: bool = False
 
 
 @dataclass

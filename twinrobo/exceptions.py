@@ -18,7 +18,7 @@ class OpticsBackendError(CameraTwinError):
 
 
 class DepthUnavailableError(CameraTwinError):
-    """A frame's depth was read, but its camera does not output depth (``outputs.depth``)."""
+    """A frame's depth was read; its camera has no simulated depth output (``outputs.depth``)."""
 
 
 class SimulatorError(CameraTwinError):

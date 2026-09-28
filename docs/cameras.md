@@ -31,29 +31,29 @@ design lens on a hypothetical sensor, not a real camera.
 
 ## Depth output
 
-Only cameras that deliver a depth map have one in TwinRobo. A spec says so in
-`outputs`:
+TwinRobo simulates what cameras **image**. It does not yet simulate what depth
+cameras **measure**, so no catalog camera outputs depth: reading `frame.depth`
+raises `DepthUnavailableError`. A policy is not trained on a signal no real
+camera gives.
 
-```yaml
-outputs:
-  depth: true   # e.g. RealSense D400: the module streams depth aligned to this camera
-```
-
-It defaults to `false`: a webcam or a single stereo eye gives an image, not
-depth. Reading `frame.depth` of such a camera raises `DepthUnavailableError`,
-so a policy cannot be trained on a signal the real camera will never give. When
-you do want the simulator's ground truth (labels, evaluation, debugging), ask
-for it explicitly:
+The simulator's depth is still there when you ask for it, as ground truth:
 
 ```python
 frame = cam.get_frame(force_depth=True)   # or twin.process(rgb, depth, force_depth=True)
-frame.depth                                # [1, 1, H, W], meters
+frame.depth                                # [1, 1, H, W], meters: exact scene depth
 ```
 
-`frame.has_depth` tells whether a frame exposes depth. Of the catalog, the
-RealSense D435 and D455 entries (color and depth imager) output depth. The ZED
-and OAK-D compute depth from their stereo pair on the host or device; model
-that from their two eyes (`twinrobo.stereo`).
+It is the scene's exact z-depth, seen through the camera's lens geometry: right
+for labels, evaluation and debugging, but not a depth sensor's reading. A
+RealSense D455, for example, measures depth by matching its two infrared images
+(95 mm apart, with a projected dot pattern): its depth has an error that grows
+with the square of distance, holes on shiny, dark or unmatched surfaces, a
+minimum range of about half a meter and noisy depth edges, none of which ground
+truth has. Simulating that is on the
+[roadmap](https://github.com/TwinRobo/TwinRobo-Core/blob/main/ROADMAP.md#depth-cameras).
+
+A spec's `outputs.depth: true` is reserved for cameras whose depth output
+TwinRobo simulates; `frame.has_depth` tells whether a frame exposes depth.
 
 ## Stereo modules
 

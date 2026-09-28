@@ -64,7 +64,7 @@ isp:
   enabled: false
 
 outputs:
-  depth: true  # the module's depth map, computed from this imager's stereo pair
+  depth: false  # the module's depth (IR stereo pair + projector) is not simulated yet: ROADMAP.md
 
 validation:
   status: estimated

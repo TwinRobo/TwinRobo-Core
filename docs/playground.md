@@ -47,9 +47,10 @@ simulator's ideal pinhole view at the same field of view.
   scene's occlusions.
 - **Ray cast** traces every pixel's rays through the lens and casts them into
   the scene's geometry: the most exact method.
-- **Difference** shows where a camera's image departs from the pinhole's;
-  **Depth** is the depth map a depth camera outputs (near is warm): it is
-  offered only for cameras that have one, the RealSense D400 series.
+- **Difference** shows where a camera's image departs from the pinhole's.
+
+There is no depth view: TwinRobo simulates what cameras image, not yet what depth
+cameras measure (see [depth output](cameras.md#depth-output)).
 
 Each image is 640 px wide, read out at the camera's own aspect ratio. The
 cameras are rendered offline with

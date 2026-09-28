@@ -28,5 +28,5 @@ def test_depth_follows_the_spec_unless_forced():
     with pytest.raises(DepthUnavailableError, match="logitech/c920"):
         _ = frame.depth
     assert torch.equal(cam.process(rgb, depth, force_depth=True).depth, depth)
-    cam.spec = CatalogRegistry().load("intel/realsense-d435/color")
+    cam.spec.outputs.depth = True  # a camera whose depth output is simulated
     assert torch.equal(cam.process(rgb, depth).depth, depth)

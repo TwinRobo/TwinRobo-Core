@@ -77,13 +77,13 @@ def test_outputs_depth(tmp_path):
     from twinrobo import CatalogRegistry
 
     reg = CatalogRegistry()
-    assert reg.load("intel/realsense-d435/color").outputs.depth
-    assert reg.load("intel/realsense-d455/depth").outputs.depth
-    assert not reg.load("logitech/c920").outputs.depth
-    assert not reg.load("stereolabs/zed-x/2.2mm").outputs.depth
+    # no catalog camera's depth output is simulated yet (ground truth is not a sensor's depth)
+    assert not any(reg.load(i).outputs.depth for i in reg.list())
     raw = yaml.safe_load(reg.resolve("logitech/c920").read_text())
+    base = reg.resolve("logitech/c920").parent
+    assert CameraSpec.from_dict({**raw, "outputs": {"depth": True}}, base_dir=base).outputs.depth
     raw.pop("outputs")
-    assert not CameraSpec.from_dict(raw, base_dir=reg.resolve("logitech/c920").parent).outputs.depth
+    assert not CameraSpec.from_dict(raw, base_dir=base).outputs.depth
     for bad in ({"depth": "yes"}, {"ir": True}, [True]):
         raw["outputs"] = bad
         with pytest.raises(SpecError):

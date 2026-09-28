@@ -258,8 +258,8 @@ class IsaacCameraTwin:
     ) -> CameraFrame:
         """Render and process one frame. ``frame.rgb`` is linear ``[1, 3, H, W]`` on ``device``.
 
-        ``frame.depth`` is readable only if the camera outputs depth (``outputs.depth`` in
-        its spec, e.g. RealSense) or with ``force_depth=True`` (simulator ground truth).
+        ``frame.depth`` is readable only if the camera's depth output is simulated
+        (``outputs.depth`` in its spec) or with ``force_depth=True`` (simulator ground truth).
         """
         if self.lens_renderer is not None:
             from ...optics.lensrender import lens_frame

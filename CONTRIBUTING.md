@@ -38,8 +38,9 @@ The same body with a different lens is a different entry.
      `python tools/catalog/fit_fov_geometry.py W H HFOV VFOV DFOV` (`--pinhole`
      for lenses with ~1 % distortion or less).
    - `calibration.psf`: the depth range (`near_m`, `far_m`) the camera will see.
-   - `outputs.depth`: `true` only if the real camera delivers a depth map aligned
-     to its image (e.g. RealSense D400), else `false`.
+   - `outputs.depth`: leave `false`. It means TwinRobo simulates the camera's own
+     depth output, which it does not do yet for any camera (see
+     [ROADMAP](ROADMAP.md#depth-cameras)).
    - `validation.status`: `estimated` (datasheet, surrogate lens), `measured`
      (fitted to captures of a real unit), `verified` or `manufacturer_verified`.
 4. **Document provenance** in the file's header comment: datasheet and

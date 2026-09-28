@@ -4,7 +4,8 @@
 
 Reads ``outputs/playground/<scene>`` (MuJoCo) and ``outputs/isaac/playground/<scene>``
 (Isaac Sim), writes one WebP per camera and method, the pinhole view, a colour-mapped
-depth image (cameras that output depth only) and ``manifest.json`` (scenes, cameras, what the page shows about them).
+depth image (only for cameras whose depth output is simulated) and ``manifest.json``
+(scenes, cameras, what the page shows about them).
 """
 
 from __future__ import annotations

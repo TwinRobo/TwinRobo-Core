@@ -64,7 +64,7 @@ isp:
   enabled: false
 
 outputs:
-  depth: true  # the module streams depth aligned to this RGB camera
+  depth: false  # the module's depth (IR stereo pair + projector) is not simulated yet: ROADMAP.md
 
 validation:
   status: estimated
