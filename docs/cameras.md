@@ -15,10 +15,16 @@ from twinrobo import CameraTwin
 camera = CameraTwin.from_catalog("stereolabs/zed-x/2.2mm")
 ```
 
-| ID | Camera | Geometry | Blur | Status |
-|---|---|---|---|---|
-| `stereolabs/zed-x/2.2mm` | ZED X / ZED X Mini eye, 2.2 mm f/2.2, 1920x1200, 3 µm, global shutter | fx 745.6, k1 -0.0634, k2 0.0074: exact fit to the datasheet FoV 110 x 80 x 120 deg | surrogate: DeepLens rf16mm scaled to f 2.237 mm, f/2.2 | estimated |
-| `stereolabs/zed-x/4mm` | ZED X eye, 4 mm f/2.2 | fx 1268.8, k1 ~ 0: fit to FoV 75 x 50 x 83 deg | surrogate: DeepLens rf24mm scaled to f 3.806 mm, f/2.2 | estimated |
+The full list, with each entry's sensor, lens and field of view, is the
+[camera catalog](catalog.md) (generated from the catalog files). Today:
+
+| Vendor | Cameras | Stereo modules (baseline) |
+|---|---|---|
+| Intel RealSense | D435 / D435i color and depth imager, D455 color and depth imager | D435 (50 mm), D455 (95 mm) |
+| Stereolabs | ZED X 2.2 mm and 4 mm eyes, ZED 2i 2.1 mm eye | ZED X (120 mm), ZED X Mini (50 mm), ZED 2i (120 mm) |
+| Luxonis | OAK-D color and mono | OAK-D (75 mm) |
+| Logitech | C920 HD Pro Webcam | |
+| Raspberry Pi | Camera Module 3, Camera Module 3 Wide | |
 
 `examples/cellphone80deg` is a teaching example: a DeepLens
 design lens on a hypothetical sensor, not a real camera.
@@ -39,20 +45,39 @@ matching.
 
 | Module | Baseline | Eyes |
 |---|---|---|
+| `intel/realsense-d435` | 50 mm | `intel/realsense-d435/depth` |
+| `intel/realsense-d455` | 95 mm | `intel/realsense-d455/depth` |
+| `luxonis/oak-d` | 75 mm | `luxonis/oak-d/mono` |
+| `stereolabs/zed-2i/2.1mm` | 120 mm | ZED 2i 2.1 mm eye |
 | `stereolabs/zed-x/2.2mm`, `stereolabs/zed-x/4mm` | 120 mm | ZED X 2.2 mm / 4 mm |
 | `stereolabs/zed-x-mini/2.2mm` | 50 mm | the ZED X 2.2 mm eye (same lens per the datasheet) |
 
+**Baselines are adjustable.** Robots mount the same module at different spacings,
+or you may want to study the baseline itself: `StereoModule.with_baseline(0.09)`
+gives the module at 90 mm, a custom mount takes `CameraMount(..., module=...,
+baseline_mm=90)`, and `twinrobo.mujoco.mounts.set_pair_baseline` moves a stereo
+pair compiled into a robot model (e.g. the multi-camera arms' wrist module)
+without rebuilding it.
+
 ## How catalog entries are made
 
-Stereolabs publishes no lens prescription, so blur uses a scaled glass design
-of similar FoV (`tools/catalog/make_surrogate_lens.py`), and the fixed,
-unpublished focus is set near the hyperfocal distance. Geometry (focal length,
-distortion) is fitted exactly to the datasheet fields of view.
+Vendors rarely publish lens prescriptions, so an `estimated` entry is built from
+the datasheet:
 
-To reach `measured`: replace intrinsics and distortion with the camera's
-factory calibration (per serial number), then fit blur and focus from a capture
-session (slanted edge / ChArUco at several distances, flat field for
-vignetting). See `tools/calibrate/`, and
+- **Geometry:** `tools/catalog/fit_fov_geometry.py` fits the focal length (and, for
+  wide lenses, OpenCV distortion) to the datasheet's horizontal, vertical and
+  diagonal fields of view, keeping the mapping monotonic (a real lens never
+  folds the image). Check which sensor area the datasheet's FoV refers to: the
+  ZED 2i's figures fit its full 2688×1520 array, while it streams a 2208×1242
+  center crop.
+- **Blur:** a glass design of similar field (a DeepLens lens) scaled to the
+  camera's focal length and stopped to its f-number
+  (`tools/catalog/make_surrogate_lens.py`).
+- **Focus:** fixed-focus cameras are set near the hyperfocal distance;
+  autofocus cameras at 1 m, to be overridden with the working distance.
+
+Every number and its source is recorded in the entry's header. To reach
+`measured`, [calibrate a real unit](calibration.md) and see
 [CONTRIBUTING](../CONTRIBUTING.md#adding-a-camera).
 
 ## Your own cameras

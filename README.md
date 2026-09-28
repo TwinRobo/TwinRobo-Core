@@ -3,7 +3,9 @@
 **Physically grounded digital twins of real cameras for robot learning in simulation.**
 
 [![CI](https://github.com/TwinRobo/TwinRobo-Core/actions/workflows/ci.yml/badge.svg)](https://github.com/TwinRobo/TwinRobo-Core/actions/workflows/ci.yml)
-[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
+[![Commercial license](https://img.shields.io/badge/commercial-license-indigo)](COMMERCIAL.md)
+[![Camera catalog: Apache-2.0](https://img.shields.io/badge/camera%20catalog-Apache--2.0-green)](twinrobo/catalog/LICENSE)
 ![Python 3.12](https://img.shields.io/badge/python-3.12-blue)
 ![Status: alpha](https://img.shields.io/badge/status-alpha-orange)
 [![Docs](https://img.shields.io/badge/docs-API%20reference-indigo)](https://twinrobo.github.io/TwinRobo-Core/)
@@ -37,9 +39,11 @@ models of their products.
 | Cameras on robot links, stereo modules | ✅ | any USD camera prim |
 | Setup | `pip install` | Docker recipe included |
 
-**Cameras:** Stereolabs ZED X (2.2 mm, 4 mm) and ZED X Mini, as single eyes or
-stereo pairs with rectified output, plus a teaching example lens. Every camera
-works in every simulator and rendering method. [Add yours](#add-your-camera).
+**Cameras:** 13 in the catalog, including Intel RealSense D435 / D455,
+Stereolabs ZED X, ZED X Mini and ZED 2i, Luxonis OAK-D, Logitech C920 and the
+Raspberry Pi Camera Module 3, as single cameras or stereo pairs with rectified
+output. Every camera works in every simulator and rendering method.
+[Add yours](#add-your-camera) or [calibrate one](docs/calibration.md).
 
 ## Features
 
@@ -56,10 +60,13 @@ works in every simulator and rendering method. [Add yours](#add-your-camera).
   `CameraTwinLiberoEnv` swaps a camera's observations in place, so policies and
   eval scripts run unchanged; recorded demos replay exactly, so any camera can
   be placed in an existing episode. [More](docs/simulators.md)
-- **Camera catalog and stereo.** Real products such as the Stereolabs ZED X
-  family, stereo modules with rectified output, and cameras mountable on any
-  robot link. Adding a camera is a YAML file and a lens file.
-  [More](docs/cameras.md)
+- **Camera catalog and stereo.** The cameras robots use (RealSense, ZED, OAK-D,
+  webcams, Raspberry Pi), stereo modules with rectified output and adjustable
+  baselines, and cameras mountable on any robot link. Adding a camera is a YAML
+  file and a lens file. [More](docs/cameras.md)
+- **Calibrate a real unit.** `python -m twinrobo.calibration` turns ChArUco,
+  slanted-edge and flat-field captures into a `measured` entry: intrinsics,
+  distortion, focus, vignetting and stereo baseline. [More](docs/calibration.md)
 - **Validated, in both simulators.** The PSF renderer matches DeepLens' reference
   renderer at about 46 dB. Points land within a pixel of where the lens' chief
   rays point (within 0.1 px in Isaac). On a defocused foreground object, ray cast
@@ -209,15 +216,25 @@ aperture, and the scene's triangles.
 
 ## Camera catalog
 
-| ID | Camera | Status |
+| Vendor | Cameras | Stereo modules (baseline) |
 |---|---|---|
-| `stereolabs/zed-x/2.2mm` | ZED X / ZED X Mini eye, 2.2 mm f/2.2, 1920×1200, global shutter | estimated |
-| `stereolabs/zed-x/4mm` | ZED X eye, 4 mm f/2.2 | estimated |
-| `examples/cellphone80deg` | a DeepLens design lens on a hypothetical sensor (teaching example) | estimated |
+| Intel RealSense | D435 / D435i color and depth imager, D455 color and depth imager | D435 (50 mm), D455 (95 mm) |
+| Stereolabs | ZED X 2.2 mm and 4 mm eyes, ZED 2i 2.1 mm eye | ZED X (120 mm), ZED X Mini (50 mm), ZED 2i (120 mm) |
+| Luxonis | OAK-D color and mono | OAK-D (75 mm) |
+| Logitech | C920 HD Pro Webcam | |
+| Raspberry Pi | Camera Module 3, Camera Module 3 Wide | |
+| Example | `examples/cellphone80deg` (a DeepLens design lens, teaching example) | |
 
-Stereo modules: ZED X (2.2 mm, 4 mm; 120 mm baseline) and ZED X Mini (2.2 mm;
-50 mm baseline). The [catalog page](https://twinrobo.github.io/TwinRobo-Core/catalog/) lists every entry with its
-sensor, lens and field of view, generated from the catalog files.
+All entries are `estimated` today: geometry fitted to the datasheet fields of
+view, blur from a surrogate lens of matching field, every number sourced in the
+entry's header. The [catalog page](https://twinrobo.github.io/TwinRobo-Core/catalog/) lists each with its sensor,
+lens and field of view, generated from the catalog files.
+
+> **The camera catalog is Apache-2.0.** Everything in
+> [`twinrobo/catalog/`](twinrobo/catalog) (camera specs, stereo modules and lens
+> files) is licensed under the [Apache License 2.0](twinrobo/catalog/LICENSE),
+> separately from the AGPL-3.0 code: use the camera data in any project,
+> commercial or not, with or without TwinRobo.
 
 ## Add your camera
 
@@ -232,7 +249,8 @@ not here, it is the most valuable contribution you can make:
    of view and f-number with `tools/catalog/make_surrogate_lens.py`.
 2. Run `pytest tests/test_catalog.py` and render it once:
    `CameraTwin.from_catalog("<vendor>/<model>/<lens>")`.
-3. Open a pull request, with where each number came from.
+3. Open a pull request, with where each number came from. Catalog
+   contributions are published under Apache-2.0, like the rest of the catalog.
 
 Calibrated a real unit? Upgrading an entry from `estimated` to `measured` is
 just as welcome. The full guide is in
@@ -249,7 +267,8 @@ the open environment their customers use:
 
 - **You contribute** any of: optical data (a lens prescription or measured
   PSFs), factory calibration, sample units, or sponsorship of compute and
-  maintenance. Data you cannot publish can stay private.
+  maintenance. Published entries are Apache-2.0, free for your customers to use
+  anywhere; data you cannot publish can stay private.
 - **You get** a verified catalog entry that works in MuJoCo, Isaac Sim and
   every rendering method, your company listed as a partner here and on the
   docs site, a showcase example with your camera, and early integration of
@@ -296,4 +315,10 @@ Third-party files and their licenses are listed in [`NOTICE`](NOTICE).
 
 ## License
 
-Apache License 2.0. See [`LICENSE`](LICENSE).
+TwinRobo is dual-licensed: the **GNU AGPL-3.0** ([`LICENSE`](LICENSE), with an
+additional permission for NVIDIA Isaac Sim / Omniverse in
+[`LICENSE-EXCEPTION.md`](LICENSE-EXCEPTION.md)), free for research, education and
+open-source use, or a **commercial license** for proprietary products and hosted
+services ([`COMMERCIAL.md`](COMMERCIAL.md)). The camera catalog
+(`twinrobo/catalog/`) is Apache-2.0, free to use anywhere. Third-party material is
+listed in [`NOTICE`](NOTICE).

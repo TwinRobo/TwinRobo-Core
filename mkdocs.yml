@@ -3,7 +3,7 @@ site_description: Physically grounded digital twins of real cameras for robot le
 repo_url: https://github.com/TwinRobo/TwinRobo-Core
 repo_name: TwinRobo/TwinRobo-Core
 edit_uri: edit/main/docs/
-copyright: TwinRobo contributors · Apache-2.0
+copyright: TwinRobo contributors · AGPL-3.0 or commercial license · camera catalog Apache-2.0
 
 theme:
   name: material
@@ -57,6 +57,7 @@ nav:
       - Optics and rendering: rendering.md
       - Cameras and stereo: cameras.md
       - Simulators: simulators.md
+      - Calibrate a real camera: calibration.md
   - Camera catalog: catalog.md
   - API reference:
       - api/index.md
@@ -66,6 +67,7 @@ nav:
       - MuJoCo: api/mujoco.md
       - Isaac Sim: api/isaac.md
       - LIBERO and RoboCasa: api/robot_learning.md
+      - Calibration: api/calibration.md
       - Validation: api/validation.md
   - Community:
       - Contributing: contributing.md

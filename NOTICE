@@ -1,6 +1,11 @@
 TwinRobo
 Copyright 2026 TwinRobo contributors
 
+Licensing: the TwinRobo code is licensed under the GNU AGPL-3.0 (LICENSE) with an
+additional permission for NVIDIA Isaac Sim / Omniverse (LICENSE-EXCEPTION.md), or
+under a commercial license (COMMERCIAL.md). The camera catalog, twinrobo/catalog/,
+is licensed under the Apache License 2.0 (twinrobo/catalog/LICENSE).
+
 This product includes third-party material, listed below.
 
 
@@ -19,6 +24,26 @@ DeepLens (https://github.com/vccimaging/DeepLens)
       From DeepLens datasets/lenses/camera/rf16mm_f2.8.json (same commit).
     twinrobo/catalog/stereolabs/zed-x/4mm/lens.json
       From DeepLens datasets/lenses/camera/rf24mm_f1.8.json (same commit).
+    twinrobo/catalog/intel/realsense-d435/color/lens.json
+      From DeepLens datasets/lenses/camera/rf16mm_f2.8.json (same commit), via twinrobo/catalog/stereolabs/zed-x/2.2mm/lens.json.
+    twinrobo/catalog/intel/realsense-d435/depth/lens.json
+      From DeepLens datasets/lenses/camera/rf16mm_f2.8.json (same commit), via twinrobo/catalog/stereolabs/zed-x/2.2mm/lens.json.
+    twinrobo/catalog/intel/realsense-d455/color/lens.json
+      From DeepLens datasets/lenses/camera/rf16mm_f2.8.json (same commit), via twinrobo/catalog/stereolabs/zed-x/2.2mm/lens.json.
+    twinrobo/catalog/intel/realsense-d455/depth/lens.json
+      From DeepLens datasets/lenses/camera/rf16mm_f2.8.json (same commit), via twinrobo/catalog/stereolabs/zed-x/2.2mm/lens.json.
+    twinrobo/catalog/stereolabs/zed-2i/2.1mm/lens.json
+      From DeepLens datasets/lenses/camera/rf16mm_f2.8.json (same commit), via twinrobo/catalog/stereolabs/zed-x/2.2mm/lens.json.
+    twinrobo/catalog/luxonis/oak-d/color/lens.json
+      From DeepLens datasets/lenses/camera/rf24mm_f1.8.json (same commit), via twinrobo/catalog/stereolabs/zed-x/4mm/lens.json.
+    twinrobo/catalog/luxonis/oak-d/mono/lens.json
+      From DeepLens datasets/lenses/camera/rf24mm_f1.8.json (same commit), via twinrobo/catalog/stereolabs/zed-x/4mm/lens.json.
+    twinrobo/catalog/logitech/c920/lens.json
+      From DeepLens datasets/lenses/camera/rf16mm_f2.8.json (same commit), via twinrobo/catalog/stereolabs/zed-x/2.2mm/lens.json.
+    twinrobo/catalog/raspberrypi/camera-module-3/standard/lens.json
+      From DeepLens datasets/lenses/camera/rf24mm_f1.8.json (same commit), via twinrobo/catalog/stereolabs/zed-x/4mm/lens.json.
+    twinrobo/catalog/raspberrypi/camera-module-3/wide/lens.json
+      From DeepLens datasets/lenses/camera/rf16mm_f2.8.json (same commit), via twinrobo/catalog/stereolabs/zed-x/2.2mm/lens.json.
     DeepLens notes these designs are transcribed from published patents
     (JP 2022-085382 Ex. 3; US 2022/0019061 Ex. 3).
 

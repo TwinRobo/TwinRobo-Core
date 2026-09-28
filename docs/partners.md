@@ -22,7 +22,9 @@ Any of these, in whatever form you can share:
 - **Sponsorship:** funding for GPU compute, validation captures and
   maintenance of the catalog and simulator adapters.
 
-Data that cannot be published can stay private: an entry can be built and
+Published catalog data is **Apache-2.0**, free for anyone to use in any product,
+whatever license a customer uses TwinRobo's code under. Data that cannot be
+published can stay private: an entry can be built and
 validated with you and ship only what you approve (for example a surrogate lens
 that matches your measurements, rather than the prescription itself).
 

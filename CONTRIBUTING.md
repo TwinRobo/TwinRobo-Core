@@ -34,15 +34,17 @@ The same body with a different lens is a different entry.
    - `sensor`: resolution, pixel pitch, shutter type.
    - `lens`: focal length, f-number, focus distance, `deeplens_model.path: lens.json`.
    - `calibration.intrinsic` / `calibration.distortion` (OpenCV `k1 k2 p1 p2 k3`)
-     when you have them; otherwise geometry follows the lens file.
+     when you have them. From a datasheet, fit them to its fields of view with
+     `python tools/catalog/fit_fov_geometry.py W H HFOV VFOV DFOV` (`--pinhole`
+     for lenses with ~1 % distortion or less).
    - `calibration.psf`: the depth range (`near_m`, `far_m`) the camera will see.
    - `validation.status`: `estimated` (datasheet, surrogate lens), `measured`
      (fitted to captures of a real unit), `verified` or `manufacturer_verified`.
 4. **Document provenance** in the file's header comment: datasheet and
    revision, how each number was obtained, and what is approximated. Reviewers
    and users rely on this to know how far to trust the entry.
-5. **Lens files and licensing.** Only contribute lens data you may
-   redistribute under Apache-2.0: your own designs or measurements, public
+5. **Lens files and licensing.** The catalog is Apache-2.0: only contribute lens
+   data you may redistribute under it: your own designs or measurements, public
    patents, or files whose license allows it. Name the source in the header
    and add an entry to `NOTICE` for third-party material. If the real
    prescription is unpublished, make a surrogate of similar field of view and
@@ -66,10 +68,12 @@ specs, the right eye's pose in the left eye's frame (baseline), the housing
 size and the default output (`rectified` or `raw`). Products sharing an eye
 reference the same `camera.yaml`.
 
-**Improving an entry to `measured`** is just as welcome: replace the intrinsics
-and distortion with a calibration of a real unit, fit the focus and blur from
-captures (slanted edges or ChArUco boards at several distances, flat fields for
-vignetting), and describe the procedure in the header.
+**Improving an entry to `measured`** is just as welcome, and needs only the
+camera: `python -m twinrobo.calibration` fits intrinsics and distortion from
+ChArUco views, the focus from slanted edges, vignetting from flat fields and a
+stereo module's baseline from simultaneous pairs, and writes the `measured`
+camera.yaml with its provenance. See the
+[calibration guide](docs/calibration.md).
 
 ## Other contributions
 
@@ -99,5 +103,8 @@ mkdocs build --strict # what CI runs: warnings (e.g. a docstring parameter that
 - One topic per pull request, with tests for new behavior.
 - `ruff check .`, `ruff format --check .` and `pytest -q` pass.
 - Describe what you validated, and on what hardware for performance claims.
-- By contributing, you agree that your contribution is licensed under the
-  Apache License 2.0 (see `LICENSE`).
+- **Sign the CLA once.** TwinRobo is dual-licensed (AGPL-3.0 and commercial;
+  the catalog is Apache-2.0), so the first pull request asks you to sign the
+  [Contributor License Agreement](CLA.md) by commenting on it. You keep your
+  copyright; the CLA lets the project license your contribution under these
+  licenses.

@@ -7,7 +7,7 @@ hide:
 
 <div class="tr-hero" markdown>
 
-<div class="tr-badges"><span>Apache-2.0</span><span>Python 3.12</span><span>MuJoCo · Isaac Sim</span><span>alpha</span></div>
+<div class="tr-badges"><span>AGPL-3.0 · commercial</span><span>Python 3.12</span><span>MuJoCo · Isaac Sim</span><span>alpha</span></div>
 
 # See through the camera <span class="tr-grad">you will deploy</span>
 
@@ -61,8 +61,9 @@ so perception trained in simulation meets the same image on the robot.</p>
 
     ---
 
-    Stereolabs ZED X and ZED X Mini today, as single eyes or rectified stereo
-    pairs. Every camera works in every simulator and method.
+    RealSense, ZED, OAK-D, a C920 webcam and the Raspberry Pi camera, as single
+    cameras or rectified stereo pairs. Every camera works in every simulator and
+    method, and a real unit can be [calibrated](calibration.md).
 
     [:octicons-arrow-right-24: Camera catalog](catalog.md)
 

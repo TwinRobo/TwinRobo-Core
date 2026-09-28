@@ -8,8 +8,8 @@ dynamic = ["version"]
 description = "TwinRobo: physically grounded digital twins of real cameras for robot learning in simulation."
 readme = "README.md"
 authors = [{name = "TwinRobo contributors"}]
-license = "Apache-2.0"
-license-files = ["LICENSE", "NOTICE"]
+license = "AGPL-3.0-only AND Apache-2.0"  # the code; the camera catalog (twinrobo/catalog/) is Apache-2.0
+license-files = ["LICENSE", "LICENSE-EXCEPTION.md", "COMMERCIAL.md", "NOTICE", "twinrobo/catalog/LICENSE"]
 # DeepLens (deeplens-core) requires Python 3.12 and pins torch; TwinRobo inherits both.
 requires-python = ">=3.12,<3.13"
 dependencies = [
@@ -57,7 +57,7 @@ include = ["twinrobo*"]
 
 [tool.setuptools.package-data]
 # the built-in camera catalog: specs, lens files, stereo modules
-twinrobo = ["catalog/**/*.yaml", "catalog/**/*.json", "catalog/**/*.md"]
+twinrobo = ["catalog/**/*.yaml", "catalog/**/*.json", "catalog/**/*.md", "catalog/LICENSE"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
