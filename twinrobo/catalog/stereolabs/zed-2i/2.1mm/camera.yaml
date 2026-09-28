@@ -1,0 +1,78 @@
+# CameraSpec (schema 0.1; pre-1.0, may change).
+#
+# Stereolabs ZED 2i 2.1 mm eye.
+# Provenance: estimated from vendor documents:
+#   ZED 2i datasheet V1.5 (2026-09-22; https://cdn.sanity.io/files/s18ewfw4/staging/17e28531d47c0c5feab2be4ca304abf06ffa889a.pdf/ZED%202i%20-%20Datasheet%20-%20V1.5%20-%202026-09-22.pdf) and store page:
+#     per eye 1/3in 4 MP, 2 um, rolling shutter; HD2K 2208x1242 is a center crop of the
+#     2688x1520 array (also HD1080 / HD720); lens 2.1 mm (store page; the V1.5 table
+#     says 2.2 mm) f/2.0; FoV max 110 (H) x 70 (V) x 120 (D) deg, TV distortion < 5.07 %.
+# Geometry: fx, k1, k2 fitted to the three FoV figures on the full 2688x1520 array (the only
+#  area they fit: f = 2.30 mm, vs 1.87 mm on the HD2K crop); the HD2K crop keeps fx
+#  and distortion. A ZED factory calibration (per serial) replaces these.
+#   Fitted FoV {'h': 110.0, 'v': 70.0, 'd': 120.0} deg for datasheet {'h': 110.0, 'v': 70.0, 'd': 120.0}.
+#   FoV of this 2208x1242 mode: 95.1 (H) x 58.6 (V) x 105.5 (D) deg.
+# Blur: no lens prescription is published. `lens.json` is a surrogate: a glass design
+#   (DeepLens rf16mm_f2.8 (Canon RF16mm F2.8, JP 2022-085382 Ex. 3)) scaled to f 2.2952 mm and stopped to f/2.0
+#   (tools/catalog/make_surrogate_lens.py); its half-field 52.53 deg vs 52.7 deg needed.
+#   The design's field is slightly short of this sensor's corners: with the
+#   lens-ray methods (pupil, raycast) the extreme corners render dark.
+# Focus: fixed and unpublished; set near the hyperfocal distance (CoC 2 px).
+schema_version: 0.1
+
+id: stereolabs/zed-2i/2.1mm
+
+manufacturer: Stereolabs
+product: ZED 2i 2.1 mm eye
+
+sensor:
+  manufacturer: null
+  model: 1/3in 4 MP CMOS, HD2K crop
+  resolution:
+    width: 2208
+    height: 1242
+  pixel_pitch_um: 2.0
+  shutter:
+    type: rolling
+  bit_depth: null
+
+lens:
+  manufacturer: Stereolabs
+  model: 2.1 mm f/2.0
+  focal_length_mm: 2.1
+  f_number: 2.0
+  focus_distance_m: 0.661
+  deeplens_model:
+    path: lens.json
+
+calibration:
+  intrinsic:
+    fx: 1147.577
+    fy: 1147.577
+    cx: 1103.5
+    cy: 620.5
+  distortion:
+    model: opencv
+    k1: -0.11758
+    k2: 0.01439
+    p1: 0.0
+    p2: 0.0
+    k3: 0.0
+  psf:
+    model: deeplens
+    field_samples: [17, 11]
+    depth_samples: 16
+    near_m: 0.1
+    far_m: 20.0
+    ks: 65
+
+sensor_model:
+  shot_noise: false
+  read_noise: false
+  dark_current: false
+
+isp:
+  enabled: false
+
+validation:
+  status: estimated
+  version: 1

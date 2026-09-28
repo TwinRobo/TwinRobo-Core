@@ -1,0 +1,68 @@
+# CameraSpec (schema 0.1; pre-1.0, may change).
+#
+# Intel RealSense D435 / D435i depth imager (one eye).
+# Provenance: estimated from vendor documents:
+#   Intel RealSense D400 series datasheet, Oct 2025 (337029-017; https://realsenseai.com/wp-content/uploads/2025/09/Intel-RealSense-D400-Series-Datasheet-October-2025.pdf):
+#     left/right imagers OV9282 (Table 3-13), 1280x800 global shutter, 3 um (OmniVision
+#     OV9282 page); lens 1.93 mm f/2.0, FoV 90 x 64 x 98 deg +/- 1 (full array). Depth
+#     and IR stream at most 1280x720 (a crop; 1280x800 is a calibration format).
+#     Monochrome NIR imager with an all-pass filter: TwinRobo renders it in RGB.
+# Geometry: fx fitted to the H and V FoV (pinhole check: 1.93 mm / 3 um = 643 px, fit 640).
+#   Fitted FoV {'h': 89.99, 'v': 64.01} deg for datasheet {'h': 90.0, 'v': 64.0}.
+#   FoV of this 1280x800 mode: 90.0 (H) x 64.0 (V) x 99.4 (D) deg.
+# Blur: no lens prescription is published. `lens.json` is a surrogate: a glass design
+#   (DeepLens rf16mm_f2.8 (Canon RF16mm F2.8, JP 2022-085382 Ex. 3)) scaled to f 1.9202 mm and stopped to f/2.0
+#   (tools/catalog/make_surrogate_lens.py); its half-field 55.4 deg vs 49.7 deg needed.
+# Focus: fixed and unpublished; set near the hyperfocal distance (CoC 2 px).
+schema_version: 0.1
+
+id: intel/realsense-d435/depth
+
+manufacturer: Intel
+product: RealSense D435 / D435i depth imager (one eye)
+
+sensor:
+  manufacturer: OmniVision
+  model: OV9282 1 MP monochrome
+  resolution:
+    width: 1280
+    height: 800
+  pixel_pitch_um: 3.0
+  shutter:
+    type: global
+  bit_depth: null
+
+lens:
+  manufacturer: Intel
+  model: 1.93 mm f/2.0
+  focal_length_mm: 1.93
+  f_number: 2.0
+  focus_distance_m: 0.309
+  deeplens_model:
+    path: lens.json
+
+calibration:
+  intrinsic:
+    fx: 640.060
+    fy: 640.060
+    cx: 639.5
+    cy: 399.5
+  psf:
+    model: deeplens
+    field_samples: [17, 11]
+    depth_samples: 16
+    near_m: 0.1
+    far_m: 20.0
+    ks: 65
+
+sensor_model:
+  shot_noise: false
+  read_noise: false
+  dark_current: false
+
+isp:
+  enabled: false
+
+validation:
+  status: estimated
+  version: 1

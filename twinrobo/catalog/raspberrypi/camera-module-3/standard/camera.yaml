@@ -1,0 +1,68 @@
+# CameraSpec (schema 0.1; pre-1.0, may change).
+#
+# Raspberry Pi Camera Module 3.
+# Provenance: estimated from vendor documents:
+#   Raspberry Pi Camera Module 3 product brief (https://datasheets.raspberrypi.com/camera/camera-module-3-product-brief.pdf):
+#     IMX708, 4608x2592 full array (video modes 2304x1296 binned 2x2, full FoV), 1.4 um,
+#     rolling shutter; lens 4.74 mm f/1.8, PDAF autofocus 10 cm - inf; FoV 66 (H) x
+#     41 (V) x 75 (D) deg (full array assumed).
+# Geometry: fx least-squares fitted to the H and V FoV (residual 0.6 deg); it is 4 % longer
+#  than 4.74 mm / 1.4 um (3386 px): the datasheet FoV is rounded or measured.
+#   Fitted FoV {'h': 66.41, 'v': 40.42} deg for datasheet {'h': 66.0, 'v': 41.0}.
+#   FoV of this 4608x2592 mode: 66.4 (H) x 40.4 (V) x 73.8 (D) deg.
+# Blur: no lens prescription is published. `lens.json` is a surrogate: a glass design
+#   (DeepLens rf24mm_f1.8 (US 2022/0019061 Ex. 3)) scaled to f 4.9284 mm and stopped to f/1.8
+#   (tools/catalog/make_surrogate_lens.py); its half-field 39.77 deg vs 36.9 deg needed.
+# Focus: autofocus: 1 m here; set focus_distance_m to the working distance (e.g. CameraSpec.from_yaml(path, focus_distance_m=...)).
+schema_version: 0.1
+
+id: raspberrypi/camera-module-3/standard
+
+manufacturer: Raspberry Pi
+product: Camera Module 3
+
+sensor:
+  manufacturer: Sony
+  model: IMX708 1/2.43in 12 MP
+  resolution:
+    width: 4608
+    height: 2592
+  pixel_pitch_um: 1.4
+  shutter:
+    type: rolling
+  bit_depth: null
+
+lens:
+  manufacturer: Raspberry Pi
+  model: 4.74 mm f/1.8
+  focal_length_mm: 4.74
+  f_number: 1.8
+  focus_distance_m: 1.0
+  deeplens_model:
+    path: lens.json
+
+calibration:
+  intrinsic:
+    fx: 3520.300
+    fy: 3520.300
+    cx: 2303.5
+    cy: 1295.5
+  psf:
+    model: deeplens
+    field_samples: [17, 11]
+    depth_samples: 16
+    near_m: 0.1
+    far_m: 20.0
+    ks: 65
+
+sensor_model:
+  shot_noise: false
+  read_noise: false
+  dark_current: false
+
+isp:
+  enabled: false
+
+validation:
+  status: estimated
+  version: 1

@@ -1,0 +1,69 @@
+# CameraSpec (schema 0.1; pre-1.0, may change).
+#
+# Luxonis OAK-D color camera.
+# Provenance: estimated from vendor documents:
+#   Luxonis OAK-D product page (https://docs.luxonis.com/hardware/products/OAK-D) and datasheet (https://github.com/luxonis/depthai-hardware/blob/master/BW1098OAK_USB3C/Datasheet/OAK-D_Datasheet.pdf):
+#     IMX378, 4056x3040 full array (THE_12_MP; the common THE_1080_P mode is a 16:9
+#     crop, binned 2x2), 1.55 um, rolling shutter, autofocus 8 cm - inf;
+#     FoV 69 (H) x 55 (V) x 81 (D) deg (full array assumed). EFL and f-number are
+#     unpublished: f/1.8 is assumed (Luxonis' IMX378 camera modules of this FoV are
+#     F1.8; not confirmed for the OAK-D).
+# Geometry: fx least-squares fitted to the H and V FoV (residual 0.3 deg); f = fx x pitch.
+#   Fitted FoV {'h': 69.24, 'v': 54.72} deg for datasheet {'h': 69.0, 'v': 55.0}.
+#   FoV of this 4056x3040 mode: 69.2 (H) x 54.7 (V) x 81.6 (D) deg.
+# Blur: no lens prescription is published. `lens.json` is a surrogate: a glass design
+#   (DeepLens rf24mm_f1.8 (US 2022/0019061 Ex. 3)) scaled to f 4.5529 mm and stopped to f/1.8
+#   (tools/catalog/make_surrogate_lens.py); its half-field 44.8 deg vs 40.8 deg needed.
+# Focus: autofocus: 1 m here; set focus_distance_m to the working distance (e.g. CameraSpec.from_yaml(path, focus_distance_m=...)).
+schema_version: 0.1
+
+id: luxonis/oak-d/color
+
+manufacturer: Luxonis
+product: OAK-D color camera
+
+sensor:
+  manufacturer: Sony
+  model: IMX378 1/2.3in 12 MP
+  resolution:
+    width: 4056
+    height: 3040
+  pixel_pitch_um: 1.55
+  shutter:
+    type: rolling
+  bit_depth: null
+
+lens:
+  manufacturer: Luxonis
+  model: EFL unpublished
+  focal_length_mm: 4.553
+  f_number: 1.8
+  focus_distance_m: 1.0
+  deeplens_model:
+    path: lens.json
+
+calibration:
+  intrinsic:
+    fx: 2937.350
+    fy: 2937.350
+    cx: 2027.5
+    cy: 1519.5
+  psf:
+    model: deeplens
+    field_samples: [17, 11]
+    depth_samples: 16
+    near_m: 0.1
+    far_m: 20.0
+    ks: 65
+
+sensor_model:
+  shot_noise: false
+  read_noise: false
+  dark_current: false
+
+isp:
+  enabled: false
+
+validation:
+  status: estimated
+  version: 1

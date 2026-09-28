@@ -1,0 +1,68 @@
+# CameraSpec (schema 0.1; pre-1.0, may change).
+#
+# Logitech C920 HD Pro Webcam.
+# Provenance: estimated from vendor documents:
+#   Logitech C920 technical specifications (https://support.logi.com/hc/en-us/articles/360023307294-C920-Technical-Specifications):
+#     1920x1080 (max video mode), focal length 3.67 mm, FoV 70.42 (H) x 43.3 (V) x 78
+#     (D) deg, autofocus. Sensor, pixel pitch, shutter and f-number are unpublished:
+#     the effective pitch in 1080p mode follows from f and the fitted fx (2.70 um);
+#     f/2.0 and a rolling shutter are assumed.
+# Geometry: fx fitted to the H and V FoV (exact); effective pitch = 3.67 mm / fx.
+#   Fitted FoV {'h': 70.42, 'v': 43.3} deg for datasheet {'h': 70.42, 'v': 43.3}.
+#   FoV of this 1920x1080 mode: 70.4 (H) x 43.3 (V) x 78.0 (D) deg.
+# Blur: no lens prescription is published. `lens.json` is a surrogate: a glass design
+#   (DeepLens rf16mm_f2.8 (Canon RF16mm F2.8, JP 2022-085382 Ex. 3)) scaled to f 3.6699 mm and stopped to f/2.0
+#   (tools/catalog/make_surrogate_lens.py); its half-field 42.03 deg vs 39.0 deg needed.
+# Focus: autofocus: 1 m here; set focus_distance_m to the working distance (e.g. CameraSpec.from_yaml(path, focus_distance_m=...)).
+schema_version: 0.1
+
+id: logitech/c920
+
+manufacturer: Logitech
+product: C920 HD Pro Webcam
+
+sensor:
+  manufacturer: null
+  model: 3 MP CMOS (1080p mode)
+  resolution:
+    width: 1920
+    height: 1080
+  pixel_pitch_um: 2.6977
+  shutter:
+    type: rolling
+  bit_depth: null
+
+lens:
+  manufacturer: Logitech
+  model: 3.67 mm
+  focal_length_mm: 3.67
+  f_number: 2.0
+  focus_distance_m: 1.0
+  deeplens_model:
+    path: lens.json
+
+calibration:
+  intrinsic:
+    fx: 1360.394
+    fy: 1360.394
+    cx: 959.5
+    cy: 539.5
+  psf:
+    model: deeplens
+    field_samples: [17, 11]
+    depth_samples: 16
+    near_m: 0.1
+    far_m: 20.0
+    ks: 65
+
+sensor_model:
+  shot_noise: false
+  read_noise: false
+  dark_current: false
+
+isp:
+  enabled: false
+
+validation:
+  status: estimated
+  version: 1

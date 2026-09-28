@@ -1,0 +1,17 @@
+# Stereo camera module (schema 0.1): two eyes in one housing. Poses of the module are
+# those of the LEFT eye; the right eye sits at `translation_m` in the left eye's camera
+# frame (+x = image right). A per-unit calibration (twinrobo.calibration) replaces the
+# baseline and adds a small rotation without schema changes.
+# Provenance: Luxonis OAK-D docs: baseline 7.5 cm (the current page's '75cm' is a typo; archived page: https://web.archive.org/web/2023/https://docs.luxonis.com/projects/hardware/en/latest/pages/BW1098OAK/).
+# Housing: approximate outer size, for drawing only.
+schema_version: 0.1
+id: luxonis/oak-d
+type: stereo
+manufacturer: Luxonis
+product: OAK-D
+reference: left
+eyes:
+  left: {spec: mono/camera.yaml}
+  right: {spec: mono/camera.yaml, translation_m: [0.075, 0.0, 0.0], rotation_rpy_deg: [0.0, 0.0, 0.0]}
+housing_mm: [110, 54.5, 33]   # width, height, depth (for drawing)
+output: rectified         # what the SDK delivers by default: rectified | raw

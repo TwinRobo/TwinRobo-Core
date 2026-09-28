@@ -1,0 +1,77 @@
+# CameraSpec (schema 0.1; pre-1.0, may change).
+#
+# Raspberry Pi Camera Module 3 Wide.
+# Provenance: estimated from vendor documents:
+#   Raspberry Pi Camera Module 3 product brief (https://datasheets.raspberrypi.com/camera/camera-module-3-product-brief.pdf):
+#     IMX708, 4608x2592 full array, 1.4 um, rolling shutter; lens 2.75 mm f/2.2, PDAF
+#     autofocus 5 cm - inf; FoV 102 (H) x 67 (V) x 120 (D) deg (full array assumed).
+# Geometry: fx from the published focal length (2.75 mm / 1.4 um = 1964.3 px); k1, k2
+#  fitted to the FoV figures with a monotonic (non-folding) mapping: V matches, H
+#  is 2 deg short and D reaches 108 deg. The quoted 120 deg diagonal implies a
+#  fisheye-like mapping that the OpenCV polynomial cannot represent without folding
+#  the image; a calibration of a real unit (twinrobo.calibration) settles it.
+#   Fitted FoV {'h': 100.08, 'v': 67.02, 'd': 108.25} deg for datasheet {'h': 102.0, 'v': 67.0, 'd': 120.0}.
+#   FoV of this 4608x2592 mode: 100.1 (H) x 67.0 (V) x 108.3 (D) deg.
+# Blur: no lens prescription is published. `lens.json` is a surrogate: a glass design
+#   (DeepLens rf16mm_f2.8 (Canon RF16mm F2.8, JP 2022-085382 Ex. 3)) scaled to f 2.7500 mm and stopped to f/2.2
+#   (tools/catalog/make_surrogate_lens.py); its half-field 60.32 deg vs 54.1 deg needed.
+# Focus: autofocus: 1 m here; set focus_distance_m to the working distance (e.g. CameraSpec.from_yaml(path, focus_distance_m=...)).
+schema_version: 0.1
+
+id: raspberrypi/camera-module-3/wide
+
+manufacturer: Raspberry Pi
+product: Camera Module 3 Wide
+
+sensor:
+  manufacturer: Sony
+  model: IMX708 1/2.43in 12 MP
+  resolution:
+    width: 4608
+    height: 2592
+  pixel_pitch_um: 1.4
+  shutter:
+    type: rolling
+  bit_depth: null
+
+lens:
+  manufacturer: Raspberry Pi
+  model: 2.75 mm f/2.2
+  focal_length_mm: 2.75
+  f_number: 2.2
+  focus_distance_m: 1.0
+  deeplens_model:
+    path: lens.json
+
+calibration:
+  intrinsic:
+    fx: 1964.286
+    fy: 1964.286
+    cx: 2303.5
+    cy: 1295.5
+  distortion:
+    model: opencv
+    k1: -0.00623
+    k2: -0.00407
+    p1: 0.0
+    p2: 0.0
+    k3: 0.0
+  psf:
+    model: deeplens
+    field_samples: [17, 11]
+    depth_samples: 16
+    near_m: 0.1
+    far_m: 20.0
+    ks: 65
+
+sensor_model:
+  shot_noise: false
+  read_noise: false
+  dark_current: false
+
+isp:
+  enabled: false
+
+validation:
+  status: estimated
+  version: 1

@@ -1,0 +1,68 @@
+# CameraSpec (schema 0.1; pre-1.0, may change).
+#
+# Intel RealSense D435 / D435i RGB camera.
+# Provenance: estimated from vendor documents:
+#   Intel RealSense D400 series datasheet, Oct 2025 (337029-017; https://realsenseai.com/wp-content/uploads/2025/09/Intel-RealSense-D400-Series-Datasheet-October-2025.pdf):
+#     RGB OV2740 (Table 3-49), 1920x1080 rolling shutter (full array = max stream,
+#     Table 4-2), 1.4 um (OmniVision OV2740 page); lens 1.88 mm f/2.0 fixed focus,
+#     FoV 69.4 (H) x 42.5 (V) x 77 (D) deg, distortion <= 1.5 % (Table 3-18), module
+#     tolerance ~+/-3 deg.
+# Geometry: fx fitted to the H and V FoV (distortion <= 1.5 %: pinhole); f = fx x pitch.
+#   Fitted FoV {'h': 69.37, 'v': 42.54} deg for datasheet {'h': 69.4, 'v': 42.5}.
+#   FoV of this 1920x1080 mode: 69.4 (H) x 42.5 (V) x 76.9 (D) deg.
+# Blur: no lens prescription is published. `lens.json` is a surrogate: a glass design
+#   (DeepLens rf16mm_f2.8 (Canon RF16mm F2.8, JP 2022-085382 Ex. 3)) scaled to f 1.9420 mm and stopped to f/2.0
+#   (tools/catalog/make_surrogate_lens.py); its half-field 41.44 deg vs 38.5 deg needed.
+# Focus: fixed and unpublished; set near the hyperfocal distance (CoC 2 px).
+schema_version: 0.1
+
+id: intel/realsense-d435/color
+
+manufacturer: Intel
+product: RealSense D435 / D435i RGB camera
+
+sensor:
+  manufacturer: OmniVision
+  model: OV2740 1/6in 2 MP
+  resolution:
+    width: 1920
+    height: 1080
+  pixel_pitch_um: 1.4
+  shutter:
+    type: rolling
+  bit_depth: null
+
+lens:
+  manufacturer: Intel
+  model: 1.88 mm f/2.0
+  focal_length_mm: 1.88
+  f_number: 2.0
+  focus_distance_m: 0.675
+  deeplens_model:
+    path: lens.json
+
+calibration:
+  intrinsic:
+    fx: 1387.167
+    fy: 1387.167
+    cx: 959.5
+    cy: 539.5
+  psf:
+    model: deeplens
+    field_samples: [17, 11]
+    depth_samples: 16
+    near_m: 0.1
+    far_m: 20.0
+    ks: 65
+
+sensor_model:
+  shot_noise: false
+  read_noise: false
+  dark_current: false
+
+isp:
+  enabled: false
+
+validation:
+  status: estimated
+  version: 1

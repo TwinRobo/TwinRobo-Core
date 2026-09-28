@@ -1,0 +1,67 @@
+# CameraSpec (schema 0.1; pre-1.0, may change).
+#
+# Intel RealSense D455 RGB camera.
+# Provenance: estimated from vendor documents:
+#   Intel RealSense D400 series datasheet, Oct 2025 (337029-017; https://realsenseai.com/wp-content/uploads/2025/09/Intel-RealSense-D400-Series-Datasheet-October-2025.pdf):
+#     RGB OV9782 1280x800 global shutter (full array = max stream, Table 4-3), 3 um
+#     (OmniVision OV9782 page); lens 1.93 mm f/2.0, FoV 90 x 65 x 98 deg (Table 3-19),
+#     distortion <= 1.5 %, module tolerance ~+/-3 deg.
+# Geometry: fx least-squares fitted to the H and V FoV (residual 0.5 deg).
+#   Fitted FoV {'h': 90.49, 'v': 64.45} deg for datasheet {'h': 90.0, 'v': 65.0}.
+#   FoV of this 1280x800 mode: 90.5 (H) x 64.5 (V) x 99.9 (D) deg.
+# Blur: no lens prescription is published. `lens.json` is a surrogate: a glass design
+#   (DeepLens rf16mm_f2.8 (Canon RF16mm F2.8, JP 2022-085382 Ex. 3)) scaled to f 1.9036 mm and stopped to f/2.0
+#   (tools/catalog/make_surrogate_lens.py); its half-field 55.46 deg vs 49.9 deg needed.
+# Focus: fixed and unpublished; set near the hyperfocal distance (CoC 2 px).
+schema_version: 0.1
+
+id: intel/realsense-d455/color
+
+manufacturer: Intel
+product: RealSense D455 RGB camera
+
+sensor:
+  manufacturer: OmniVision
+  model: OV9782 1 MP
+  resolution:
+    width: 1280
+    height: 800
+  pixel_pitch_um: 3.0
+  shutter:
+    type: global
+  bit_depth: null
+
+lens:
+  manufacturer: Intel
+  model: 1.93 mm f/2.0
+  focal_length_mm: 1.93
+  f_number: 2.0
+  focus_distance_m: 0.304
+  deeplens_model:
+    path: lens.json
+
+calibration:
+  intrinsic:
+    fx: 634.523
+    fy: 634.523
+    cx: 639.5
+    cy: 399.5
+  psf:
+    model: deeplens
+    field_samples: [17, 11]
+    depth_samples: 16
+    near_m: 0.1
+    far_m: 20.0
+    ks: 65
+
+sensor_model:
+  shot_noise: false
+  read_noise: false
+  dark_current: false
+
+isp:
+  enabled: false
+
+validation:
+  status: estimated
+  version: 1

@@ -1,0 +1,68 @@
+# CameraSpec (schema 0.1; pre-1.0, may change).
+#
+# Luxonis OAK-D mono camera (one stereo eye).
+# Provenance: estimated from vendor documents:
+#   Luxonis OAK-D product page (https://docs.luxonis.com/hardware/products/OAK-D) and datasheet (https://github.com/luxonis/depthai-hardware/blob/master/BW1098OAK_USB3C/Datasheet/OAK-D_Datasheet.pdf):
+#     OV9282, 1280x800 (THE_800_P), 3 um, global shutter, fixed focus; FoV 72 (H) x
+#     49 (V) x 81 (D) deg (datasheet: 72 x 50 x 82). EFL and f-number unpublished:
+#     f/2.0 is assumed (the OV9282 modules Luxonis lists are F2.0). Monochrome:
+#     TwinRobo renders it in RGB.
+# Geometry: fx least-squares fitted to the H and V FoV (residual 0.1 deg); f = fx x pitch.
+#   Fitted FoV {'h': 72.08, 'v': 48.9} deg for datasheet {'h': 72.0, 'v': 49.0}.
+#   FoV of this 1280x800 mode: 72.1 (H) x 48.9 (V) x 81.3 (D) deg.
+# Blur: no lens prescription is published. `lens.json` is a surrogate: a glass design
+#   (DeepLens rf24mm_f1.8 (US 2022/0019061 Ex. 3)) scaled to f 2.6390 mm and stopped to f/2.0
+#   (tools/catalog/make_surrogate_lens.py); its half-field 42.95 deg vs 40.6 deg needed.
+# Focus: fixed and unpublished; set near the hyperfocal distance (CoC 2 px).
+schema_version: 0.1
+
+id: luxonis/oak-d/mono
+
+manufacturer: Luxonis
+product: OAK-D mono camera (one stereo eye)
+
+sensor:
+  manufacturer: OmniVision
+  model: OV9282 1 MP monochrome
+  resolution:
+    width: 1280
+    height: 800
+  pixel_pitch_um: 3.0
+  shutter:
+    type: global
+  bit_depth: null
+
+lens:
+  manufacturer: Luxonis
+  model: EFL unpublished
+  focal_length_mm: 2.639
+  f_number: 2.0
+  focus_distance_m: 0.583
+  deeplens_model:
+    path: lens.json
+
+calibration:
+  intrinsic:
+    fx: 879.662
+    fy: 879.662
+    cx: 639.5
+    cy: 399.5
+  psf:
+    model: deeplens
+    field_samples: [17, 11]
+    depth_samples: 16
+    near_m: 0.1
+    far_m: 20.0
+    ks: 65
+
+sensor_model:
+  shot_noise: false
+  read_noise: false
+  dark_current: false
+
+isp:
+  enabled: false
+
+validation:
+  status: estimated
+  version: 1

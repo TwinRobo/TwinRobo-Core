@@ -1,0 +1,17 @@
+# Stereo camera module (schema 0.1): two eyes in one housing. Poses of the module are
+# those of the LEFT eye; the right eye sits at `translation_m` in the left eye's camera
+# frame (+x = image right). A per-unit calibration (twinrobo.calibration) replaces the
+# baseline and adds a small rotation without schema changes.
+# Provenance: ZED 2i datasheet V1.5 (baseline 120 mm; https://cdn.sanity.io/files/s18ewfw4/staging/17e28531d47c0c5feab2be4ca304abf06ffa889a.pdf/ZED%202i%20-%20Datasheet%20-%20V1.5%20-%202026-09-22.pdf).
+# Housing: approximate outer size, for drawing only.
+schema_version: 0.1
+id: stereolabs/zed-2i/2.1mm
+type: stereo
+manufacturer: Stereolabs
+product: ZED 2i (2.1 mm)
+reference: left
+eyes:
+  left: {spec: camera.yaml}
+  right: {spec: camera.yaml, translation_m: [0.12, 0.0, 0.0], rotation_rpy_deg: [0.0, 0.0, 0.0]}
+housing_mm: [175, 30, 43]   # width, height, depth (for drawing)
+output: rectified         # what the SDK delivers by default: rectified | raw
