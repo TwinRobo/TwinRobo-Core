@@ -525,6 +525,7 @@ def lens_frame(
     """
     from ..frame import CameraFrame
 
+    rgb, ideal = twin.sensor_color(rgb), twin.sensor_color(ideal)  # mono sensors: luminance
     raw = twin.sensor.capture(rgb, 1.0, None)
     out = twin.isp.process(raw, None)
     if rectify:

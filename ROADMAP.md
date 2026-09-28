@@ -31,6 +31,14 @@ low-texture surfaces or in sunlight (which washes out the projector), and a
 minimum distance of about 0.5 m. The SDK can re-project depth into the RGB
 camera's view ("aligned depth"), which adds occlusion gaps of its own.
 
+### Where depth belongs
+
+A stereo depth camera's depth is the **module's** output, not a camera's: each IR
+imager outputs an infrared image, and the module matches the pair (on the device
+for RealSense) into a depth map in its **left imager's** view, optionally
+re-projected into the RGB camera's. So depth will be declared on the stereo
+module (`module.yaml`), and camera entries keep `outputs.depth: false`.
+
 ### Plan
 
 1. **Stereo depth from the module's own eyes.** A stereo module
@@ -41,8 +49,9 @@ camera's view ("aligned depth"), which adds occlusion gaps of its own.
    disparity range, subpixel precision, left-right check and filters, so holes,
    error growing with distance, edge artefacts and the minimum range follow from
    the geometry instead of being painted on.
-2. **Active illumination.** Render the projector's dot pattern into the IR eyes
-   (a spot light with a pattern texture in MuJoCo and Isaac Sim), with its range
+2. **Active illumination.** Needs [infrared rendering](#infrared-cameras). Render
+   the projector's dot pattern into the IR eyes (a spot light with a pattern
+   texture in MuJoCo and Isaac Sim), with its range
    and falloff and the ambient IR that washes it out. Passive stereo modules skip
    this step.
 3. **The depth pipeline's output.** Depth units and quantization, the valid
@@ -61,3 +70,33 @@ fitted to the vendor's specs. It is less faithful than simulating the
 measurement, but useful for training robustness while the stereo path is built.
 Time-of-flight cameras need their own model (multipath, phase wrapping) and come
 after stereo.
+
+## Infrared cameras
+
+**Today:** a camera's `sensor.spectrum: nir` (the RealSense IR imagers) says it sees
+near-infrared, and `sensor.color: mono` gives its one intensity channel
+(luminance). Its **geometry and optics** are modeled; its **image content** is
+not, because the simulators render visible light. The docs do not show these
+cameras for that reason.
+
+**Geometry holds, blur shifts.** Tracing the D455 IR imager's (surrogate) lens at
+850 nm instead of 550 nm moves a point at the image edge by 0.7 px (a 0.13%
+change in magnification) and changes the geometric spot by a fraction of a
+pixel; the ZED X lens behaves alike. Diffraction, which the PSFs do not include
+yet, grows with wavelength: at f/2 the Airy radius goes from about 0.45 px to
+0.69 px, as large as the lens blur.
+
+### Plan
+
+1. **A spectral band per camera:** trace the lens over the sensor's band (e.g.
+   800-900 nm for an IR imager, weighted by its quantum efficiency) as one
+   channel, instead of the three visible wavelengths. The PSF, pupil and ray-cast
+   methods take any wavelengths already.
+2. **Diffraction in the PSFs:** it matters at every wavelength and most in the
+   infrared.
+3. **Near-infrared scenes:** materials' near-IR reflectance (skin, fabric and
+   plants are bright; some paints and plastics swap), ambient IR (sunlight,
+   lamps), and the IR light of an active camera's projector.
+4. **Then** show IR cameras in the docs and the previews, and feed them to the
+   [depth pipeline](#depth-cameras).
+

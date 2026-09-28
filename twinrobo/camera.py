@@ -89,6 +89,10 @@ def build_optics(
     return DenseDepthRenderer(bank)
 
 
+#: Linear-RGB luminance weights (Rec. 709) of a mono sensor.
+LUMA = (0.2126, 0.7152, 0.0722)
+
+
 class CameraTwin:
     """A deployed camera configuration: optics, sensor and ISP."""
 
@@ -157,6 +161,18 @@ class CameraTwin:
             registry.load(camera_id), device=device, cache=cache, build_psf=build_psf
         )
 
+    def sensor_color(self, rgb: Tensor) -> Tensor:
+        """The light a sensor of this camera records: luminance for mono sensors.
+
+        A mono sensor has one intensity channel; it is returned in all three
+        (``[B, 3, H, W]``, equal channels) so frames keep the RGB convention. Color
+        sensors are unchanged.
+        """
+        if self.spec is None or self.spec.sensor.color != "mono":
+            return rgb
+        w = rgb.new_tensor(LUMA)[None, :, None, None]
+        return (rgb * w).sum(1, keepdim=True).expand_as(rgb).contiguous()
+
     @property
     def outputs_depth(self) -> bool:
         """Whether the camera's depth output is simulated (``outputs.depth``).
@@ -210,7 +226,8 @@ class CameraTwin:
             rgb, depth = self.warp(rgb, depth)
         else:
             ideal = rgb
-        rgb_optical = self.optics.render(rgb, depth, metadata)
+        rgb_optical = self.sensor_color(self.optics.render(rgb, depth, metadata))
+        ideal = self.sensor_color(ideal)
         raw = self.sensor.capture(rgb_optical, exposure, metadata)
         out = self.isp.process(raw, metadata)
         if rectify and warped:

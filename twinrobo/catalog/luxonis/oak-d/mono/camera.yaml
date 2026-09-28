@@ -28,6 +28,7 @@ sensor:
     width: 1280
     height: 800
   pixel_pitch_um: 3.0
+  color: mono  # one intensity channel (the SDK's infrared / mono stream)
   shutter:
     type: global
   bit_depth: null

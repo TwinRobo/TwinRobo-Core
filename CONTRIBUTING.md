@@ -31,7 +31,9 @@ The same body with a different lens is a different entry.
    - `lens.json`: the DeepLens lens file, kept beside the spec (DeepLens does
      not ship its lens library).
 3. **Fill in the spec:**
-   - `sensor`: resolution, pixel pitch, shutter type.
+   - `sensor`: resolution, pixel pitch, shutter type; `color: mono` for a one-channel
+     sensor and `spectrum: nir` for one that sees near-infrared (e.g. a stereo
+     module's IR imagers; see [ROADMAP](ROADMAP.md#infrared-cameras)).
    - `lens`: focal length, f-number, focus distance, `deeplens_model.path: lens.json`.
    - `calibration.intrinsic` / `calibration.distortion` (OpenCV `k1 k2 p1 p2 k3`)
      when you have them. From a datasheet, fit them to its fields of view with

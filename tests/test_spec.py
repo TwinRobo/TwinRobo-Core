@@ -89,3 +89,18 @@ def test_outputs_depth(tmp_path):
         raw["outputs"] = bad
         with pytest.raises(SpecError):
             CameraSpec.from_dict(raw, base_dir=tmp_path)
+
+
+def test_sensor_color_and_spectrum(tmp_path):
+    from twinrobo import CatalogRegistry
+
+    reg = CatalogRegistry()
+    ir = reg.load("intel/realsense-d455/depth").sensor
+    assert (ir.color, ir.spectrum) == ("mono", "nir")
+    rgb = reg.load("intel/realsense-d455/color").sensor
+    assert (rgb.color, rgb.spectrum) == ("rgb", "visible")  # the defaults
+    raw = yaml.safe_load(reg.resolve("logitech/c920").read_text())
+    base = reg.resolve("logitech/c920").parent
+    for key, bad in (("color", "bayer"), ("spectrum", "uv")):
+        with pytest.raises(SpecError):
+            CameraSpec.from_dict({**raw, "sensor": {**raw["sensor"], key: bad}}, base_dir=base)

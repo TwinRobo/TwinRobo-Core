@@ -1,6 +1,7 @@
 # CameraSpec (schema 0.1; pre-1.0, may change).
 #
-# Intel RealSense D455 depth imager (one eye).
+# Intel RealSense D455 IR imager (one stereo eye): a near-infrared camera. Its geometry and optics
+# are modeled; its image content (near-IR light, the projector's dots) is not yet: ROADMAP.md.
 # Provenance: estimated from vendor documents:
 #   Intel RealSense D400 series datasheet, Oct 2025 (337029-017; https://realsenseai.com/wp-content/uploads/2025/09/Intel-RealSense-D400-Series-Datasheet-October-2025.pdf):
 #     left/right imagers OV9782 (Table 3-14, filter none), 1280x800 global shutter,
@@ -18,7 +19,7 @@ schema_version: 0.1
 id: intel/realsense-d455/depth
 
 manufacturer: Intel
-product: RealSense D455 depth imager (one eye)
+product: RealSense D455 IR imager (one stereo eye)
 
 sensor:
   manufacturer: OmniVision
@@ -27,6 +28,8 @@ sensor:
     width: 1280
     height: 800
   pixel_pitch_um: 3.0
+  color: mono  # one intensity channel (the SDK's infrared / mono stream)
+  spectrum: nir  # sees near-infrared: no IR-cut filter, the projector's 850 nm
   shutter:
     type: global
   bit_depth: null

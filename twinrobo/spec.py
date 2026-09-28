@@ -39,6 +39,10 @@ class SensorSpec:
     pixel_pitch_um: float | None = None
     shutter: str = "global"  # "global" | "rolling"
     bit_depth: int | None = None
+    color: str = "rgb"  # "rgb" | "mono": what the camera outputs (mono: one intensity channel)
+    # "visible" | "nir": the light it sees. TwinRobo renders visible light, so a near-infrared
+    # camera's geometry and optics are modeled but its image content is not (see ROADMAP.md).
+    spectrum: str = "visible"
 
 
 @dataclass
@@ -131,9 +135,15 @@ class CameraSpec:
             pixel_pitch_um=sensor_d.get("pixel_pitch_um"),
             shutter=(sensor_d.get("shutter") or {}).get("type", "global"),
             bit_depth=sensor_d.get("bit_depth"),
+            color=sensor_d.get("color", "rgb"),
+            spectrum=sensor_d.get("spectrum", "visible"),
         )
         if sensor.shutter not in ("global", "rolling"):
             raise SpecError(f"sensor.shutter.type must be global|rolling, got {sensor.shutter!r}")
+        if sensor.color not in ("rgb", "mono"):
+            raise SpecError(f"sensor.color must be rgb|mono, got {sensor.color!r}")
+        if sensor.spectrum not in ("visible", "nir"):
+            raise SpecError(f"sensor.spectrum must be visible|nir, got {sensor.spectrum!r}")
 
         lens_d = _require(data, "lens")
         dl_d = lens_d.get("deeplens_model")
