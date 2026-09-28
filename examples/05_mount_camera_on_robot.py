@@ -42,7 +42,9 @@ def render(env, camera_id: str, width: int, height: int):
     twin = CameraTwin.from_spec(spec)  # builds (or loads) the camera's PSF bank
     model, data = env.sim.model._model, env.sim.data._data
     with mounted(model, data, WRIST) as host:  # the mount renders through a borrowed camera
-        frame = MujocoCameraTwin(twin, RobosuiteRenderer(env), camera=host).get_frame()
+        frame = MujocoCameraTwin(twin, RobosuiteRenderer(env), camera=host).get_frame(
+            force_depth=True
+        )
         uv = project(model, data, host, DETAIL_BODY, twin.intrinsics)
     return to_uint8(frame.rgb_ideal), to_uint8(frame.rgb), frame.depth[0, 0].cpu().numpy(), uv
 

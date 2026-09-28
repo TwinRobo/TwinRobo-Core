@@ -17,6 +17,7 @@
    ],
    "cameras": [
     {
+     "outputs_depth": true,
      "id": "intel/realsense-d435/color",
      "label": "Intel RealSense D435 / D435i RGB camera",
      "sensor": "1920×1080, 1.4 µm",
@@ -35,6 +36,7 @@
      "dir": "mujoco-pickplace/intel--realsense-d435--color"
     },
     {
+     "outputs_depth": true,
      "id": "intel/realsense-d435/depth",
      "label": "Intel RealSense D435 / D435i depth imager (one eye)",
      "sensor": "1280×800, 3.0 µm",
@@ -53,6 +55,7 @@
      "dir": "mujoco-pickplace/intel--realsense-d435--depth"
     },
     {
+     "outputs_depth": true,
      "id": "intel/realsense-d455/color",
      "label": "Intel RealSense D455 RGB camera",
      "sensor": "1280×800, 3.0 µm",
@@ -71,6 +74,7 @@
      "dir": "mujoco-pickplace/intel--realsense-d455--color"
     },
     {
+     "outputs_depth": true,
      "id": "intel/realsense-d455/depth",
      "label": "Intel RealSense D455 depth imager (one eye)",
      "sensor": "1280×800, 3.0 µm",
@@ -89,6 +93,7 @@
      "dir": "mujoco-pickplace/intel--realsense-d455--depth"
     },
     {
+     "outputs_depth": false,
      "id": "logitech/c920",
      "label": "Logitech C920 HD Pro Webcam",
      "sensor": "1920×1080, 2.6977 µm",
@@ -107,6 +112,7 @@
      "dir": "mujoco-pickplace/logitech--c920"
     },
     {
+     "outputs_depth": false,
      "id": "luxonis/oak-d/color",
      "label": "Luxonis OAK-D color camera",
      "sensor": "4056×3040, 1.55 µm",
@@ -125,6 +131,7 @@
      "dir": "mujoco-pickplace/luxonis--oak-d--color"
     },
     {
+     "outputs_depth": false,
      "id": "luxonis/oak-d/mono",
      "label": "Luxonis OAK-D mono camera (one stereo eye)",
      "sensor": "1280×800, 3.0 µm",
@@ -143,6 +150,7 @@
      "dir": "mujoco-pickplace/luxonis--oak-d--mono"
     },
     {
+     "outputs_depth": false,
      "id": "raspberrypi/camera-module-3/standard",
      "label": "Raspberry Pi Camera Module 3",
      "sensor": "4608×2592, 1.4 µm",
@@ -161,6 +169,7 @@
      "dir": "mujoco-pickplace/raspberrypi--camera-module-3--standard"
     },
     {
+     "outputs_depth": false,
      "id": "raspberrypi/camera-module-3/wide",
      "label": "Raspberry Pi Camera Module 3 Wide",
      "sensor": "4608×2592, 1.4 µm",
@@ -179,6 +188,7 @@
      "dir": "mujoco-pickplace/raspberrypi--camera-module-3--wide"
     },
     {
+     "outputs_depth": false,
      "id": "stereolabs/zed-2i/2.1mm",
      "label": "Stereolabs ZED 2i 2.1 mm eye",
      "sensor": "2208×1242, 2.0 µm",
@@ -197,6 +207,7 @@
      "dir": "mujoco-pickplace/stereolabs--zed-2i--2.1mm"
     },
     {
+     "outputs_depth": false,
      "id": "stereolabs/zed-x/2.2mm",
      "label": "Stereolabs ZED X / X Mini 2.2 mm eye",
      "sensor": "1920×1200, 3.0 µm",
@@ -215,6 +226,7 @@
      "dir": "mujoco-pickplace/stereolabs--zed-x--2.2mm"
     },
     {
+     "outputs_depth": false,
      "id": "stereolabs/zed-x/4mm",
      "label": "Stereolabs ZED X 4 mm eye",
      "sensor": "1920×1200, 3.0 µm",
@@ -246,6 +258,7 @@
    ],
    "cameras": [
     {
+     "outputs_depth": true,
      "id": "intel/realsense-d435/color",
      "label": "Intel RealSense D435 / D435i RGB camera",
      "sensor": "1920×1080, 1.4 µm",
@@ -264,6 +277,7 @@
      "dir": "isaac-tabletop/intel--realsense-d435--color"
     },
     {
+     "outputs_depth": true,
      "id": "intel/realsense-d435/depth",
      "label": "Intel RealSense D435 / D435i depth imager (one eye)",
      "sensor": "1280×800, 3.0 µm",
@@ -282,6 +296,7 @@
      "dir": "isaac-tabletop/intel--realsense-d435--depth"
     },
     {
+     "outputs_depth": true,
      "id": "intel/realsense-d455/color",
      "label": "Intel RealSense D455 RGB camera",
      "sensor": "1280×800, 3.0 µm",
@@ -300,6 +315,7 @@
      "dir": "isaac-tabletop/intel--realsense-d455--color"
     },
     {
+     "outputs_depth": true,
      "id": "intel/realsense-d455/depth",
      "label": "Intel RealSense D455 depth imager (one eye)",
      "sensor": "1280×800, 3.0 µm",
@@ -318,6 +334,7 @@
      "dir": "isaac-tabletop/intel--realsense-d455--depth"
     },
     {
+     "outputs_depth": false,
      "id": "logitech/c920",
      "label": "Logitech C920 HD Pro Webcam",
      "sensor": "1920×1080, 2.6977 µm",
@@ -336,6 +353,7 @@
      "dir": "isaac-tabletop/logitech--c920"
     },
     {
+     "outputs_depth": false,
      "id": "luxonis/oak-d/color",
      "label": "Luxonis OAK-D color camera",
      "sensor": "4056×3040, 1.55 µm",
@@ -354,6 +372,7 @@
      "dir": "isaac-tabletop/luxonis--oak-d--color"
     },
     {
+     "outputs_depth": false,
      "id": "luxonis/oak-d/mono",
      "label": "Luxonis OAK-D mono camera (one stereo eye)",
      "sensor": "1280×800, 3.0 µm",
@@ -372,6 +391,7 @@
      "dir": "isaac-tabletop/luxonis--oak-d--mono"
     },
     {
+     "outputs_depth": false,
      "id": "raspberrypi/camera-module-3/standard",
      "label": "Raspberry Pi Camera Module 3",
      "sensor": "4608×2592, 1.4 µm",
@@ -390,6 +410,7 @@
      "dir": "isaac-tabletop/raspberrypi--camera-module-3--standard"
     },
     {
+     "outputs_depth": false,
      "id": "raspberrypi/camera-module-3/wide",
      "label": "Raspberry Pi Camera Module 3 Wide",
      "sensor": "4608×2592, 1.4 µm",
@@ -408,6 +429,7 @@
      "dir": "isaac-tabletop/raspberrypi--camera-module-3--wide"
     },
     {
+     "outputs_depth": false,
      "id": "stereolabs/zed-2i/2.1mm",
      "label": "Stereolabs ZED 2i 2.1 mm eye",
      "sensor": "2208×1242, 2.0 µm",
@@ -426,6 +448,7 @@
      "dir": "isaac-tabletop/stereolabs--zed-2i--2.1mm"
     },
     {
+     "outputs_depth": false,
      "id": "stereolabs/zed-x/2.2mm",
      "label": "Stereolabs ZED X / X Mini 2.2 mm eye",
      "sensor": "1920×1200, 3.0 µm",
@@ -444,6 +467,7 @@
      "dir": "isaac-tabletop/stereolabs--zed-x--2.2mm"
     },
     {
+     "outputs_depth": false,
      "id": "stereolabs/zed-x/4mm",
      "label": "Stereolabs ZED X 4 mm eye",
      "sensor": "1920×1200, 3.0 µm",

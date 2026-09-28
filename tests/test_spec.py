@@ -69,3 +69,22 @@ def test_catalog_lens_reference(tmp_path, example_spec_path):
     raw["lens"]["deeplens_model"]["path"] = "catalog:examples/cellphone80deg/lens.json"
     spec = CameraSpec.from_dict(raw, base_dir=tmp_path)
     assert spec.lens.deeplens_model.path == example_spec_path.parent / "lens.json"
+
+
+def test_outputs_depth(tmp_path):
+    import yaml
+
+    from twinrobo import CatalogRegistry
+
+    reg = CatalogRegistry()
+    assert reg.load("intel/realsense-d435/color").outputs.depth
+    assert reg.load("intel/realsense-d455/depth").outputs.depth
+    assert not reg.load("logitech/c920").outputs.depth
+    assert not reg.load("stereolabs/zed-x/2.2mm").outputs.depth
+    raw = yaml.safe_load(reg.resolve("logitech/c920").read_text())
+    raw.pop("outputs")
+    assert not CameraSpec.from_dict(raw, base_dir=reg.resolve("logitech/c920").parent).outputs.depth
+    for bad in ({"depth": "yes"}, {"ir": True}, [True]):
+        raw["outputs"] = bad
+        with pytest.raises(SpecError):
+            CameraSpec.from_dict(raw, base_dir=tmp_path)

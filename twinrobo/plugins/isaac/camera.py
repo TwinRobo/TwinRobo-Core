@@ -253,8 +253,14 @@ class IsaacCameraTwin:
             rep.orchestrator.step(rt_subframes=self.rt_subframes, pause_timeline=False)
         raise SimulatorError("the pupil views produced no frame")
 
-    def get_frame(self, timestamp: float | None = None, step: bool = True) -> CameraFrame:
-        """Render and process one frame. ``frame.rgb`` is linear ``[1, 3, H, W]`` on ``device``."""
+    def get_frame(
+        self, timestamp: float | None = None, step: bool = True, force_depth: bool = False
+    ) -> CameraFrame:
+        """Render and process one frame. ``frame.rgb`` is linear ``[1, 3, H, W]`` on ``device``.
+
+        ``frame.depth`` is readable only if the camera outputs depth (``outputs.depth`` in
+        its spec, e.g. RealSense) or with ``force_depth=True`` (simulator ground truth).
+        """
         if self.lens_renderer is not None:
             from ...optics.lensrender import lens_frame
 
@@ -269,6 +275,7 @@ class IsaacCameraTwin:
                 self.rectify,
                 timestamp,
                 {"camera": self.camera},
+                force_depth=force_depth,
             )
         rgb, depth = self.render_ideal(step)
         return self.twin.process(
@@ -277,6 +284,7 @@ class IsaacCameraTwin:
             timestamp=timestamp,
             metadata={"camera": self.camera, "fovy_deg": self.fovy_deg},
             rectify=self.rectify,
+            force_depth=force_depth,
         )
 
     def __repr__(self) -> str:

@@ -29,6 +29,32 @@ The full list, with each entry's sensor, lens and field of view, is the
 `examples/cellphone80deg` is a teaching example: a DeepLens
 design lens on a hypothetical sensor, not a real camera.
 
+## Depth output
+
+Only cameras that deliver a depth map have one in TwinRobo. A spec says so in
+`outputs`:
+
+```yaml
+outputs:
+  depth: true   # e.g. RealSense D400: the module streams depth aligned to this camera
+```
+
+It defaults to `false`: a webcam or a single stereo eye gives an image, not
+depth. Reading `frame.depth` of such a camera raises `DepthUnavailableError`,
+so a policy cannot be trained on a signal the real camera will never give. When
+you do want the simulator's ground truth (labels, evaluation, debugging), ask
+for it explicitly:
+
+```python
+frame = cam.get_frame(force_depth=True)   # or twin.process(rgb, depth, force_depth=True)
+frame.depth                                # [1, 1, H, W], meters
+```
+
+`frame.has_depth` tells whether a frame exposes depth. Of the catalog, the
+RealSense D435 and D455 entries (color and depth imager) output depth. The ZED
+and OAK-D compute depth from their stereo pair on the host or device; model
+that from their two eyes (`twinrobo.stereo`).
+
 ## Stereo modules
 
 Each `camera.yaml` models one eye, once: products sharing an eye (the ZED X and

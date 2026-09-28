@@ -260,10 +260,16 @@ class MujocoCameraTwin:
         with _camera_fovy(self.backend.model, self._cam_id, self.fovy_deg):
             return self.backend.render(self.camera, W, H)
 
-    def get_frame(self, timestamp: float | None = None, status=None) -> CameraFrame:
-        """Render and process one frame. ``frame.rgb`` is linear ``[1, 3, H, W]`` on ``device``."""
+    def get_frame(
+        self, timestamp: float | None = None, status=None, force_depth: bool = False
+    ) -> CameraFrame:
+        """Render and process one frame. ``frame.rgb`` is linear ``[1, 3, H, W]`` on ``device``.
+
+        ``frame.depth`` is readable only if the camera outputs depth (``outputs.depth`` in
+        its spec, e.g. RealSense) or with ``force_depth=True`` (simulator ground truth).
+        """
         if self.render_method != "psf":
-            return self._lens_frame(timestamp, status)
+            return self._lens_frame(timestamp, status, force_depth)
         rgb8, depth = self.render_ideal()
         rgb = torch.from_numpy(rgb8).to(self.device).permute(2, 0, 1)[None].float() / 255.0
         rgb = srgb_to_linear(rgb)
@@ -274,10 +280,11 @@ class MujocoCameraTwin:
             timestamp=timestamp,
             metadata={"camera": self.camera, "fovy_deg": self.fovy_deg},
             rectify=self.rectify,
+            force_depth=force_depth,
         )
 
     # -- lens-ray methods (A: pupil raster, B: ray cast) ------------------------------------
-    def _lens_frame(self, timestamp, status) -> CameraFrame:
+    def _lens_frame(self, timestamp, status, force_depth=False) -> CameraFrame:
         from .lensrender import LensRayRenderer, lens_rays
 
         if self.camera is None:
@@ -316,5 +323,13 @@ class MujocoCameraTwin:
         from ...optics.lensrender import lens_frame
 
         return lens_frame(
-            self.twin, lr, rgb, depth, ideal, self.rectify, timestamp, {"camera": self.camera}
+            self.twin,
+            lr,
+            rgb,
+            depth,
+            ideal,
+            self.rectify,
+            timestamp,
+            {"camera": self.camera},
+            force_depth=force_depth,
         )

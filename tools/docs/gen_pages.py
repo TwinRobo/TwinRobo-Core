@@ -64,8 +64,8 @@ lines = [
     "",
     "## Cameras",
     "",
-    "| ID | Camera | Sensor | Lens | Pinhole FoV (H × V) | Status |",
-    "|---|---|---|---|---|---|",
+    "| ID | Camera | Sensor | Lens | Pinhole FoV (H × V) | Depth | Status |",
+    "|---|---|---|---|---|---|---|",
 ]
 for path, spec in cameras:
     rel = path.relative_to(ROOT).as_posix()
@@ -84,7 +84,7 @@ for path, spec in cameras:
     name = f"{spec.get('manufacturer', '')} {spec.get('product', '')}".strip()
     lines.append(
         f"| [`{spec['id']}`]({REPO}/blob/main/{rel}) | {name} | {sensor} | {lens_txt} "
-        f"| {fov_txt} | {status} |"
+        f"| {fov_txt} | {'yes' if (spec.get('outputs') or {}).get('depth') else '–'} | {status} |"
     )
 lines += [
     "",

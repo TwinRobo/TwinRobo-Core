@@ -59,7 +59,7 @@ def main():
         for method in METHODS:
             t = time.perf_counter()
             cam = MujocoCameraTwin(twin, backend, camera="robot0_eye_in_hand", render=method)
-            frame = cam.get_frame()
+            frame = cam.get_frame(force_depth=True)  # the page shows ground-truth depth
             torch.cuda.synchronize()
             save_frame(scene_dir / cid, method, frame, pinhole=method == "psf")
             print(f"{cid:40s} {method:8s} {time.perf_counter() - t:5.1f} s", flush=True)

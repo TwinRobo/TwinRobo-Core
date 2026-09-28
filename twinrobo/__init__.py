@@ -4,6 +4,7 @@ from .camera import CameraTwin
 from .exceptions import (
     CameraTwinError,
     CatalogError,
+    DepthUnavailableError,
     OpticsBackendError,
     SimulatorError,
     SpecError,
@@ -21,6 +22,7 @@ __all__ = [
     "CatalogRegistry",
     "CameraTwinError",
     "CatalogError",
+    "DepthUnavailableError",
     "OpticsBackendError",
     "SimulatorError",
     "SpecError",

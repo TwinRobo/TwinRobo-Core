@@ -53,6 +53,7 @@ def camera_meta(camera_id: str, full_spec, twin) -> dict:
         "focus_m": lens.focus_distance_m,
         "fov_deg": {k: round(v, 1) for k, v in fov.items()},
         "status": full_spec.validation.status,
+        "outputs_depth": full_spec.outputs.depth,
         "size": [twin.intrinsics.width, twin.intrinsics.height],
     }
 

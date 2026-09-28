@@ -63,6 +63,9 @@ sensor_model:
 isp:
   enabled: false
 
+outputs:
+  depth: false  # an image only: the real camera measures no depth
+
 validation:
   status: estimated
   version: 1

@@ -158,6 +158,11 @@ class CameraTwin:
         )
 
     @property
+    def outputs_depth(self) -> bool:
+        """Whether the real camera delivers depth (``outputs.depth``; true without a spec)."""
+        return self.spec.outputs.depth if self.spec is not None else True
+
+    @property
     def render_intrinsics(self) -> CameraIntrinsics | None:
         """The pinhole a simulator should render for this twin.
 
@@ -176,6 +181,7 @@ class CameraTwin:
         exposure: float = 1.0,
         metadata: dict[str, Any] | None = None,
         rectify: bool = False,
+        force_depth: bool = False,
     ) -> CameraFrame:
         """Turn an ideal simulator RGB-D observation into a CameraTwin frame.
 
@@ -187,6 +193,11 @@ class CameraTwin:
         ``rectify``: undistort the output (as vendor SDKs do by default): ``frame.rgb``
         and ``frame.depth`` are then pinhole images with the camera's intrinsics, the
         lens blur kept. No effect without distortion.
+
+        ``force_depth``: expose ``frame.depth`` even if the camera outputs none
+        (`outputs_depth` false): the simulator's ground truth, which the real camera
+        would not give. Without it, reading such a frame's depth raises
+        `DepthUnavailableError`. ``depth`` is still required: the lens blur uses it.
         """
         check_rgb(rgb)
         check_depth(depth, rgb)
@@ -210,6 +221,7 @@ class CameraTwin:
             depth=depth,
             timestamp=timestamp,
             metadata={"camera_id": self.spec.id if self.spec else None, **(metadata or {})},
+            has_depth=self.outputs_depth or force_depth,
         )
 
     # Rendering from a simulator camera is done by adapters that wrap the twin.

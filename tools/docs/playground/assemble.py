@@ -4,7 +4,7 @@
 
 Reads ``outputs/playground/<scene>`` (MuJoCo) and ``outputs/isaac/playground/<scene>``
 (Isaac Sim), writes one WebP per camera and method, the pinhole view, a colour-mapped
-depth image and ``manifest.json`` (scenes, cameras, what the page shows about them).
+depth image (cameras that output depth only) and ``manifest.json`` (scenes, cameras, what the page shows about them).
 """
 
 from __future__ import annotations
@@ -28,6 +28,13 @@ QUALITY = 82
 
 def slug(camera_id: str) -> str:
     return camera_id.replace("/", "--")
+
+
+def outputs_depth(camera_id: str) -> bool:
+    """Whether the real camera delivers depth (its spec's ``outputs.depth``)."""
+    from twinrobo import CatalogRegistry
+
+    return CatalogRegistry().load(camera_id).outputs.depth
 
 
 def depth_rgb(depth: np.ndarray, near: float, far: float) -> np.ndarray:
@@ -62,7 +69,9 @@ def assemble(out: Path) -> dict:
                 dst.mkdir(parents=True, exist_ok=True)
                 for name in ["pinhole", *METHODS]:
                     webp(sdir / cam["id"] / f"{name}.png", dst / f"{name}.webp")
-                webp(depth_rgb(depth, near, far), dst / "depth.webp")
+                cam = {"outputs_depth": outputs_depth(cam["id"]), **cam}
+                if cam["outputs_depth"]:  # only depth cameras have a Depth view
+                    webp(depth_rgb(depth, near, far), dst / "depth.webp")
                 cams.append({**cam, "dir": f"{scene['id']}/{slug(cam['id'])}"})
             scene["cameras"] = cams
             scenes.append(scene)

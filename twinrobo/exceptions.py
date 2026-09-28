@@ -17,5 +17,9 @@ class OpticsBackendError(CameraTwinError):
     """An optics backend (e.g. DeepLens) is unavailable or failed."""
 
 
+class DepthUnavailableError(CameraTwinError):
+    """A frame's depth was read, but its camera does not output depth (``outputs.depth``)."""
+
+
 class SimulatorError(CameraTwinError):
     """A simulator adapter (e.g. Isaac Sim) is unavailable or failed."""

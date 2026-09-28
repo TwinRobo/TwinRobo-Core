@@ -62,6 +62,9 @@ sensor_model:
 isp:
   enabled: false
 
+outputs:
+  depth: true  # the module's depth map, computed from this imager's stereo pair
+
 validation:
   status: estimated
   version: 1

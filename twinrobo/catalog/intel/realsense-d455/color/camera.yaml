@@ -62,6 +62,9 @@ sensor_model:
 isp:
   enabled: false
 
+outputs:
+  depth: true  # the module streams depth aligned to this RGB camera
+
 validation:
   status: estimated
   version: 1

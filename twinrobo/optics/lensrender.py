@@ -514,12 +514,14 @@ def lens_frame(
     rectify: bool,
     timestamp=None,
     metadata: dict | None = None,
+    force_depth: bool = False,
 ):
     """A `CameraFrame` from a lens render: sensor and ISP, then optional rectification.
 
     ``rgb``/``depth`` come from `LensRayRenderer.render_scene`; ``ideal`` is the paraxial
     pinhole view of the same sensor (``renderer.rays.intrinsics``), linear.
     ``rectify`` undistorts with the lens' own chief rays, as stereo SDKs deliver.
+    ``force_depth``: expose depth even if the camera outputs none (see `CameraTwin.process`).
     """
     from ..frame import CameraFrame
 
@@ -545,4 +547,5 @@ def lens_frame(
             **(metadata or {}),
             **renderer.stats,
         },
+        has_depth=twin.outputs_depth or force_depth,
     )

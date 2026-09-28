@@ -100,6 +100,7 @@
         ["Lens", cam.lens],
         ["Field of view", `${fov.h}° H · ${fov.v}° V · ${fov.d}° D`],
         ["Focus", cam.focus_m ? `${cam.focus_m} m` : "infinity"],
+        ["Depth output", cam.outputs_depth ? "Yes" : "No (image only)"],
         ["Catalog status", STATUS[cam.status] || cam.status],
       ];
       for (const [k, v] of rows) dl.append(el("dt", {}, k), el("dd", {}, v));
@@ -114,7 +115,8 @@
       for (const cam of scene().cameras) {
         const b = el("button", { type: "button", class: "trp-card" });
         if (cam.id === camera().id) b.classList.add("is-active");
-        const img = el("img", { src: url(cam, state.view === "depth" ? "depth" : state.method), alt: cam.label, loading: "lazy" });
+        const thumb = state.view === "depth" && cam.outputs_depth ? "depth" : state.method;
+        const img = el("img", { src: url(cam, thumb), alt: cam.label, loading: "lazy" });
         b.append(img, el("span", {}, cam.label));
         b.addEventListener("click", () => {
           state.camera = cam.id;
@@ -128,6 +130,9 @@
     function render() {
       const s = scene(), cam = camera();
       state.camera = cam.id;
+      // depth only for cameras that output it (e.g. RealSense); the others have no Depth view
+      if (state.view === "depth" && !cam.outputs_depth) state.view = "side";
+      $('.trp-group[data-key="view"] button[data-value="depth"]').hidden = !cam.outputs_depth;
       try { sessionStorage.setItem("tr-playground", JSON.stringify(state)); } catch (e) {}
       for (const g of root.querySelectorAll(".trp-group")) {
         const cur = String(state[g.dataset.key]);
@@ -153,7 +158,10 @@
       setSplit();
       const [near, far] = s.depth_m;
       $(".trp-note").textContent =
-        `${s.label}: ${s.note}` + (state.view === "depth" ? ` Depth ${near}–${far} m, log scale.` : "");
+        `${s.label}: ${s.note}` +
+        (state.view === "depth"
+          ? ` Depth ${near}–${far} m, log scale.`
+          : "");
       info(cam);
       grid();
     }

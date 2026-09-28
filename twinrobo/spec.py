@@ -57,6 +57,13 @@ class LensSpec:
 
 
 @dataclass
+class OutputsSpec:
+    """What the real camera delivers besides its image."""
+
+    depth: bool = False  # a depth map aligned to this camera (e.g. RealSense D400 streams)
+
+
+@dataclass
 class ValidationSpec:
     status: str = "estimated"  # one of PROVENANCE_LEVELS
     version: int = 0
@@ -73,6 +80,7 @@ class CameraSpec:
     calibration: dict[str, Any] = field(default_factory=dict)
     sensor_model: dict[str, Any] = field(default_factory=dict)
     isp: dict[str, Any] = field(default_factory=dict)
+    outputs: OutputsSpec = field(default_factory=OutputsSpec)
     validation: ValidationSpec = field(default_factory=ValidationSpec)
     source_path: Path | None = None
 
@@ -146,6 +154,16 @@ class CameraSpec:
             deeplens_model=deeplens_model,
         )
 
+        out_d = data.get("outputs") or {}
+        if not isinstance(out_d, dict):
+            raise SpecError("outputs must be a mapping (e.g. {depth: true})")
+        unknown = set(out_d) - {"depth"}
+        if unknown:
+            raise SpecError(f"unknown outputs: {sorted(unknown)} (supported: depth)")
+        if not isinstance(out_d.get("depth", False), bool):
+            raise SpecError(f"outputs.depth must be true or false, got {out_d['depth']!r}")
+        outputs = OutputsSpec(depth=out_d.get("depth", False))
+
         val_d = data.get("validation") or {}
         validation = ValidationSpec(
             status=val_d.get("status", "estimated"),
@@ -166,6 +184,7 @@ class CameraSpec:
             calibration=data.get("calibration") or {},
             sensor_model=data.get("sensor_model") or {},
             isp=data.get("isp") or {},
+            outputs=outputs,
             validation=validation,
             source_path=source_path,
         )

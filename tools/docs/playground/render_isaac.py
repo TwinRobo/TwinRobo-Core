@@ -118,7 +118,7 @@ def main():
             cam = IsaacCameraTwin(twin, camera, rt_subframes=8, render=method)
             for _ in range(3):  # let the renderer settle on the new views
                 cam.get_frame()
-            frame = cam.get_frame()
+            frame = cam.get_frame(force_depth=True)  # the page shows ground-truth depth
             torch.cuda.synchronize()
             save_frame(scene_dir / cid, method, frame, pinhole=method == "psf")
             cam.close()
