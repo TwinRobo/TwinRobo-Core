@@ -288,7 +288,7 @@ class DeepLensOptics(OpticsModel):
             "seed": int(seed),
             "overfill": float(overfill),
             "candidates": 4,
-            "version": 3,
+            "version": 4,  # 4: rays aimed at each pixel's measured passing region
         }
 
     @torch.no_grad()
@@ -338,6 +338,62 @@ class DeepLensOptics(OpticsModel):
         return torch.stack(out).float()
 
     @torch.no_grad()
+    def _ray_aim(self, K, pz, pr, grid=(17, 11), rays=4096, margin=1.1):
+        """Per-pixel aiming disk ``(cx, cy, r)`` ``[H, W]`` each (mm) on the plane ``z = pz``.
+
+        Rays are aimed at the region of that plane through which a pixel's light
+        actually passes the lens. It is measured on a coarse field ``grid``: from each
+        node, ``rays`` rays over the whole disk of radius ``pr``; the passing ones'
+        centroid and their farthest distance from it (times ``margin``) set the disk,
+        interpolated bilinearly to every pixel. Where DeepLens finds the exit pupil the
+        disk is about the pupil's; where it cannot and falls back to the last surface
+        (whose aperture can be many times the beam), this keeps most traced rays inside
+        the lens instead of blocked by it. Sampling stays uniform over a disk that
+        covers every passing ray, so the result is unbiased either way.
+        """
+        import torch.nn.functional as F
+        from deeplens.light import Ray
+
+        from .lensrays import concentric_disk, stratified_samples
+
+        L, dev = self._lens, self.device
+        W, H = K.width, K.height
+        gw, gh = min(grid[0], W), min(grid[1], H)
+        pitch, zs = float(L.pixel_size), float(L.d_sensor)
+        gu = torch.linspace(0, W - 1, gw, device=dev)
+        gv = torch.linspace(0, H - 1, gh, device=dev)
+        vv, uu = torch.meshgrid(gv, gu, indexing="ij")
+        P = uu.numel()
+        pu, pv = stratified_samples(rays, P, torch.Generator(device=dev).manual_seed(2), dev)
+        dx, dy = concentric_disk(pu, pv)
+        tx, ty = dx * pr, dy * pr  # [P, rays]
+        o = torch.stack(
+            [
+                (-(uu.reshape(-1) - K.cx) * pitch)[:, None].expand(P, rays),
+                ((vv.reshape(-1) - K.cy) * pitch)[:, None].expand(P, rays),
+                torch.full((P, rays), zs, device=dev),
+            ],
+            -1,
+        ).reshape(-1, 3)
+        t = torch.stack([tx, ty, torch.full_like(tx, pz)], -1).reshape(-1, 3)
+        ok = torch.zeros(P, rays, dtype=torch.bool, device=dev)
+        for wv in self.wavelengths_rgb_um:  # a ray passing in any channel counts
+            ray = L.trace2obj(Ray(o.clone(), t - o, wv, device=dev))
+            ok |= ((ray.is_valid > 0) & (ray.d[:, 2] < 0)).view(P, rays)
+        cnt = ok.sum(1)
+        w = ok.float()
+        cx = (tx * w).sum(1) / cnt.clamp_min(1)
+        cy = (ty * w).sum(1) / cnt.clamp_min(1)
+        dist = torch.where(ok, torch.hypot(tx - cx[:, None], ty - cy[:, None]), 0.0)
+        r = dist.amax(1) * margin + 2.0 * pr / math.sqrt(rays)  # + about one sample spacing
+        few = cnt < 16  # (nearly) fully vignetted node: keep the whole disk
+        cx, cy = torch.where(few, 0.0, cx), torch.where(few, 0.0, cy)
+        r = torch.where(few, torch.full_like(r, pr), r.clamp(max=pr))
+        maps = torch.stack([cx, cy, r]).reshape(1, 3, gh, gw)
+        maps = F.interpolate(maps, size=(H, W), mode="bilinear", align_corners=True)[0]
+        return maps[0], maps[1], maps[2]
+
+    @torch.no_grad()
     def trace_lens_rays(
         self,
         rays_per_pixel: int = 8,
@@ -350,10 +406,10 @@ class DeepLensOptics(OpticsModel):
         """Trace every sensor pixel through the lens into object space (see `LensRays`).
 
         Each pixel gets ``rays_per_pixel`` rays per RGB wavelength: a jittered
-        point inside the pixel aimed at a stratified point of the exit pupil disk,
-        enlarged by ``overfill`` so off-axis bundles are not cut by the sampling
-        (the stop then blocks what does not pass). Rays are traced backward
-        (sensor -> object) with DeepLens' own surface tracer.
+        point inside the pixel aimed at a stratified point of the disk on the exit
+        pupil plane through which that pixel's light passes (`_ray_aim`; the
+        pupil enlarged by ``overfill`` bounds it), so the stop blocks few of them.
+        Rays are traced backward (sensor -> object) with DeepLens' own surface tracer.
 
         ``candidates``: each pixel traces ``candidates x rays_per_pixel`` rays and
         keeps ``rays_per_pixel`` that pass the lens, in random order. Strongly
@@ -375,6 +431,7 @@ class DeepLensOptics(OpticsModel):
         pz, pr = float(pz), float(pr) * overfill
         wvlns = self.wavelengths_rgb_um
         g = torch.Generator(device=dev).manual_seed(seed)
+        aim_x, aim_y, aim_r = (a.reshape(-1) for a in self._ray_aim(K, pz, pr))
 
         origin = torch.empty(len(wvlns), H, W, n, 2, dtype=torch.float16, device=dev)
         tan_res = torch.empty_like(origin)
@@ -392,13 +449,16 @@ class DeepLensOptics(OpticsModel):
             dx, dy = concentric_disk(pu, pv)
             c, s_ = torch.cos(rot), torch.sin(rot)
             dx, dy = dx * c - dy * s_, dx * s_ + dy * c
+            pix = (sv0.long() * W + su0.long())[:, None]  # pixel -> its aiming disk
+            dx = aim_x[pix] + dx * aim_r[pix]
+            dy = aim_y[pix] + dy * aim_r[pix]
             su = su0[:, None] - 0.5 + ju  # sample position in pixel coordinates
             sv = sv0[:, None] - 0.5 + jv
             # Upright image -> sensor: the lens inverts the image (object +x, +y land at -x, -y).
             xs = -(su - K.cx) * pitch
             ys = (sv - K.cy) * pitch
             o = torch.stack([xs, ys, torch.full_like(xs, zs)], -1).reshape(-1, 3)
-            t = torch.stack([dx * pr, dy * pr, torch.full_like(dx, pz)], -1).reshape(-1, 3)
+            t = torch.stack([dx, dy, torch.full_like(dx, pz)], -1).reshape(-1, 3)
             d = t - o
             cos4 = ((-d[:, 2]) / d.norm(dim=-1)) ** 4  # cos^4 of the sensor-side angle
             out = []
