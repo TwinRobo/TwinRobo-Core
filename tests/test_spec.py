@@ -4,6 +4,7 @@ import pytest
 import yaml
 
 from twinrobo import CameraSpec, SpecError
+from twinrobo.registry import BUILTIN_CATALOG
 
 
 def test_example_spec_loads(example_spec_path):
@@ -66,9 +67,9 @@ def test_overrides_reconfigure_the_same_camera(example_spec_path):
 def test_catalog_lens_reference(tmp_path, example_spec_path):
     """A spec outside the catalog can reuse a catalog lens as ``catalog:<id>/lens.json``."""
     raw = yaml.safe_load(example_spec_path.read_text())
-    raw["lens"]["deeplens_model"]["path"] = "catalog:examples/cellphone80deg/lens.json"
+    raw["lens"]["deeplens_model"]["path"] = "catalog:stereolabs/zed-x/2.2mm/lens.json"
     spec = CameraSpec.from_dict(raw, base_dir=tmp_path)
-    assert spec.lens.deeplens_model.path == example_spec_path.parent / "lens.json"
+    assert spec.lens.deeplens_model.path == BUILTIN_CATALOG / "stereolabs/zed-x/2.2mm/lens.json"
 
 
 def test_outputs_depth(tmp_path):

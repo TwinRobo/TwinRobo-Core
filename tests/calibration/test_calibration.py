@@ -2,6 +2,7 @@
 
 import math
 import shutil
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -181,9 +182,10 @@ def test_fit_focus_recovers_a_known_focus():
     from twinrobo.calibration import fit_focus
     from twinrobo.calibration.sharpness import model_mtf
     from twinrobo.camera import build_reference_optics
-    from twinrobo.registry import BUILTIN_CATALOG
 
-    spec = CameraSpec.from_yaml(BUILTIN_CATALOG / "examples" / "cellphone80deg" / "camera.yaml")
+    spec = CameraSpec.from_yaml(
+        Path(__file__).resolve().parent.parent / "data" / "cellphone80deg" / "camera.yaml"
+    )
     optics = build_reference_optics(spec, device="cuda" if torch.cuda.is_available() else "cpu")
     optics.set_focus(0.8)  # the "real" camera
     ms = []

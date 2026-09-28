@@ -20,7 +20,7 @@ from twinrobo.datasets.libero import CameraTwinLiberoEnv, make_env
 from twinrobo.registry import BUILTIN_CATALOG
 
 ROOT = Path(__file__).resolve().parents[1]
-SPEC = BUILTIN_CATALOG / "examples" / "cellphone80deg" / "camera.yaml"
+SPEC = BUILTIN_CATALOG / "stereolabs" / "zed-x" / "2.2mm" / "camera.yaml"  # a catalog camera
 OUT = ROOT / "outputs/04_libero"
 
 

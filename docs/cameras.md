@@ -26,9 +26,6 @@ The full list, with each entry's sensor, lens and field of view, is the
 | Logitech | C920 HD Pro Webcam | |
 | Raspberry Pi | Camera Module 3, Camera Module 3 Wide | |
 
-`examples/cellphone80deg` is a teaching example: a DeepLens
-design lens on a hypothetical sensor, not a real camera.
-
 ## Depth output
 
 TwinRobo simulates what cameras **image**. It does not yet simulate what depth

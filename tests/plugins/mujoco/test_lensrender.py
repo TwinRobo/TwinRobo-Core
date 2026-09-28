@@ -1,6 +1,7 @@
 """Lens-ray rendering (pupil raster, ray cast): geometry, occlusion, shading, agreement."""
 
 import os
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -10,9 +11,8 @@ os.environ.setdefault("MUJOCO_GL", "egl")
 pytest.importorskip("deeplens")
 
 from twinrobo import CameraSpec, CameraTwin  # noqa: E402
-from twinrobo.registry import BUILTIN_CATALOG  # noqa: E402
 
-SPEC = BUILTIN_CATALOG / "examples" / "cellphone80deg" / "camera.yaml"
+SPEC = Path(__file__).resolve().parent.parent.parent / "data" / "cellphone80deg" / "camera.yaml"
 DEV = "cuda" if torch.cuda.is_available() else "cpu"
 
 

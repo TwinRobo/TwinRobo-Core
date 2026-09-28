@@ -16,7 +16,7 @@ import numpy as np
 
 WIDTH = 640  # playground images: every camera read out at this width (its own aspect)
 METHODS = ("psf", "pupil", "raycast")
-SKIP = {"examples/cellphone80deg"}  # the teaching example is not a product
+SKIP: set[str] = set()  # catalog ids to leave out
 
 
 def cameras() -> list[str]:

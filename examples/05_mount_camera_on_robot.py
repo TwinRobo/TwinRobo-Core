@@ -28,7 +28,6 @@ ROOT = Path(__file__).resolve().parents[1]
 CAMERAS = {  # catalog id -> label
     "stereolabs/zed-x/2.2mm": "ZED X · 2.2 mm (110° HFoV)",
     "stereolabs/zed-x/4mm": "ZED X · 4 mm (75° HFoV)",
-    "examples/cellphone80deg": "Cellphone lens (80° DFoV)",
 }
 # On the wrist link, 8 cm ahead of the flange, aimed at the objects in the bin
 # (yaw, pitch, roll in the link's frame; see twinrobo.plugins.mujoco.mounts).

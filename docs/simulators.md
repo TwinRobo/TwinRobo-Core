@@ -30,7 +30,7 @@ from twinrobo import CameraTwin
 from twinrobo.datasets.libero import CameraTwinLiberoEnv, make_env
 
 env, task, init_states = make_env("libero_spatial", 0, resolution=128)
-twin = CameraTwin.from_catalog("examples/cellphone80deg")
+twin = CameraTwin.from_catalog("stereolabs/zed-x/2.2mm")
 env = CameraTwinLiberoEnv(env, {"agentview": twin})
 env.seed(0)
 env.reset()

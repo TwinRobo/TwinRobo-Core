@@ -1,5 +1,7 @@
 """DeepLens adapter: loading (Phase 0 exit), PSF banks, cache, and agreement with the reference."""
 
+from pathlib import Path
+
 import pytest
 import torch
 
@@ -10,7 +12,6 @@ import yaml  # noqa: E402
 from twinrobo import CameraSpec, CameraTwin  # noqa: E402
 from twinrobo.optics import DenseDepthRenderer, PSFCache  # noqa: E402
 from twinrobo.optics.deeplens import DeepLensOptics  # noqa: E402
-from twinrobo.registry import BUILTIN_CATALOG  # noqa: E402
 from twinrobo.utils.synthetic import slanted_plane  # noqa: E402
 from twinrobo.validation.optics import compare_to_reference  # noqa: E402
 
@@ -21,7 +22,7 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 def optics(request):
 
     return DeepLensOptics(
-        BUILTIN_CATALOG / "examples" / "cellphone80deg" / "lens.json",
+        Path(__file__).resolve().parent.parent / "data" / "cellphone80deg" / "lens.json",
         sensor_resolution=(320, 200),
         focus_distance_m=2.0,
         device=DEVICE,
@@ -124,7 +125,7 @@ def test_runtime_renderer_matches_reference(optics):
 def test_infinity_focus(optics):
 
     inf = DeepLensOptics(
-        BUILTIN_CATALOG / "examples" / "cellphone80deg" / "lens.json",
+        Path(__file__).resolve().parent.parent / "data" / "cellphone80deg" / "lens.json",
         sensor_resolution=(320, 200),
         focus_distance_m=float("inf"),
         device=DEVICE,

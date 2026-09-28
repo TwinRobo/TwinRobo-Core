@@ -5,6 +5,7 @@ white wall 3 m away and a small red marker at a known 3D point.
 """
 
 import importlib.util
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -51,10 +52,11 @@ def stage(app):
 @pytest.fixture(scope="module")
 def twin():
     from twinrobo import CameraSpec, CameraTwin
-    from twinrobo.registry import BUILTIN_CATALOG
 
     spec = CameraSpec.from_yaml(
-        BUILTIN_CATALOG / "examples" / "cellphone80deg" / "camera.yaml", width=320, height=200
+        Path(__file__).resolve().parent.parent.parent / "data" / "cellphone80deg" / "camera.yaml",
+        width=320,
+        height=200,
     )
     return CameraTwin.from_spec(spec, device="cuda")
 

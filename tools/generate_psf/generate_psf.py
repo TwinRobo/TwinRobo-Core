@@ -1,6 +1,6 @@
 """Precompute (or refresh) the PSF bank for a CameraSpec into the PSF cache.
 
-python tools/generate_psf/generate_psf.py twinrobo/catalog/examples/cellphone80deg/camera.yaml
+python tools/generate_psf/generate_psf.py twinrobo/catalog/stereolabs/zed-x/2.2mm/camera.yaml
 """
 
 import argparse

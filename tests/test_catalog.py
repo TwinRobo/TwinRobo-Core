@@ -13,7 +13,7 @@ MODULES = ModuleRegistry([BUILTIN_CATALOG]).list()
 
 
 def test_catalog_is_not_empty():
-    assert "stereolabs/zed-x/2.2mm" in CAMERAS and "examples/cellphone80deg" in CAMERAS
+    assert "stereolabs/zed-x/2.2mm" in CAMERAS
     assert MODULES
 
 

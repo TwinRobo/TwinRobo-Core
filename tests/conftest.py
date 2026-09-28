@@ -2,9 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from twinrobo.registry import BUILTIN_CATALOG
-
 
 @pytest.fixture
 def example_spec_path() -> Path:
-    return BUILTIN_CATALOG / "examples" / "cellphone80deg" / "camera.yaml"
+    """A camera for tests: a DeepLens design lens on a hypothetical sensor (not in the catalog)."""
+    return Path(__file__).resolve().parent / "data" / "cellphone80deg" / "camera.yaml"

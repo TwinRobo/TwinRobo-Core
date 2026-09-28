@@ -5,6 +5,7 @@ along -Z at a matte wall 3 m away.
 """
 
 import importlib.util
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -20,10 +21,9 @@ POST_Z = 0.3  # a thin black post 30 cm in front of the camera (focus: 3 m)
 
 def small_twin(build_psf=False):
     from twinrobo import CameraSpec, CameraTwin
-    from twinrobo.registry import BUILTIN_CATALOG
 
     spec = CameraSpec.from_yaml(
-        BUILTIN_CATALOG / "examples" / "cellphone80deg" / "camera.yaml",
+        Path(__file__).resolve().parent.parent.parent / "data" / "cellphone80deg" / "camera.yaml",
         width=320,
         height=200,
         focus_distance_m=3.0,

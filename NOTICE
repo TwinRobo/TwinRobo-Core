@@ -15,7 +15,7 @@ DeepLens (https://github.com/vccimaging/DeepLens)
   Used as an installed dependency (pinned commit, see pyproject.toml); not vendored.
 
   Redistributed file:
-    twinrobo/catalog/examples/cellphone80deg/lens.json
+    tests/data/cellphone80deg/lens.json (a test fixture)
       Copied unmodified from DeepLens datasets/lenses/cellphone/cellphone80deg.json
       (commit 278e4f720a4549187a51edaea57bb658548911ce, tag v2.5.4).
 

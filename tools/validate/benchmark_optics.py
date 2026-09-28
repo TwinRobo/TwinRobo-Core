@@ -12,12 +12,11 @@ import torch
 
 from twinrobo.optics import DenseDepthRenderer
 from twinrobo.optics.deeplens import DeepLensOptics, deeplens_version
-from twinrobo.registry import BUILTIN_CATALOG
 from twinrobo.utils.synthetic import fronto_plane, occluder_scene, slanted_plane
 from twinrobo.validation.optics import compare_to_reference, point_response_check, psnr, timed
 
 ROOT = Path(__file__).resolve().parents[2]
-LENS = BUILTIN_CATALOG / "examples" / "cellphone80deg" / "lens.json"
+LENS = ROOT / "tests" / "data" / "cellphone80deg" / "lens.json"  # the reference lens (DeepLens)
 
 
 def main():
