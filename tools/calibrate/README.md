@@ -1,7 +1,6 @@
 # tools/calibrate
 
-Placeholder for calibration tooling: fitting a catalog entry's intrinsics,
-distortion, blur and focus from captures of a real unit (slanted edges and
-ChArUco boards at several distances, flat fields for vignetting), to move an
-entry from `estimated` to `measured`. Contributions welcome; see
-[CONTRIBUTING](../../CONTRIBUTING.md).
+Calibration lives in the package: `python -m twinrobo.calibration --help`, or the
+[calibration guide](../../docs/calibration.md). It fits a real unit's intrinsics,
+distortion, focus and vignetting (and a stereo module's baseline) from ChArUco,
+slanted-edge and flat-field captures, and writes a `measured` catalog entry.

@@ -155,6 +155,14 @@ class DeepLensOptics(OpticsModel):
     # PSF generation
     # ------------------------------------------------------------------
     @torch.no_grad()
+    def set_focus(self, focus_distance_m: float) -> None:
+        """Refocus the lens to an object distance in meters (``inf`` = infinity)."""
+        if not focus_distance_m > 0:
+            raise ValueError("focus_distance_m must be positive (meters) or inf")
+        self.focus_distance_m = float(focus_distance_m)
+        foc = float("inf") if math.isinf(focus_distance_m) else -float(focus_distance_m) * M_TO_MM
+        self._lens.refocus(foc_dist=foc)
+
     def generate_psf(
         self,
         field_positions: Tensor | Sequence[Sequence[float]],
