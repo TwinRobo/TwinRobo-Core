@@ -5,11 +5,7 @@ hide:
 nav_icon: material/robot-industrial
 ---
 
-# Simulator
-
-Catalog cameras on a real robot setting: a LIBERO and a RoboCasa demo replayed
-through the cameras on the robot's wrist. Pick a camera and a rendering method,
-then play; the 3D scene shows where every camera looks.
+<h1 class="tr-sr-only">Try in Simulator</h1>
 
 <div class="tr-demo" markdown="0"><iframe src="https://twinrobo.github.io/TwinRobo-Preview/" title="TwinRobo Preview" loading="lazy" allow="fullscreen"></iframe></div>
 <p class="tr-demo-cap"><a href="https://twinrobo.github.io/TwinRobo-Preview/" target="_blank" rel="noopener">Open full screen</a> · <a href="https://github.com/TwinRobo/TwinRobo-Preview" target="_blank" rel="noopener">TwinRobo-Preview</a> (precomputed with TwinRobo Studio; runs in the browser)</p>

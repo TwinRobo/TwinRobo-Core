@@ -36,7 +36,7 @@ from twinrobo import CameraTwin
 # The first call builds the PSF bank with DeepLens (~20 s on a GPU) and caches it
 # under $TWINROBO_CACHE/psf (default ~/.cache/twinrobo/psf); later calls load it.
 camera = CameraTwin.from_catalog("stereolabs/zed-x/2.2mm")
-frame = camera.process(rgb, depth)  # linear RGB [B,3,H,W] + metric depth [B,1,H,W], on GPU
+frame = camera.process(rgb, depth)  # in: linear RGB [B,3,H,W], metric depth [B,1,H,W], on GPU
 frame.rgb_ideal, frame.rgb_optical, frame.rgb
 ```
 

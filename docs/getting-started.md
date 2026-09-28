@@ -54,11 +54,11 @@ wrist = CameraMount("wrist", body="robot0_right_hand", pos=(0.08, 0, 0), rpy_deg
 
 # 3. Render what that camera would record.
 with mounted(env.sim.model._model, env.sim.data._data, wrist) as host:
-    frame = MujocoCameraTwin(twin, RobosuiteRenderer(env), camera=host).get_frame()
+    frame = MujocoCameraTwin(twin, RobosuiteRenderer(env), camera=host).get_frame(force_depth=True)
 
 image = to_uint8(frame.rgb)          # the real camera's image, uint8 [H, W, 3]
 pinhole = to_uint8(frame.rgb_ideal)  # the simulator's ideal pinhole, same camera
-depth = frame.depth[0, 0]            # metric z-depth (m), aligned to the image
+depth = frame.depth[0, 0]            # ground-truth z-depth (m): a label, the ZED X outputs none
 ```
 
 The first call builds the lens's PSF bank with DeepLens (about 20 s on a GPU)
@@ -79,7 +79,8 @@ MUJOCO_GL=egl python examples/05_mount_camera_on_robot.py   # writes outputs/05_
 - **Close-up:** the same patch at native resolution; the real lens softens the
   lettering, as the camera would.
 - **Difference ×4:** where the optics change the image.
-- **Depth:** metric z-depth, aligned pixel for pixel with the camera's image.
+- **Ground-truth depth:** the simulator's metric z-depth, aligned pixel for pixel with the
+  camera's image; a label for training, not an output of the camera (`force_depth=True`).
 
 ## Next steps
 

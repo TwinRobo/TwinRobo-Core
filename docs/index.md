@@ -78,7 +78,7 @@ so perception trained in simulation meets the same image on the robot.</p>
 | `psf`: pinhole + lens blur and distortion | :material-check-bold: | :material-check-bold: |
 | `pupil`: lens rays across the aperture | :material-check-bold: | :material-check-bold: |
 | `raycast`: lens rays cast into the scene | :material-check-bold: | :material-check-bold: |
-| RGB + metric depth, on the GPU | :material-check-bold: | :material-check-bold: |
+| RGB on the GPU, ground-truth depth on request | :material-check-bold: | :material-check-bold: |
 | Cameras on robot links, stereo modules | :material-check-bold: | any USD camera prim |
 | Setup | `pip install` | Docker recipe included |
 
@@ -92,7 +92,7 @@ so perception trained in simulation meets the same image on the robot.</p>
 
     twin = CameraTwin.from_catalog("stereolabs/zed-x/2.2mm")
     cam = MujocoCameraTwin(twin, MujocoRenderer(model, data), camera="wrist")
-    frame = cam.get_frame()          # frame.rgb, frame.depth, on the GPU
+    frame = cam.get_frame()          # frame.rgb: the camera's image, on the GPU
     ```
 
 === "Isaac Sim"
@@ -123,7 +123,7 @@ so perception trained in simulation meets the same image on the robot.</p>
     from twinrobo import CameraTwin
 
     twin = CameraTwin.from_catalog("stereolabs/zed-x/2.2mm")
-    frame = twin.process(rgb, depth) # linear RGB [B,3,H,W] + metric depth [B,1,H,W]
+    frame = twin.process(rgb, depth) # in: linear RGB [B,3,H,W], metric depth [B,1,H,W]
     ```
 
 ## Validated in both simulators

@@ -123,7 +123,7 @@ from twinrobo.plugins.isaac import IsaacCameraTwin
 twin = CameraTwin.from_catalog("stereolabs/zed-x/2.2mm")
 cam = IsaacCameraTwin(twin, "/World/Camera")  # any UsdGeom.Camera prim
 frame = cam.get_frame()                       # renders, then runs the optics
-frame.rgb, frame.depth                        # linear RGB and metric z-depth, on the GPU
+frame.rgb                                     # linear RGB on the GPU (force_depth=True for depth)
 cam.close()                                   # removes what it added to the stage
 ```
 

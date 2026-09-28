@@ -94,7 +94,6 @@ def camera_entry(path: Path, spec: dict) -> dict:
     s, lens = spec["sensor"], spec["lens"]
     res = s["resolution"]
     fov = pinhole_fov(spec)
-    words = f"{s.get('model') or ''} {spec.get('product') or ''}".lower()
     calib = spec.get("calibration") or {}
     return {
         "id": spec["id"],
@@ -105,7 +104,7 @@ def camera_entry(path: Path, spec: dict) -> dict:
         "height": res["height"],
         "pitch_um": s.get("pixel_pitch_um"),
         "shutter": (s.get("shutter") or {}).get("type") or "",
-        "mono": "mono" in words,
+        "mono": s.get("color") == "mono",
         "focal_mm": lens.get("focal_length_mm"),
         "f_number": lens.get("f_number"),
         "focus_m": lens.get("focus_distance_m"),
@@ -118,7 +117,11 @@ def camera_entry(path: Path, spec: dict) -> dict:
     }
 
 
-cams = [camera_entry(p, c) for p, c in cameras]
+# Near-infrared cameras (e.g. RealSense IR imagers) are left out: TwinRobo renders visible
+# light, so their images would not show what they see (ROADMAP.md).
+shown = [(p, c) for p, c in cameras if (c["sensor"].get("spectrum") or "visible") != "nir"]
+cams = [camera_entry(p, c) for p, c in shown]
+listed = {c["id"] for c in cams}
 with mkdocs_gen_files.open("assets/catalog.json", "w") as f:
     json.dump({"cameras": cams, "modules": mods, "status": STATUS}, f, indent=1)
 
@@ -132,22 +135,67 @@ lines = [
     "nav_icon: material/camera-iris",
     "---",
     "",
-    "# Camera catalog",
+    # a title for screen readers and search only (Material adds a visible one otherwise)
+    '<h1 class="tr-sr-only">Camera catalog</h1>',
     "",
     BROWSER,
     "",
+    "## Cameras",
+    "",
+    "| Camera | ID | Sensor | Lens | FoV (H × V) | Status | |",
+    "|---|---|---|---|---|---|---|",
+]
+SHOW = '<a class="trc-show" href="#cam={id}" data-camera="{id}">Show in browser</a>'
+SHOW_OFF = '<span class="trc-show is-off" aria-disabled="true" title="{tip}">Show in browser</span>'
+TIP_NIR = (
+    "Not viewable in the browser yet: a near-infrared camera, and TwinRobo renders visible "
+    "light (see the roadmap)"
+)
+TIP_NONE = "No in-browser preview yet: this camera's views have not been rendered for the docs"
+# the table lists every camera (the browser leaves near-infrared ones out)
+table = [
+    {**camera_entry(p, c), "nir": (c["sensor"].get("spectrum") or "visible") == "nir"}
+    for p, c in cameras
+]
+for c in sorted(table, key=lambda c: (c["maker"], c["product"])):
+    sensor = ", ".join(
+        x
+        for x in (
+            f"{c['width']}×{c['height']}",
+            f"{c['pitch_um']} µm" if c["pitch_um"] else "",
+            c["shutter"],
+            "mono" if c["mono"] else "",
+        )
+        if x
+    )
+    lens = f"{c['focal_mm']} mm" + (f" f/{c['f_number']}" if c["f_number"] else "")
+    fov = f"{c['fov'][0]:.0f}° × {c['fov'][1]:.0f}°" if c["fov"] else "from the lens file"
+    if c["views"] and not c["nir"]:  # the page script loads it into the viewer above
+        show = SHOW.format(id=c["id"])
+    else:
+        show = SHOW_OFF.format(tip=TIP_NIR if c["nir"] else TIP_NONE)
+    lines.append(
+        f"| {c['maker']} {c['product']} | [`{c['id']}`]({c['yaml']}) | {sensor} | {lens} | {fov} "
+        f"| {STATUS.get(c['status'], c['status'])} | {show} |"
+    )
+lines += [
+    "",
     "## Stereo modules",
     "",
-    "| Module | Product | Baseline | Eyes | Output |",
-    "|---|---|---|---|---|",
+    "| Module | ID | Baseline | Eyes | Output | |",
+    "|---|---|---|---|---|---|",
 ]
-for m in mods:
-    # the page script shows the eye in the viewer (#cam=... is its state, not a heading)
+TIP_STEREO = (
+    "Not viewable in the browser yet: stereo modules (both eyes together) are not rendered "
+    "for the docs; its eyes are listed above"
+)
+for m in sorted(mods, key=lambda m: m["name"]):
+    # an eye shown in the viewer links to it (#cam=... is the page script's state)
     link = '<a href="#cam={0}" data-camera="{0}"><code>{0}</code></a>'
-    eyes = ", ".join(link.format(e) for e in m["eyes"])
+    eyes = ", ".join(link.format(e) if e in listed else f"`{e}` (IR)" for e in m["eyes"])
     lines.append(
-        f"| [`{m['id']}`]({m['yaml']}) | {m['name']} | {m['baseline_mm']:.0f} mm "
-        f"| {eyes or '–'} | {m['output']} |"
+        f"| {m['name']} | [`{m['id']}`]({m['yaml']}) | {m['baseline_mm']:.0f} mm "
+        f"| {eyes or '–'} | {m['output']} | {SHOW_OFF.format(tip=TIP_STEREO)} |"
     )
 lines += [
     "",
@@ -162,7 +210,9 @@ lines += [
     "    simulates what cameras image, not yet what depth cameras measure",
     "    ([depth output](cameras.md#depth-output)). Images are 640 px wide, rendered",
     "    offline with [`tools/docs/playground`](" + REPO + "/tree/main/tools/docs/playground).",
-    "    For cameras on a robot, see the [simulator demo](playground.md).",
+    "    For cameras on a robot, see the [simulator demo](playground.md). Near-infrared",
+    "    cameras (the RealSense IR imagers) are not shown: TwinRobo renders visible light",
+    "    ([roadmap](" + REPO + "/blob/main/ROADMAP.md#infrared-cameras)).",
     "",
     '!!! tip "Your camera is missing?"',
     "    [Add it](contributing.md#adding-a-camera): an entry is a `camera.yaml` and a lens",

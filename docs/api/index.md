@@ -23,8 +23,9 @@ from twinrobo.plugins.mujoco import MujocoCameraTwin, MujocoRenderer
 twin = CameraTwin.from_catalog("stereolabs/zed-x/2.2mm")      # a real camera
 cam = MujocoCameraTwin(twin, MujocoRenderer(model, data), camera="wrist")
 frame = cam.get_frame()                                         # CameraFrame
-frame.rgb, frame.depth                                          # on the GPU
+frame.rgb                                                       # the camera's image, on the GPU
 ```
 
 Tensors follow one convention everywhere: `rgb` is linear `[B, 3, H, W]`,
-`depth` is metric z-depth `[B, 1, H, W]` in meters (see [`twinrobo.frame`](core.md#twinrobo.frame)).
+`depth` is metric z-depth `[B, 1, H, W]` in meters: an input (it sets the defocus),
+and an output only with `force_depth=True`, as ground truth (see [`twinrobo.frame`](core.md#twinrobo.frame)).

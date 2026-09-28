@@ -897,3 +897,35 @@
   height: 100%;
   fill: #fff;
 }
+/* a heading for screen readers and search only */
+.md-typeset .tr-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+/* catalog table: "Show in browser" (greyed out without a preview) */
+.md-typeset .trc-show {
+  display: inline-block;
+  white-space: nowrap;
+  font-size: 0.64rem;
+  font-weight: 650;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  color: #fff;
+  background: var(--tr-grad);
+}
+.md-typeset a.trc-show:hover {
+  color: #fff;
+  filter: brightness(1.08);
+}
+.md-typeset .trc-show.is-off {
+  color: var(--md-default-fg-color--lighter);
+  background: var(--md-default-fg-color--lightest);
+  cursor: not-allowed;
+}

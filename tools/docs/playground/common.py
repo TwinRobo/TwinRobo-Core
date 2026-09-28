@@ -24,7 +24,8 @@ def cameras() -> list[str]:
 
     reg = CatalogRegistry()
     ids = sorted(e.id if hasattr(e, "id") else e for e in reg.list())
-    return [i for i in ids if i not in SKIP]
+    # near-infrared cameras: TwinRobo renders visible light, so their views would mislead
+    return [i for i in ids if i not in SKIP and reg.load(i).sensor.spectrum != "nir"]
 
 
 def spec_for(camera_id: str):

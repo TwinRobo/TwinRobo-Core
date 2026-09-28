@@ -20,7 +20,7 @@ The full list, with each entry's sensor, lens and field of view, is the
 
 | Vendor | Cameras | Stereo modules (baseline) |
 |---|---|---|
-| Intel RealSense | D435 / D435i color and depth imager, D455 color and depth imager | D435 (50 mm), D455 (95 mm) |
+| Intel RealSense | D435 / D435i color and IR imager, D455 color and IR imager | D435 (50 mm), D455 (95 mm) |
 | Stereolabs | ZED X 2.2 mm and 4 mm eyes, ZED 2i 2.1 mm eye | ZED X (120 mm), ZED X Mini (50 mm), ZED 2i (120 mm) |
 | Luxonis | OAK-D color and mono | OAK-D (75 mm) |
 | Logitech | C920 HD Pro Webcam | |

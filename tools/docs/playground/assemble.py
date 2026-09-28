@@ -17,6 +17,8 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
+from twinrobo import CatalogRegistry
+
 ROOT = Path(__file__).resolve().parents[3]
 SOURCES = [ROOT / "outputs/playground", ROOT / "outputs/isaac/playground"]
 METHODS = {
@@ -33,8 +35,6 @@ def slug(camera_id: str) -> str:
 
 def outputs_depth(camera_id: str) -> bool:
     """Whether the real camera delivers depth (its spec's ``outputs.depth``)."""
-    from twinrobo import CatalogRegistry
-
     return CatalogRegistry().load(camera_id).outputs.depth
 
 
@@ -66,6 +66,8 @@ def assemble(out: Path) -> dict:
             scene["depth_m"] = [round(near, 3), round(far, 3)]
             cams = []
             for cam, depth in zip(meta["cameras"], depths, strict=True):
+                if CatalogRegistry().load(cam["id"]).sensor.spectrum == "nir":
+                    continue  # near-IR cameras: not rendered in their own light
                 dst = out / scene["id"] / slug(cam["id"])
                 dst.mkdir(parents=True, exist_ok=True)
                 for name in ["pinhole", *METHODS]:

@@ -36,7 +36,7 @@ models of their products.
 | `psf`: pinhole + lens blur and distortion | ✅ | ✅ |
 | `pupil`: lens rays across the aperture | ✅ | ✅ |
 | `raycast`: lens rays cast into the scene | ✅ | ✅ |
-| RGB + metric depth, on the GPU | ✅ | ✅ |
+| RGB on the GPU, ground-truth depth on request | ✅ | ✅ |
 | Cameras on robot links, stereo modules | ✅ | any USD camera prim |
 | Setup | `pip install` | Docker recipe included |
 
@@ -127,11 +127,11 @@ wrist = CameraMount("wrist", body="robot0_right_hand", pos=(0.08, 0, 0), rpy_deg
 
 # 3. Render what that camera would record.
 with mounted(env.sim.model._model, env.sim.data._data, wrist) as host:
-    frame = MujocoCameraTwin(twin, RobosuiteRenderer(env), camera=host).get_frame()
+    frame = MujocoCameraTwin(twin, RobosuiteRenderer(env), camera=host).get_frame(force_depth=True)
 
 image = to_uint8(frame.rgb)  # the real camera's image, uint8 [H, W, 3]
 pinhole = to_uint8(frame.rgb_ideal)  # the simulator's ideal pinhole, same camera
-depth = frame.depth[0, 0]  # metric z-depth (m), aligned to the image
+depth = frame.depth[0, 0]  # ground-truth z-depth (m): a label, the ZED X outputs none
 ```
 
 The first call builds the lens's PSF bank with DeepLens (about 20 s on a GPU)
@@ -157,7 +157,8 @@ Read it top to bottom:
   lettering, as the camera would.
 - **Difference ×4:** where the optics change the image: distortion shifts
   edges for the 2.2 mm lens; blur changes edges and texture for the others.
-- **Depth:** metric z-depth, aligned pixel for pixel with the camera's image.
+- **Ground-truth depth:** the simulator's metric z-depth, aligned pixel for pixel with the
+  camera's image; a label for training, not an output of the camera (`force_depth=True`).
 
 ### Next steps
 
@@ -171,7 +172,7 @@ Read it top to bottom:
 
   twin = CameraTwin.from_catalog("stereolabs/zed-x/2.2mm", build_psf=False)
   cam = IsaacCameraTwin(twin, "/World/Camera", render="raycast")
-  frame = cam.get_frame()  # frame.rgb, frame.depth: the ZED X's view, on the GPU
+  frame = cam.get_frame()  # frame.rgb: the ZED X's view, on the GPU
   ```
 
   `docker/isaac/run.sh examples/01_isaac_camera.py --render raycast` renders the
@@ -188,7 +189,8 @@ Read it top to bottom:
   ```
 
 - **An RGB-D frame from any source:** `twin.process(rgb, depth)` takes linear
-  RGB `[B,3,H,W]` and metric depth `[B,1,H,W]` on the GPU.
+  RGB `[B,3,H,W]` and metric depth `[B,1,H,W]` on the GPU (depth sets each pixel's
+  defocus) and returns the camera's image.
 - **Your own camera:** copy a catalog spec, or add one for everyone; see
   [Cameras](docs/cameras.md) and [CONTRIBUTING](CONTRIBUTING.md#adding-a-camera).
 
@@ -219,7 +221,7 @@ aperture, and the scene's triangles.
 
 | Vendor | Cameras | Stereo modules (baseline) |
 |---|---|---|
-| Intel RealSense | D435 / D435i color and depth imager, D455 color and depth imager | D435 (50 mm), D455 (95 mm) |
+| Intel RealSense | D435 / D435i color and IR imager, D455 color and IR imager | D435 (50 mm), D455 (95 mm) |
 | Stereolabs | ZED X 2.2 mm and 4 mm eyes, ZED 2i 2.1 mm eye | ZED X (120 mm), ZED X Mini (50 mm), ZED 2i (120 mm) |
 | Luxonis | OAK-D color and mono | OAK-D (75 mm) |
 | Logitech | C920 HD Pro Webcam | |
