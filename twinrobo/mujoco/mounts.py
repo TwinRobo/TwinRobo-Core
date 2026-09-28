@@ -74,6 +74,7 @@ class CameraMount:
     rpy_deg: tuple[float, float, float] = (0.0, 0.0, 0.0)  # yaw, pitch, roll
     fovy: float = 60.0
     module: str | None = None  # stereo module id: this mount is its left eye (see expand_mount)
+    baseline_mm: float | None = None  # a stereo module's baseline, if not the catalog one
 
     def __post_init__(self):
         self.pos = tuple(float(v) for v in self.pos)
@@ -85,6 +86,12 @@ class CameraMount:
             raise ValueError("fovy must be within [1, 170] degrees")
         if not self.name or not all(c.isalnum() or c in "_-" for c in self.name):
             raise ValueError("camera name: letters, digits, _ and - only")
+        if self.baseline_mm is not None:
+            if not self.module:
+                raise ValueError("baseline_mm is for stereo module mounts (set module)")
+            self.baseline_mm = float(self.baseline_mm)
+            if not 1.0 <= self.baseline_mm <= 2000.0:
+                raise ValueError("baseline_mm must be within [1, 2000] mm")
 
     def rotation(self) -> np.ndarray:
         """Body-frame rotation whose columns are the camera's x, y, z axes."""
@@ -102,6 +109,8 @@ class CameraMount:
         d = asdict(self)
         d["pos"], d["rpy_deg"] = list(self.pos), list(self.rpy_deg)
         d["quat"] = [float(v) for v in self.quat()]  # for the 3D view
+        if d["baseline_mm"] is None:  # the module's own baseline: nothing to store
+            del d["baseline_mm"]
         return d
 
     @classmethod
@@ -113,6 +122,7 @@ class CameraMount:
             rpy_deg=d.get("rpy_deg", (0, 0, 0)),
             fovy=d.get("fovy", 60.0),
             module=d.get("module") or None,
+            baseline_mm=d.get("baseline_mm"),
         )
 
 
@@ -343,6 +353,55 @@ def snap_to_body(
     )
 
 
+def mount_module(mount: CameraMount, modules=None):
+    """The stereo module of a mount, at the mount's baseline (``baseline_mm``) if it sets one."""
+    from ..stereo import ModuleRegistry
+
+    module = (modules or ModuleRegistry()).load(mount.module)
+    if mount.baseline_mm is not None:
+        module = module.with_baseline(mount.baseline_mm / 1000)
+    return module
+
+
+def pair_baseline(model, left: str, right: str) -> float:
+    """Distance (m) between two cameras of a compiled model, in their parent body's frame."""
+    import mujoco
+
+    ids = [mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_CAMERA, c) for c in (left, right)]
+    if min(ids) < 0:
+        raise ValueError(f"no cameras {left!r} / {right!r} in the model")
+    return float(np.linalg.norm(model.cam_pos[ids[1]] - model.cam_pos[ids[0]]))
+
+
+def set_pair_baseline(model, left: str, right: str, baseline_m: float) -> float:
+    """Move a compiled stereo pair's eyes to ``baseline_m`` apart; returns the old baseline.
+
+    The eyes move symmetrically about their midpoint, along the line between them,
+    so the module stays centered where the robot mounts it. This adjusts a stereo pair
+    built into a robot model (e.g. the multi-camera arms' wrist module) without
+    rebuilding the model; call ``mj_forward`` (or ``sim.forward()``) before rendering.
+    Both cameras must share a parent body.
+    """
+    import mujoco
+
+    baseline_m = float(baseline_m)
+    if not 0.001 <= baseline_m <= 2.0:
+        raise ValueError(f"stereo baseline must be within 1 mm and 2 m, got {baseline_m} m")
+    ids = [mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_CAMERA, c) for c in (left, right)]
+    if min(ids) < 0:
+        raise ValueError(f"no cameras {left!r} / {right!r} in the model")
+    if model.cam_bodyid[ids[0]] != model.cam_bodyid[ids[1]]:
+        raise ValueError(f"{left!r} and {right!r} are on different bodies")
+    pl, pr = (np.array(model.cam_pos[i], dtype=np.float64) for i in ids)
+    old = float(np.linalg.norm(pr - pl))
+    if old == 0:
+        raise ValueError(f"{left!r} and {right!r} coincide; no baseline direction")
+    mid, axis = (pl + pr) / 2, (pr - pl) / old
+    model.cam_pos[ids[0]] = mid - axis * baseline_m / 2
+    model.cam_pos[ids[1]] = mid + axis * baseline_m / 2
+    return old
+
+
 def expand_mount(mount: CameraMount, modules=None) -> dict[str, CameraMount]:
     """The cameras a mount renders: itself, or a stereo module's two eyes.
 
@@ -351,9 +410,9 @@ def expand_mount(mount: CameraMount, modules=None) -> dict[str, CameraMount]:
     """
     if not mount.module:
         return {mount.name: mount}
-    from ..stereo import ModuleRegistry, eye_name, eye_poses
+    from ..stereo import eye_name, eye_poses
 
-    module = (modules or ModuleRegistry()).load(mount.module)
+    module = mount_module(mount, modules)
     out = {}
     for eye, (p, R) in eye_poses(module, mount.pos, mount.rotation()).items():
         n = eye_name(mount.name, eye)

@@ -77,3 +77,48 @@ def test_rectify_undoes_the_distortion():
     err_raw = (sensor[core] - pin[core]).abs().max()
     assert err_rect < 0.01  # two bilinear resamplings
     assert err_raw > 3 * err_rect  # and it was clearly distorted before
+
+
+def test_module_baseline_can_be_changed():
+    from twinrobo.stereo import ModuleRegistry
+
+    zed = ModuleRegistry().load("stereolabs/zed-x-mini/2.2mm")
+    wide = zed.with_baseline(0.09)
+    assert abs(wide.baseline_m - 0.09) < 1e-12 and abs(zed.baseline_m - 0.05) < 1e-12
+    assert wide.left == zed.left and wide.right.spec == zed.right.spec
+    assert wide.housing_mm[0] == pytest.approx(zed.housing_mm[0] + 40)
+    with pytest.raises(ValueError):
+        zed.with_baseline(0)
+
+
+def test_stereo_mount_baseline_override_round_trips():
+    mount = CameraMount(
+        "st",
+        pos=(0.5, -0.8, 1.4),
+        rpy_deg=(120, 25, 0),
+        module="stereolabs/zed-x-mini/2.2mm",
+        baseline_mm=75,
+    )
+    L, R = expand_mount(mount).values()
+    assert np.allclose(np.subtract(R.pos, L.pos), 0.075 * mount.rotation()[:, 0], atol=1e-5)
+    assert CameraMount.from_json(mount.to_json()) == mount
+    assert "baseline_mm" not in CameraMount("st", module="stereolabs/zed-x-mini/2.2mm").to_json()
+    with pytest.raises(ValueError, match="stereo module"):
+        CameraMount("mono", baseline_mm=60)
+
+
+def test_set_pair_baseline_moves_compiled_eyes_symmetrically():
+    mujoco = pytest.importorskip("mujoco")
+    from twinrobo.mujoco.mounts import pair_baseline, set_pair_baseline
+
+    model = mujoco.MjModel.from_xml_string(
+        """<mujoco><worldbody><body name="b" pos="1 2 3">
+             <camera name="L" pos="-0.025 0.1 0.2"/><camera name="R" pos="0.025 0.1 0.2"/>
+           </body></worldbody></mujoco>"""
+    )
+    assert pair_baseline(model, "L", "R") == pytest.approx(0.05)
+    assert set_pair_baseline(model, "L", "R", 0.12) == pytest.approx(0.05)
+    assert pair_baseline(model, "L", "R") == pytest.approx(0.12)
+    assert np.allclose(model.cam_pos[0], (-0.06, 0.1, 0.2)) and np.allclose(
+        model.cam_pos[1], (0.06, 0.1, 0.2)
+    )

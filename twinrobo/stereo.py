@@ -15,7 +15,7 @@ pure translation the rectified pair is row-aligned.
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any
 
@@ -50,6 +50,29 @@ class StereoModule:
     @property
     def baseline_m(self) -> float:
         return float(np.linalg.norm(np.subtract(self.right.translation_m, self.left.translation_m)))
+
+    def with_baseline(self, baseline_m: float) -> StereoModule:
+        """The same module with another baseline: the right eye moved along the same
+        direction from the left eye (the housing widened or narrowed with it).
+
+        Robots differ in how far apart they mount a stereo pair; this lets one catalog
+        module stand for any of them.
+        """
+        baseline_m = float(baseline_m)
+        if not 0.001 <= baseline_m <= 2.0:
+            raise ValueError(f"stereo baseline must be within 1 mm and 2 m, got {baseline_m} m")
+        t = np.subtract(self.right.translation_m, self.left.translation_m)
+        if np.linalg.norm(t) == 0:
+            raise ValueError(f"{self.id}: the eyes coincide; no baseline direction")
+        right = np.asarray(self.left.translation_m) + t / np.linalg.norm(t) * baseline_m
+        housing = self.housing_mm
+        if housing is not None:
+            housing = (housing[0] + 1000 * (baseline_m - self.baseline_m), *housing[1:])
+        return replace(
+            self,
+            right=replace(self.right, translation_m=tuple(float(v) for v in right)),
+            housing_mm=housing,
+        )
 
     @property
     def label(self) -> str:
