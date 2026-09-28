@@ -1,0 +1,467 @@
+{
+ "methods": {
+  "psf": "PSF bank",
+  "pupil": "Pupil views",
+  "raycast": "Ray cast"
+ },
+ "scenes": [
+  {
+   "id": "mujoco-pickplace",
+   "label": "MuJoCo · robosuite PickPlace",
+   "simulator": "MuJoCo",
+   "pose": "the Panda's wrist camera (robot0_eye_in_hand)",
+   "note": "Looking down from a Franka Panda's wrist into a bin of groceries (robosuite PickPlace, seed 0).",
+   "depth_m": [
+    0.202,
+    0.389
+   ],
+   "cameras": [
+    {
+     "id": "intel/realsense-d435/color",
+     "label": "Intel RealSense D435 / D435i RGB camera",
+     "sensor": "1920×1080, 1.4 µm",
+     "lens": "1.88 mm f/2.0",
+     "focus_m": 0.675,
+     "fov_deg": {
+      "h": 69.4,
+      "v": 42.5,
+      "d": 76.9
+     },
+     "status": "estimated",
+     "size": [
+      640,
+      360
+     ],
+     "dir": "mujoco-pickplace/intel--realsense-d435--color"
+    },
+    {
+     "id": "intel/realsense-d435/depth",
+     "label": "Intel RealSense D435 / D435i depth imager (one eye)",
+     "sensor": "1280×800, 3.0 µm",
+     "lens": "1.93 mm f/2.0",
+     "focus_m": 0.309,
+     "fov_deg": {
+      "h": 90.0,
+      "v": 64.0,
+      "d": 99.4
+     },
+     "status": "estimated",
+     "size": [
+      640,
+      400
+     ],
+     "dir": "mujoco-pickplace/intel--realsense-d435--depth"
+    },
+    {
+     "id": "intel/realsense-d455/color",
+     "label": "Intel RealSense D455 RGB camera",
+     "sensor": "1280×800, 3.0 µm",
+     "lens": "1.93 mm f/2.0",
+     "focus_m": 0.304,
+     "fov_deg": {
+      "h": 90.5,
+      "v": 64.5,
+      "d": 99.9
+     },
+     "status": "estimated",
+     "size": [
+      640,
+      400
+     ],
+     "dir": "mujoco-pickplace/intel--realsense-d455--color"
+    },
+    {
+     "id": "intel/realsense-d455/depth",
+     "label": "Intel RealSense D455 depth imager (one eye)",
+     "sensor": "1280×800, 3.0 µm",
+     "lens": "1.93 mm f/2.0",
+     "focus_m": 0.309,
+     "fov_deg": {
+      "h": 90.0,
+      "v": 64.0,
+      "d": 99.4
+     },
+     "status": "estimated",
+     "size": [
+      640,
+      400
+     ],
+     "dir": "mujoco-pickplace/intel--realsense-d455--depth"
+    },
+    {
+     "id": "logitech/c920",
+     "label": "Logitech C920 HD Pro Webcam",
+     "sensor": "1920×1080, 2.6977 µm",
+     "lens": "3.67 mm f/2.0",
+     "focus_m": 1.0,
+     "fov_deg": {
+      "h": 70.4,
+      "v": 43.3,
+      "d": 78.0
+     },
+     "status": "estimated",
+     "size": [
+      640,
+      360
+     ],
+     "dir": "mujoco-pickplace/logitech--c920"
+    },
+    {
+     "id": "luxonis/oak-d/color",
+     "label": "Luxonis OAK-D color camera",
+     "sensor": "4056×3040, 1.55 µm",
+     "lens": "4.553 mm f/1.8",
+     "focus_m": 1.0,
+     "fov_deg": {
+      "h": 69.2,
+      "v": 54.7,
+      "d": 81.6
+     },
+     "status": "estimated",
+     "size": [
+      640,
+      480
+     ],
+     "dir": "mujoco-pickplace/luxonis--oak-d--color"
+    },
+    {
+     "id": "luxonis/oak-d/mono",
+     "label": "Luxonis OAK-D mono camera (one stereo eye)",
+     "sensor": "1280×800, 3.0 µm",
+     "lens": "2.639 mm f/2.0",
+     "focus_m": 0.583,
+     "fov_deg": {
+      "h": 72.1,
+      "v": 48.9,
+      "d": 81.3
+     },
+     "status": "estimated",
+     "size": [
+      640,
+      400
+     ],
+     "dir": "mujoco-pickplace/luxonis--oak-d--mono"
+    },
+    {
+     "id": "raspberrypi/camera-module-3/standard",
+     "label": "Raspberry Pi Camera Module 3",
+     "sensor": "4608×2592, 1.4 µm",
+     "lens": "4.74 mm f/1.8",
+     "focus_m": 1.0,
+     "fov_deg": {
+      "h": 66.4,
+      "v": 40.4,
+      "d": 73.8
+     },
+     "status": "estimated",
+     "size": [
+      640,
+      360
+     ],
+     "dir": "mujoco-pickplace/raspberrypi--camera-module-3--standard"
+    },
+    {
+     "id": "raspberrypi/camera-module-3/wide",
+     "label": "Raspberry Pi Camera Module 3 Wide",
+     "sensor": "4608×2592, 1.4 µm",
+     "lens": "2.75 mm f/2.2",
+     "focus_m": 1.0,
+     "fov_deg": {
+      "h": 100.1,
+      "v": 67.0,
+      "d": 108.3
+     },
+     "status": "estimated",
+     "size": [
+      640,
+      360
+     ],
+     "dir": "mujoco-pickplace/raspberrypi--camera-module-3--wide"
+    },
+    {
+     "id": "stereolabs/zed-2i/2.1mm",
+     "label": "Stereolabs ZED 2i 2.1 mm eye",
+     "sensor": "2208×1242, 2.0 µm",
+     "lens": "2.1 mm f/2.0",
+     "focus_m": 0.661,
+     "fov_deg": {
+      "h": 95.1,
+      "v": 58.6,
+      "d": 105.5
+     },
+     "status": "estimated",
+     "size": [
+      640,
+      360
+     ],
+     "dir": "mujoco-pickplace/stereolabs--zed-2i--2.1mm"
+    },
+    {
+     "id": "stereolabs/zed-x/2.2mm",
+     "label": "Stereolabs ZED X / X Mini 2.2 mm eye",
+     "sensor": "1920×1200, 3.0 µm",
+     "lens": "2.2 mm f/2.2",
+     "focus_m": 0.4,
+     "fov_deg": {
+      "h": 110.0,
+      "v": 80.0,
+      "d": 120.0
+     },
+     "status": "estimated",
+     "size": [
+      640,
+      400
+     ],
+     "dir": "mujoco-pickplace/stereolabs--zed-x--2.2mm"
+    },
+    {
+     "id": "stereolabs/zed-x/4mm",
+     "label": "Stereolabs ZED X 4 mm eye",
+     "sensor": "1920×1200, 3.0 µm",
+     "lens": "4.0 mm f/2.2",
+     "focus_m": 1.1,
+     "fov_deg": {
+      "h": 74.2,
+      "v": 50.6,
+      "d": 83.4
+     },
+     "status": "estimated",
+     "size": [
+      640,
+      400
+     ],
+     "dir": "mujoco-pickplace/stereolabs--zed-x--4mm"
+    }
+   ]
+  },
+  {
+   "id": "isaac-tabletop",
+   "label": "Isaac Sim · random tabletop",
+   "simulator": "Isaac Sim 6.1",
+   "pose": "a wrist camera about 30 cm over the table",
+   "note": "Random primitives on a checkered table (seed 7) under a wrist camera, RTX renderer.",
+   "depth_m": [
+    0.285,
+    1.5
+   ],
+   "cameras": [
+    {
+     "id": "intel/realsense-d435/color",
+     "label": "Intel RealSense D435 / D435i RGB camera",
+     "sensor": "1920×1080, 1.4 µm",
+     "lens": "1.88 mm f/2.0",
+     "focus_m": 0.675,
+     "fov_deg": {
+      "h": 69.4,
+      "v": 42.5,
+      "d": 76.9
+     },
+     "status": "estimated",
+     "size": [
+      640,
+      360
+     ],
+     "dir": "isaac-tabletop/intel--realsense-d435--color"
+    },
+    {
+     "id": "intel/realsense-d435/depth",
+     "label": "Intel RealSense D435 / D435i depth imager (one eye)",
+     "sensor": "1280×800, 3.0 µm",
+     "lens": "1.93 mm f/2.0",
+     "focus_m": 0.309,
+     "fov_deg": {
+      "h": 90.0,
+      "v": 64.0,
+      "d": 99.4
+     },
+     "status": "estimated",
+     "size": [
+      640,
+      400
+     ],
+     "dir": "isaac-tabletop/intel--realsense-d435--depth"
+    },
+    {
+     "id": "intel/realsense-d455/color",
+     "label": "Intel RealSense D455 RGB camera",
+     "sensor": "1280×800, 3.0 µm",
+     "lens": "1.93 mm f/2.0",
+     "focus_m": 0.304,
+     "fov_deg": {
+      "h": 90.5,
+      "v": 64.5,
+      "d": 99.9
+     },
+     "status": "estimated",
+     "size": [
+      640,
+      400
+     ],
+     "dir": "isaac-tabletop/intel--realsense-d455--color"
+    },
+    {
+     "id": "intel/realsense-d455/depth",
+     "label": "Intel RealSense D455 depth imager (one eye)",
+     "sensor": "1280×800, 3.0 µm",
+     "lens": "1.93 mm f/2.0",
+     "focus_m": 0.309,
+     "fov_deg": {
+      "h": 90.0,
+      "v": 64.0,
+      "d": 99.4
+     },
+     "status": "estimated",
+     "size": [
+      640,
+      400
+     ],
+     "dir": "isaac-tabletop/intel--realsense-d455--depth"
+    },
+    {
+     "id": "logitech/c920",
+     "label": "Logitech C920 HD Pro Webcam",
+     "sensor": "1920×1080, 2.6977 µm",
+     "lens": "3.67 mm f/2.0",
+     "focus_m": 1.0,
+     "fov_deg": {
+      "h": 70.4,
+      "v": 43.3,
+      "d": 78.0
+     },
+     "status": "estimated",
+     "size": [
+      640,
+      360
+     ],
+     "dir": "isaac-tabletop/logitech--c920"
+    },
+    {
+     "id": "luxonis/oak-d/color",
+     "label": "Luxonis OAK-D color camera",
+     "sensor": "4056×3040, 1.55 µm",
+     "lens": "4.553 mm f/1.8",
+     "focus_m": 1.0,
+     "fov_deg": {
+      "h": 69.2,
+      "v": 54.7,
+      "d": 81.6
+     },
+     "status": "estimated",
+     "size": [
+      640,
+      480
+     ],
+     "dir": "isaac-tabletop/luxonis--oak-d--color"
+    },
+    {
+     "id": "luxonis/oak-d/mono",
+     "label": "Luxonis OAK-D mono camera (one stereo eye)",
+     "sensor": "1280×800, 3.0 µm",
+     "lens": "2.639 mm f/2.0",
+     "focus_m": 0.583,
+     "fov_deg": {
+      "h": 72.1,
+      "v": 48.9,
+      "d": 81.3
+     },
+     "status": "estimated",
+     "size": [
+      640,
+      400
+     ],
+     "dir": "isaac-tabletop/luxonis--oak-d--mono"
+    },
+    {
+     "id": "raspberrypi/camera-module-3/standard",
+     "label": "Raspberry Pi Camera Module 3",
+     "sensor": "4608×2592, 1.4 µm",
+     "lens": "4.74 mm f/1.8",
+     "focus_m": 1.0,
+     "fov_deg": {
+      "h": 66.4,
+      "v": 40.4,
+      "d": 73.8
+     },
+     "status": "estimated",
+     "size": [
+      640,
+      360
+     ],
+     "dir": "isaac-tabletop/raspberrypi--camera-module-3--standard"
+    },
+    {
+     "id": "raspberrypi/camera-module-3/wide",
+     "label": "Raspberry Pi Camera Module 3 Wide",
+     "sensor": "4608×2592, 1.4 µm",
+     "lens": "2.75 mm f/2.2",
+     "focus_m": 1.0,
+     "fov_deg": {
+      "h": 100.1,
+      "v": 67.0,
+      "d": 108.3
+     },
+     "status": "estimated",
+     "size": [
+      640,
+      360
+     ],
+     "dir": "isaac-tabletop/raspberrypi--camera-module-3--wide"
+    },
+    {
+     "id": "stereolabs/zed-2i/2.1mm",
+     "label": "Stereolabs ZED 2i 2.1 mm eye",
+     "sensor": "2208×1242, 2.0 µm",
+     "lens": "2.1 mm f/2.0",
+     "focus_m": 0.661,
+     "fov_deg": {
+      "h": 95.1,
+      "v": 58.6,
+      "d": 105.5
+     },
+     "status": "estimated",
+     "size": [
+      640,
+      360
+     ],
+     "dir": "isaac-tabletop/stereolabs--zed-2i--2.1mm"
+    },
+    {
+     "id": "stereolabs/zed-x/2.2mm",
+     "label": "Stereolabs ZED X / X Mini 2.2 mm eye",
+     "sensor": "1920×1200, 3.0 µm",
+     "lens": "2.2 mm f/2.2",
+     "focus_m": 0.4,
+     "fov_deg": {
+      "h": 110.0,
+      "v": 80.0,
+      "d": 120.0
+     },
+     "status": "estimated",
+     "size": [
+      640,
+      400
+     ],
+     "dir": "isaac-tabletop/stereolabs--zed-x--2.2mm"
+    },
+    {
+     "id": "stereolabs/zed-x/4mm",
+     "label": "Stereolabs ZED X 4 mm eye",
+     "sensor": "1920×1200, 3.0 µm",
+     "lens": "4.0 mm f/2.2",
+     "focus_m": 1.1,
+     "fov_deg": {
+      "h": 74.2,
+      "v": 50.6,
+      "d": 83.4
+     },
+     "status": "estimated",
+     "size": [
+      640,
+      400
+     ],
+     "dir": "isaac-tabletop/stereolabs--zed-x--4mm"
+    }
+   ]
+  }
+ ]
+}

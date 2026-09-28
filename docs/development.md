@@ -72,3 +72,15 @@ pip install -e ".[dev]" --no-deps && pip install numpy pyyaml pytest ruff
   infinity, so TwinRobo picks depth layers itself.
 - Even PSF kernel sizes are centered half a pixel off, so TwinRobo uses odd
   kernel sizes (default 65).
+
+## Regenerating the playground
+
+The [playground](playground.md) shows pre-rendered images (the site is static).
+After a change to the catalog or the renderers, render both scenes and rebuild
+its assets:
+
+```bash
+MUJOCO_GL=egl python tools/docs/playground/render_mujoco.py      # -> outputs/playground
+docker/isaac/run.sh tools/docs/playground/render_isaac.py        # -> outputs/isaac/playground
+python tools/docs/playground/assemble.py                         # -> docs/assets/playground
+```

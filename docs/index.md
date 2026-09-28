@@ -17,6 +17,7 @@ so perception trained in simulation meets the same image on the robot.</p>
 
 [Get started](getting-started.md){ .md-button .md-button--primary }
 [Browse cameras](catalog.md){ .md-button }
+[Try the playground](playground.md){ .md-button }
 
 ![An Isaac Sim tabletop: the simulator's pinhole (left) and the Stereolabs ZED X 2.2 mm, every pixel ray-traced through its lens (right)](images/isaac-raycast.jpg)
 

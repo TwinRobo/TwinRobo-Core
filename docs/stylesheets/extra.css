@@ -254,3 +254,209 @@
   display: table;
   width: 100%;
 }
+
+/* playground */
+#tr-playground {
+  margin-top: 1rem;
+}
+.trp-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1rem;
+  margin-bottom: 0.8rem;
+}
+.trp-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  border: 1px solid var(--tr-card-border);
+  border-radius: 999px;
+  padding: 3px;
+  background: var(--tr-card-bg);
+}
+.trp-group.is-muted {
+  opacity: 0.45;
+}
+.trp-group button {
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.3rem 0.8rem;
+  border-radius: 999px;
+  color: var(--md-default-fg-color--light);
+  cursor: pointer;
+}
+.trp-group button:hover {
+  color: var(--md-typeset-a-color);
+}
+.trp-group button.is-active {
+  background: var(--tr-grad);
+  color: #fff;
+}
+.trp-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 15rem;
+  gap: 1rem;
+  align-items: start;
+}
+@media (max-width: 60em) {
+  .trp-main {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.trp-frame {
+  --split: 50%;
+  position: relative;
+  width: 100%;
+  border-radius: 0.6rem;
+  overflow: hidden;
+  background: #000;
+  box-shadow: 0 6px 24px rgba(15, 16, 32, 0.18);
+}
+.trp-frame img,
+.trp-frame canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  margin: 0;
+}
+.trp-over {
+  position: absolute;
+  inset: 0;
+}
+.trp-frame::after {
+  /* the compare split line */
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--split);
+  width: 2px;
+  margin-left: -1px;
+  background: #fff;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+.trp-slider {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: ew-resize;
+}
+.trp-tag {
+  position: absolute;
+  top: 0.5rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(15, 16, 32, 0.6);
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  pointer-events: none;
+}
+.trp-tag-l {
+  left: 0.5rem;
+}
+.trp-tag-r {
+  right: 0.5rem;
+}
+.trp-tag:empty {
+  display: none;
+}
+/* side by side: pinhole left, camera right */
+.trp-frame[data-view="side"] .trp-under {
+  width: 50%;
+}
+.trp-frame[data-view="side"] .trp-over {
+  left: 50%;
+  clip-path: none !important;
+}
+.trp-frame[data-view="side"] .trp-over img {
+  position: static;
+}
+.trp-frame:not([data-view="compare"])::after,
+.trp-frame:not([data-view="compare"]) .trp-slider {
+  display: none;
+}
+.trp-frame[data-view="side"]::after {
+  display: block;
+  left: 50%;
+}
+.trp-frame:not([data-view="diff"]) .trp-diff,
+.trp-frame[data-view="diff"] .trp-over,
+.trp-frame[data-view="depth"] .trp-over {
+  display: none;
+}
+.md-typeset .trp-note {
+  font-size: 0.68rem;
+  color: var(--md-default-fg-color--light);
+  margin: 0.5rem 0 0;
+}
+.trp-info {
+  border: 1px solid var(--tr-card-border);
+  border-radius: 0.6rem;
+  background: var(--tr-card-bg);
+  padding: 0.9rem 1rem;
+  font-size: 0.7rem;
+}
+.md-typeset .trp-info h3 {
+  margin: 0 0 0.2rem;
+  font-size: 0.85rem;
+}
+.md-typeset .trp-info dl {
+  margin: 0.8rem 0;
+}
+.md-typeset .trp-info dt {
+  font-weight: 700;
+  color: var(--md-default-fg-color--light);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.md-typeset .trp-info dd {
+  margin: 0 0 0.5rem;
+}
+.md-typeset h2.trp-h {
+  margin-top: 1.6rem;
+}
+.trp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: 0.7rem;
+}
+.trp-card {
+  font: inherit;
+  text-align: left;
+  padding: 0;
+  border: 1px solid var(--tr-card-border);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background: var(--tr-card-bg);
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.trp-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.18);
+}
+.trp-card.is-active {
+  outline: 2px solid var(--tr-indigo);
+}
+.trp-card img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  background: #000;
+}
+.trp-card span {
+  display: block;
+  font-size: 0.62rem;
+  font-weight: 600;
+  padding: 0.35rem 0.5rem;
+  line-height: 1.3;
+}

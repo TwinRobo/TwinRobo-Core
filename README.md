@@ -9,6 +9,7 @@
 ![Python 3.12](https://img.shields.io/badge/python-3.12-blue)
 ![Status: alpha](https://img.shields.io/badge/status-alpha-orange)
 [![Docs](https://img.shields.io/badge/docs-API%20reference-indigo)](https://twinrobo.github.io/TwinRobo-Core/)
+[![Playground](https://img.shields.io/badge/docs-playground-teal)](https://twinrobo.github.io/TwinRobo-Core/playground/)
 
 Simulators render through a perfect pinhole. Robots see through real cameras:
 lenses that blur, distort and vignette, with fixed focus and a specific field
