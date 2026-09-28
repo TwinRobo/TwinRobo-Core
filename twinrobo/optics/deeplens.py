@@ -288,7 +288,7 @@ class DeepLensOptics(OpticsModel):
             "seed": int(seed),
             "overfill": float(overfill),
             "candidates": 4,
-            "version": 4,  # 4: rays aimed at each pixel's measured passing region
+            "version": 5,  # 4: rays aimed where each pixel's light passes; 5: chief rays too
         }
 
     @torch.no_grad()
@@ -519,14 +519,20 @@ class DeepLensOptics(OpticsModel):
 
         illumination = self._relative_illumination(K, pr, pz, overfill_pr=True)
 
-        # Chief rays (green, exit pupil center) for depth and rectification.
+        # Chief rays (green) for depth and rectification: each pixel's ray through the center of
+        # the region its light passes (`_ray_aim`), i.e. the center of its beam. Aiming at the
+        # optical axis instead misses the stop for off-axis pixels of lenses whose exit pupil
+        # DeepLens cannot locate, and a blocked ray has no meaningful direction.
         vv, uu = torch.meshgrid(torch.arange(H, device=dev, dtype=torch.float32), u, indexing="ij")
         o = torch.stack([-(uu - K.cx) * pitch, (vv - K.cy) * pitch, torch.full_like(uu, zs)], -1)
         o = o.reshape(-1, 3)
-        d = torch.tensor([0.0, 0.0, pz], device=dev) - o
+        d = torch.stack([aim_x, aim_y, torch.full_like(aim_x, pz)], -1) - o
         ray = L.trace2obj(Ray(o, d, wvlns[gi], device=dev))
+        ok = (ray.is_valid > 0) & (ray.d[:, 2] < 0)
         dz = (-ray.d[:, 2]).clamp_min(1e-9)
-        chief = torch.stack([ray.d[:, 0] / dz, ray.d[:, 1] / dz], -1).reshape(H, W, 2)
+        pin = torch.stack([(uu - K.cx) / K.fx, -(vv - K.cy) / K.fy], -1).reshape(-1, 2)
+        chief = torch.stack([ray.d[:, 0] / dz, ray.d[:, 1] / dz], -1)
+        chief = torch.where(ok[:, None], chief, pin).reshape(H, W, 2)  # blocked: the pinhole
         return LensRays(
             intrinsics=K,
             wavelengths_um=list(wvlns),
