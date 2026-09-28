@@ -33,8 +33,8 @@ brings robosuite; no LIBERO checkout needed):
 import robosuite
 
 from twinrobo import CameraSpec, CameraTwin, CatalogRegistry
-from twinrobo.mujoco import MujocoCameraTwin, RobosuiteRenderer, to_uint8
-from twinrobo.mujoco.mounts import CameraMount, mounted
+from twinrobo.plugins.mujoco import MujocoCameraTwin, RobosuiteRenderer, to_uint8
+from twinrobo.plugins.mujoco.mounts import CameraMount, mounted
 
 env = robosuite.make(
     "PickPlace",

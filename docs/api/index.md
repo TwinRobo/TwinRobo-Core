@@ -18,7 +18,7 @@ A typical use:
 
 ```python
 from twinrobo import CameraTwin
-from twinrobo.mujoco import MujocoCameraTwin, MujocoRenderer
+from twinrobo.plugins.mujoco import MujocoCameraTwin, MujocoRenderer
 
 twin = CameraTwin.from_catalog("stereolabs/zed-x/2.2mm")      # a real camera
 cam = MujocoCameraTwin(twin, MujocoRenderer(model, data), camera="wrist")

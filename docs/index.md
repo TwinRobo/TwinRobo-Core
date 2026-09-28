@@ -87,7 +87,7 @@ so perception trained in simulation meets the same image on the robot.</p>
 
     ```python
     from twinrobo import CameraTwin
-    from twinrobo.mujoco import MujocoCameraTwin, MujocoRenderer
+    from twinrobo.plugins.mujoco import MujocoCameraTwin, MujocoRenderer
 
     twin = CameraTwin.from_catalog("stereolabs/zed-x/2.2mm")
     cam = MujocoCameraTwin(twin, MujocoRenderer(model, data), camera="wrist")
@@ -98,7 +98,7 @@ so perception trained in simulation meets the same image on the robot.</p>
 
     ```python
     from twinrobo import CameraTwin
-    from twinrobo.isaac import IsaacCameraTwin
+    from twinrobo.plugins.isaac import IsaacCameraTwin
 
     twin = CameraTwin.from_catalog("stereolabs/zed-x/2.2mm", build_psf=False)
     cam = IsaacCameraTwin(twin, "/World/Camera", render="raycast")
@@ -109,7 +109,7 @@ so perception trained in simulation meets the same image on the robot.</p>
 
     ```python
     from twinrobo import CameraTwin
-    from twinrobo.libero import CameraTwinLiberoEnv, make_env
+    from twinrobo.datasets.libero import CameraTwinLiberoEnv, make_env
 
     env, task, init_states = make_env("libero_spatial", 0, resolution=128)
     env = CameraTwinLiberoEnv(env, {"agentview": CameraTwin.from_catalog("stereolabs/zed-x/4mm")})

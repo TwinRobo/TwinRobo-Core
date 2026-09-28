@@ -55,7 +55,7 @@ matching.
 **Baselines are adjustable.** Robots mount the same module at different spacings,
 or you may want to study the baseline itself: `StereoModule.with_baseline(0.09)`
 gives the module at 90 mm, a custom mount takes `CameraMount(..., module=...,
-baseline_mm=90)`, and `twinrobo.mujoco.mounts.set_pair_baseline` moves a stereo
+baseline_mm=90)`, and `twinrobo.plugins.mujoco.mounts.set_pair_baseline` moves a stereo
 pair compiled into a robot model (e.g. the multi-camera arms' wrist module)
 without rebuilding it.
 

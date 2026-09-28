@@ -13,8 +13,8 @@ from contextlib import contextmanager
 import numpy as np
 import torch
 
-from ..isp.color import srgb_to_linear
-from ..optics.lensrender import (  # noqa: F401  (re-exported: the public names live here too)
+from ...isp.color import srgb_to_linear
+from ...optics.lensrender import (  # noqa: F401  (re-exported: the public names live here too)
     METHODS,
     PupilViews,
     TriangleMesh,
@@ -24,7 +24,7 @@ from ..optics.lensrender import (  # noqa: F401  (re-exported: the public names 
     lens_rays,
     pupil_centers,
 )
-from ..optics.lensrender import LensRayRenderer as _LensRayRenderer
+from ...optics.lensrender import LensRayRenderer as _LensRayRenderer
 
 
 @contextmanager

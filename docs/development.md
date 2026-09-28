@@ -15,13 +15,17 @@ twinrobo/          the SDK (simulator independent core + simulator adapters)
   catalog/           built-in cameras (<id>/camera.yaml + lens.json) and stereo modules
   optics/            DeepLensOptics, PSFBank/PSFCache, DenseDepthRenderer, LensRays,
                      RadialDistortion + DistortionWarp
+  optics/lensrender.py  lens-ray methods (pupil raster, ray cast), simulator independent
   sensor/  isp/      interfaces + ideal pass-throughs
-  mujoco/            MuJoCo adapter, lens-ray renderers (pupil raster, ray cast), camera mounts
-  libero/            LIBERO env wrapper, robots, exact replay
-  robocasa/          RoboCasa env setup and episode replay
-  isaac/             Isaac Sim adapter (IsaacCameraTwin), imports Isaac lazily
+  calibration/       real-camera calibration -> measured catalog entries
+  plugins/           simulator plugins, each importing its simulator lazily
+    mujoco/          MujocoCameraTwin, render backends, camera mounts, MuJoCo lens scene
+    isaac/           IsaacCameraTwin, Isaac lens scene (runs inside Isaac, docker/isaac)
+  datasets/          robot-learning environments and datasets
+    libero/          LIBERO env wrapper, robots and multi-camera variants, exact replay
+    robocasa/        RoboCasa env setup and episode replay
   validation/        renderer vs reference
-examples/  tests/  tools/  docs/
+examples/  tests/ (tests/plugins/, tests/datasets/ mirror the package)  tools/  docs/
 ```
 
 ## Tests
@@ -41,7 +45,7 @@ Simulator tests need their data, set by environment variables:
 | `MUJOCO_GL=egl` | headless rendering |
 
 Isaac Sim tests run inside the Isaac container:
-`docker/isaac/run.sh -m pytest -q tests/isaac` (see
+`docker/isaac/run.sh -m pytest -q tests/plugins/isaac` (see
 [simulators](simulators.md#running-in-docker)).
 
 To develop against a local DeepLens checkout:

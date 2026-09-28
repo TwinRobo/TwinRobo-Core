@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from twinrobo.mujoco.mounts import CameraMount, look_rotation, rpy_from_rotation
+from twinrobo.plugins.mujoco.mounts import CameraMount, look_rotation, rpy_from_rotation
 
 
 @pytest.mark.parametrize("rpy", [(0, 0, 0), (127, 31, 0), (-60, -20, 15), (179, 80, -30)])
@@ -19,7 +19,7 @@ def test_look_rotation_is_upright():
 
 
 def test_quat_needs_no_mujoco_and_matches_it():
-    from twinrobo.mujoco.mounts import CameraMount, mat_to_quat
+    from twinrobo.plugins.mujoco.mounts import CameraMount, mat_to_quat
 
     rng = np.random.default_rng(0)
     for rpy in [

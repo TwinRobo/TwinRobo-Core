@@ -68,7 +68,7 @@ Each TwinRobo camera picks how its image is formed, per `MujocoCameraTwin`.
 | `raycast` | the same lens rays intersected with the scene's triangles on the GPU (NVIDIA Warp BVH); each hit shaded from a pupil view that sees it | ~0.9 s | as `pupil`, with exact per-ray visibility (see-through around defocused foreground) |
 
 ```python
-from twinrobo.mujoco import MujocoCameraTwin
+from twinrobo.plugins.mujoco import MujocoCameraTwin
 
 cam = MujocoCameraTwin(
     twin,
@@ -98,7 +98,7 @@ frame = cam.get_frame()  # frame.metadata has the render stats
   lens-shading correction; `raw` keeps the sensor's vignetting and cos^4 falloff.
 - **Rectify:** lens-ray images are undistorted with the lens' own chief-ray map
   (`LensRays.rectify_grid`), not a fitted model.
-- **Validation** (`tests/mujoco/test_lensrender.py`):
+- **Validation** (`tests/plugins/mujoco/test_lensrender.py`):
   - A marker lands where the lens' chief ray points (282.5 px; the paraxial
     pinhole says 287).
   - A post 0.3 m in front of the focus plane: its partially covered, defocused
@@ -109,7 +109,7 @@ frame = cam.get_frame()  # frame.metadata has the render stats
     silhouettes are blends in every view. Raise `view_oversample` for them.
   - Height fields and SDF geoms are not ray cast.
   - Scenes come from a simulator's *lens scene* (`twinrobo.optics.lensrender`):
-    MuJoCo (`twinrobo.mujoco.lensrender`) and Isaac Sim (`twinrobo.isaac.lens`).
+    MuJoCo (`twinrobo.plugins.mujoco.lensrender`) and Isaac Sim (`twinrobo.plugins.isaac.lens`).
 - **Lens files matter:** ray-based methods trace the lens file literally. The
   ZED X lens in the catalog is a blur surrogate (a scaled Canon RF16mm
   prescription); its image circle does not cover the full ZED X sensor, so its

@@ -3,7 +3,7 @@ import importlib.util
 import pytest
 
 from twinrobo import CameraSpec, CameraTwin, SimulatorError
-from twinrobo.isaac import IsaacCameraTwin
+from twinrobo.plugins.isaac import IsaacCameraTwin
 from twinrobo.registry import BUILTIN_CATALOG
 
 

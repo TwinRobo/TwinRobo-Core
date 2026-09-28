@@ -22,8 +22,8 @@ from __future__ import annotations
 import numpy as np
 import torch
 
-from ..isp.color import srgb_to_linear
-from ..optics.lensrender import PupilViews, TriangleMesh, _box, _cylinder, _sphere
+from ...isp.color import srgb_to_linear
+from ...optics.lensrender import PupilViews, TriangleMesh, _box, _cylinder, _sphere
 
 PUPIL_PRIM = "TwinRoboPupil"
 APERTURE = 20.955  # USD default horizontal aperture; only focal / aperture matters

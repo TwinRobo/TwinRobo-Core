@@ -49,7 +49,7 @@ def _video(path, w, h):
 
 def test_episode_replays_its_recorded_video():
     """An episode's own kitchen + recorded states reproduce its recorded camera video."""
-    from twinrobo.robocasa import (
+    from twinrobo.datasets.robocasa import (
         env_args,
         make_env,
         read_episode,

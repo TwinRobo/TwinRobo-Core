@@ -211,10 +211,10 @@ def _rotate(q, v):
 
 def _module_eyes(module_id: str):
     """``(StereoModule, vertical FoV of its eye)`` for a catalog stereo module."""
-    from ..geometry import CameraIntrinsics
-    from ..optics.distortion import RadialDistortion, field_of_view
-    from ..spec import CameraSpec
-    from ..stereo import ModuleRegistry
+    from ...geometry import CameraIntrinsics
+    from ...optics.distortion import RadialDistortion, field_of_view
+    from ...spec import CameraSpec
+    from ...stereo import ModuleRegistry
 
     module = ModuleRegistry().load(module_id)
     spec = CameraSpec.from_yaml(module.left.spec)
@@ -230,7 +230,7 @@ def _add_stereo_module(model, body, cam: str, m: dict, pf: str, fmt) -> None:
 
     import mujoco
 
-    from ..stereo import eye_name, eye_poses
+    from ...stereo import eye_name, eye_poses
 
     ref = body.find(f"camera[@name='{pf}{m['like']}']")
     if ref is None:

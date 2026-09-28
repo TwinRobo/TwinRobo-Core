@@ -4,8 +4,8 @@ import torch
 
 from twinrobo.exceptions import SpecError
 from twinrobo.geometry import CameraIntrinsics
-from twinrobo.mujoco.mounts import CameraMount, expand_mount
 from twinrobo.optics.distortion import DistortionWarp, RadialDistortion
+from twinrobo.plugins.mujoco.mounts import CameraMount, expand_mount
 from twinrobo.stereo import ModuleRegistry, StereoModule, eye_poses
 
 
@@ -109,7 +109,7 @@ def test_stereo_mount_baseline_override_round_trips():
 
 def test_set_pair_baseline_moves_compiled_eyes_symmetrically():
     mujoco = pytest.importorskip("mujoco")
-    from twinrobo.mujoco.mounts import pair_baseline, set_pair_baseline
+    from twinrobo.plugins.mujoco.mounts import pair_baseline, set_pair_baseline
 
     model = mujoco.MjModel.from_xml_string(
         """<mujoco><worldbody><body name="b" pos="1 2 3">

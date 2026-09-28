@@ -31,7 +31,7 @@ models of their products.
 
 | | MuJoCo (incl. LIBERO, RoboCasa) | NVIDIA Isaac Sim 6.x |
 |---|---|---|
-| Adapter | `twinrobo.mujoco.MujocoCameraTwin` | `twinrobo.isaac.IsaacCameraTwin` |
+| Adapter | `twinrobo.plugins.mujoco.MujocoCameraTwin` | `twinrobo.plugins.isaac.IsaacCameraTwin` |
 | `psf`: pinhole + lens blur and distortion | ✅ | ✅ |
 | `pupil`: lens rays across the aperture | ✅ | ✅ |
 | `raycast`: lens rays cast into the scene | ✅ | ✅ |
@@ -105,8 +105,8 @@ brings robosuite; no LIBERO checkout needed):
 import robosuite
 
 from twinrobo import CameraSpec, CameraTwin, CatalogRegistry
-from twinrobo.mujoco import MujocoCameraTwin, RobosuiteRenderer, to_uint8
-from twinrobo.mujoco.mounts import CameraMount, mounted
+from twinrobo.plugins.mujoco import MujocoCameraTwin, RobosuiteRenderer, to_uint8
+from twinrobo.plugins.mujoco.mounts import CameraMount, mounted
 
 env = robosuite.make(
     "PickPlace",
@@ -166,7 +166,7 @@ Read it top to bottom:
 - **Isaac Sim:** the same twin on any USD camera prim:
 
   ```python
-  from twinrobo.isaac import IsaacCameraTwin
+  from twinrobo.plugins.isaac import IsaacCameraTwin
 
   twin = CameraTwin.from_catalog("stereolabs/zed-x/2.2mm", build_psf=False)
   cam = IsaacCameraTwin(twin, "/World/Camera", render="raycast")
@@ -179,7 +179,7 @@ Read it top to bottom:
   twin, and eval scripts run unchanged:
 
   ```python
-  from twinrobo.libero import CameraTwinLiberoEnv, make_env
+  from twinrobo.datasets.libero import CameraTwinLiberoEnv, make_env
 
   env, task, init_states = make_env("libero_spatial", 0, resolution=128)
   env = CameraTwinLiberoEnv(env, {"agentview": twin})

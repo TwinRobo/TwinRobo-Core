@@ -3,7 +3,7 @@
 `LensRays` holds, for every sensor pixel, ``n`` rays per wavelength that leave the
 sensor, pass through the lens, and enter the scene. They are traced once by an
 optics backend (`DeepLensOptics.trace_lens_rays`) and then used by the
-ray-based renderers (`twinrobo.mujoco.lensrender`). They depend only on the
+ray-based renderers (`twinrobo.plugins.mujoco.lensrender`). They depend only on the
 lens, focus and sensor, never on the scene, so they are cached.
 
 Conventions. The camera frame is MuJoCo's and Isaac's (USD): x right, y up, and

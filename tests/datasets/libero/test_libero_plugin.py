@@ -11,8 +11,8 @@ if not (os.environ.get("LIBERO_CONFIG_PATH") and os.environ.get("LIBERO_ROOT")):
     pytest.skip("set LIBERO_ROOT and LIBERO_CONFIG_PATH", allow_module_level=True)
 
 from twinrobo import CameraTwin  # noqa: E402
+from twinrobo.datasets.libero import CameraTwinLiberoEnv, make_env  # noqa: E402
 from twinrobo.geometry import CameraIntrinsics  # noqa: E402
-from twinrobo.libero import CameraTwinLiberoEnv, make_env  # noqa: E402
 
 pytestmark = [pytest.mark.libero, pytest.mark.gl]
 

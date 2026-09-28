@@ -11,7 +11,7 @@ mujoco = pytest.importorskip("mujoco")
 
 from twinrobo import CameraTwin  # noqa: E402
 from twinrobo.geometry import CameraIntrinsics  # noqa: E402
-from twinrobo.mujoco import MujocoCameraTwin, MujocoRenderer, to_uint8  # noqa: E402
+from twinrobo.plugins.mujoco import MujocoCameraTwin, MujocoRenderer, to_uint8  # noqa: E402
 
 pytestmark = pytest.mark.gl
 
@@ -97,7 +97,7 @@ def test_to_uint8_center_crop():
 
 
 def test_mount_orientation_convention():
-    from twinrobo.mujoco.mounts import CameraMount
+    from twinrobo.plugins.mujoco.mounts import CameraMount
 
     look = lambda m: -m.rotation()[:, 2]  # noqa: E731  (MuJoCo cameras look along -z)
     np.testing.assert_allclose(look(CameraMount("a")), [1, 0, 0], atol=1e-9)  # body +x

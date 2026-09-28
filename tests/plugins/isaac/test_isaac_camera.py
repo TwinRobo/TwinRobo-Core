@@ -1,4 +1,4 @@
-"""IsaacCameraTwin inside Isaac Sim (run with docker/isaac/run.sh -m pytest tests/isaac).
+"""IsaacCameraTwin inside Isaac Sim (run with docker/isaac/run.sh -m pytest tests/plugins/isaac).
 
 A synthetic stage with known geometry: a camera at the origin looking along -Z, a
 white wall 3 m away and a small red marker at a known 3D point.
@@ -73,7 +73,7 @@ def render(cam, frames=4):
 
 
 def test_projection_matches_the_twin_intrinsics(stage, twin):
-    from twinrobo.isaac import IsaacCameraTwin
+    from twinrobo.plugins.isaac import IsaacCameraTwin
 
     cam = IsaacCameraTwin(twin, "/World/Cam", rt_subframes=4)
     try:
@@ -98,7 +98,7 @@ def test_projection_matches_the_twin_intrinsics(stage, twin):
 
 
 def test_frame_goes_through_the_optics(stage, twin):
-    from twinrobo.isaac import IsaacCameraTwin
+    from twinrobo.plugins.isaac import IsaacCameraTwin
 
     cam = IsaacCameraTwin(twin, "/World/Cam", rt_subframes=4)
     try:
@@ -116,7 +116,7 @@ def test_frame_goes_through_the_optics(stage, twin):
 def test_match_fov_false_keeps_the_cameras_lens_and_close_cleans_up(stage, twin):
     from pxr import UsdGeom
 
-    from twinrobo.isaac import IsaacCameraTwin
+    from twinrobo.plugins.isaac import IsaacCameraTwin
 
     src = UsdGeom.Camera(stage.GetPrimAtPath("/World/Cam"))
     src.GetFocalLengthAttr().Set(18.0)

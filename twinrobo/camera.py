@@ -2,8 +2,8 @@
 
 `CameraTwin` composes optics -> sensor -> ISP for one camera module. It only needs
 ideal RGB-D input via `process`; simulator adapters wrap it and render that input
-from a simulator camera (`twinrobo.mujoco.MujocoCameraTwin`,
-`twinrobo.isaac.IsaacCameraTwin`).
+from a simulator camera (`twinrobo.plugins.mujoco.MujocoCameraTwin`,
+`twinrobo.plugins.isaac.IsaacCameraTwin`).
 """
 
 from __future__ import annotations
@@ -127,7 +127,7 @@ class CameraTwin:
         """Load a spec; builds and caches its PSF bank on first use (slow), then reuses it.
 
         ``build_psf=False`` skips the PSF bank (identity optics), for twins rendered
-        only with the lens-ray methods (`twinrobo.mujoco.lensrender`).
+        only with the lens-ray methods (`twinrobo.plugins.mujoco.lensrender`).
         """
         spec = path if isinstance(path, CameraSpec) else CameraSpec.from_yaml(path)
         reference = build_reference_optics(spec, device)
@@ -215,12 +215,12 @@ class CameraTwin:
     # Rendering from a simulator camera is done by adapters that wrap the twin.
     def attach(self, simulator_camera: Any) -> None:
         raise NotImplementedError(
-            "wrap the twin in a simulator adapter: twinrobo.mujoco.MujocoCameraTwin "
-            "or twinrobo.isaac.IsaacCameraTwin"
+            "wrap the twin in a simulator adapter: twinrobo.plugins.mujoco.MujocoCameraTwin "
+            "or twinrobo.plugins.isaac.IsaacCameraTwin"
         )
 
     def get_frame(self) -> CameraFrame:
         raise NotImplementedError(
-            "wrap the twin in a simulator adapter: twinrobo.mujoco.MujocoCameraTwin "
-            "or twinrobo.isaac.IsaacCameraTwin"
+            "wrap the twin in a simulator adapter: twinrobo.plugins.mujoco.MujocoCameraTwin "
+            "or twinrobo.plugins.isaac.IsaacCameraTwin"
         )

@@ -37,7 +37,7 @@ mujoco = [
     "mujoco==3.3.2",
     "warp-lang>=1.17",  # GPU ray casting for render="raycast"
 ]
-# LIBERO plugin (LIBERO itself: set LIBERO_ROOT to a checkout, see twinrobo/libero)
+# LIBERO plugin (LIBERO itself: set LIBERO_ROOT to a checkout, see twinrobo/datasets/libero)
 libero = [
     "mujoco==3.3.2",
     "robosuite==1.4.1",
@@ -61,7 +61,7 @@ twinrobo = ["catalog/**/*.yaml", "catalog/**/*.json", "catalog/**/*.md", "catalo
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-# importlib: test folders named like packages (tests/mujoco, tests/libero, ...) are never
+# importlib: test folders named like packages (tests/plugins/mujoco, tests/datasets/libero, ...) are never
 # put on sys.path, where they would pose as those packages when they are not installed
 addopts = "--import-mode=importlib"
 markers = [

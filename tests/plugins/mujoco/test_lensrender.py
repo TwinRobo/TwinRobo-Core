@@ -23,7 +23,7 @@ def small_twin(w=320, h=200, focus=3.0):
 
 @pytest.fixture(scope="module")
 def rays():
-    from twinrobo.mujoco.lensrender import lens_rays
+    from twinrobo.plugins.mujoco.lensrender import lens_rays
 
     return lens_rays(small_twin().reference, 32)
 
@@ -83,7 +83,7 @@ MARKER = '<geom type="box" pos="1.5 0 -2.99" size="0.01 0.01 0.001" material="re
 
 
 def backend(extra):
-    from twinrobo.mujoco import MujocoRenderer
+    from twinrobo.plugins.mujoco import MujocoRenderer
 
     m = mujoco.MjModel.from_xml_string(SCENE.format(extra=extra))
     d = mujoco.MjData(m)
@@ -94,7 +94,7 @@ def backend(extra):
 @pytest.mark.gl
 @pytest.mark.parametrize("method", ["pupil", "raycast"])
 def test_distortion_places_points_where_the_lens_does(method):
-    from twinrobo.mujoco import MujocoCameraTwin
+    from twinrobo.plugins.mujoco import MujocoCameraTwin
 
     twin = small_twin()
     be = backend(MARKER)
@@ -119,8 +119,8 @@ def test_defocused_occluder_edges_match_traced_rays(rays, half_width):
     Occluders narrower than a sensor pixel are a known limit (MuJoCo's multisampled
     silhouettes blend them into the background in every view); see lensrender.
     """
-    from twinrobo.mujoco import MujocoCameraTwin
-    from twinrobo.mujoco.lensrender import LensRayRenderer
+    from twinrobo.plugins.mujoco import MujocoCameraTwin
+    from twinrobo.plugins.mujoco.lensrender import LensRayRenderer
 
     post = f'<geom type="box" pos="0 0 -0.3" size="{half_width} 1 0.001" material="black"/>'
     be = backend(post)
@@ -145,7 +145,7 @@ def test_defocused_occluder_edges_match_traced_rays(rays, half_width):
 
 @pytest.mark.gl
 def test_methods_agree_and_shading_modes(rays):
-    from twinrobo.mujoco.lensrender import LensRayRenderer
+    from twinrobo.plugins.mujoco.lensrender import LensRayRenderer
 
     be = backend(MARKER)
     a, _ = LensRayRenderer(rays, "pupil", 7).render(be, "cam", 0)
@@ -162,7 +162,7 @@ def test_methods_agree_and_shading_modes(rays):
 
 @pytest.mark.gl
 def test_camera_offset_is_restored():
-    from twinrobo.mujoco.lensrender import _camera_offset
+    from twinrobo.plugins.mujoco.lensrender import _camera_offset
 
     be = backend("")
     before = np.array(be.data.cam_xpos[0])

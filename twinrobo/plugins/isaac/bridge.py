@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ..exceptions import SimulatorError
+from ...exceptions import SimulatorError
 
 
 def require_isaac():

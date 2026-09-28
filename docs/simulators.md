@@ -9,7 +9,7 @@
 
 ## MuJoCo
 
-`twinrobo.mujoco` renders a MuJoCo camera at the twin's resolution and
+`twinrobo.plugins.mujoco` renders a MuJoCo camera at the twin's resolution and
 paraxial FoV, from the same camera pose, with metric depth, and runs the
 TwinRobo pipeline. `MujocoCameraTwin(twin, backend, camera=...)` works with
 `MujocoRenderer(model, data)` for plain MuJoCo and `RobosuiteRenderer(env)`
@@ -27,7 +27,7 @@ export MUJOCO_GL=egl
 
 ```python
 from twinrobo import CameraTwin
-from twinrobo.libero import CameraTwinLiberoEnv, make_env
+from twinrobo.datasets.libero import CameraTwinLiberoEnv, make_env
 
 env, task, init_states = make_env("libero_spatial", 0, resolution=128)
 twin = CameraTwin.from_catalog("examples/cellphone80deg")
@@ -41,14 +41,14 @@ obs = env.set_init_state(init_states[0])  # obs["agentview_image"] comes from th
   its shape, dtype and image convention, so eval scripts and policies run
   unchanged.
 - **Replay:** demos replay from their recorded states
-  (`twinrobo.libero.replay`), so any camera can be placed in a recorded
+  (`twinrobo.datasets.libero.replay`), so any camera can be placed in a recorded
   episode.
 - **Geometry:** the twin's frame is center-cropped to the observation's aspect
   ratio and area-resized. `match_fov=False` keeps LIBERO's FoV and applies only
   the optics.
 - **Robots:** besides the Franka Panda, robosuite's Sawyer, UR5e, KUKA iiwa,
   Kinova Jaco and Kinova Gen3 are registered for LIBERO scenes
-  (`twinrobo.libero.robots`, LIBERO unmodified). Multi-camera variants of the
+  (`twinrobo.datasets.libero.robots`, LIBERO unmodified). Multi-camera variants of the
   Panda, UR5e and Gen3 carry a ZED X Mini stereo module at the wrist and an
   over-the-shoulder camera; cameras add no joints, so a variant replays its
   base arm's demos.
@@ -94,7 +94,7 @@ export ROBOCASA_ASSETS=<robocasa asset pack>   # objects/, textures/, fixtures/,
 The asset pack is linked into the installed package; the pack is not modified.
 
 ```python
-from twinrobo.robocasa import env_args, make_env, read_episode, reset_to_episode, setup_robocasa
+from twinrobo.datasets.robocasa import env_args, make_env, read_episode, reset_to_episode, setup_robocasa
 
 setup_robocasa()  # checks robosuite 1.5, links $ROBOCASA_ASSETS
 env = make_env(env_args(dataset_dir))  # a LeRobot dataset dir (meta/, extras/)
@@ -113,12 +113,12 @@ env.sim.set_state_from_flattened(states[t])  # then render any camera at frame t
 
 ![A USD tabletop seen by the Isaac pinhole camera (left) and through the ZED X 2.2 mm lens (right)](images/isaac-zed-x.jpg)
 
-`twinrobo.isaac.IsaacCameraTwin` renders a USD camera's view through a twin,
+`twinrobo.plugins.isaac.IsaacCameraTwin` renders a USD camera's view through a twin,
 with the same interface as the MuJoCo adapter:
 
 ```python
 from twinrobo import CameraTwin
-from twinrobo.isaac import IsaacCameraTwin
+from twinrobo.plugins.isaac import IsaacCameraTwin
 
 twin = CameraTwin.from_catalog("stereolabs/zed-x/2.2mm")
 cam = IsaacCameraTwin(twin, "/World/Camera")  # any UsdGeom.Camera prim
@@ -155,7 +155,7 @@ cam.close()                                   # removes what it added to the sta
   mesh, cube, sphere, cylinder, capsule, cone and plane (instance proxies
   included), posed each frame from USD and converted to meters, in one NVIDIA
   Warp BVH. `build_psf=False` skips the PSF bank, which only `psf` uses.
-- **Tested** (`tests/isaac/`):
+- **Tested** (`tests/plugins/isaac/`):
   - `psf`: a marker lands within 1 px of the pixel the twin's intrinsics
     predict; depth is metric (the wall 2.99 m away, an object 30 cm away);
     `match_fov=False` keeps the camera's lens; `close()` leaves the stage as it
@@ -176,7 +176,7 @@ with Isaac Sim 6.1.0 on an RTX 3090):
 ```bash
 docker pull nvcr.io/nvidia/isaac-sim:6.1.0   # needs the NVIDIA Container Toolkit
 docker/isaac/run.sh examples/01_isaac_camera.py        # -> outputs/isaac/isaac_camera.png
-docker/isaac/run.sh -m pytest -q tests/isaac
+docker/isaac/run.sh -m pytest -q tests/plugins/isaac
 ```
 
 `run.sh` builds the `twinrobo-isaac` image on first use and mounts this repo

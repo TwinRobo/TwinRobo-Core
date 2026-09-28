@@ -2,7 +2,7 @@
 # Run TwinRobo inside Isaac Sim (Docker, headless, GPU).
 #
 #   docker/isaac/run.sh examples/01_isaac_camera.py
-#   docker/isaac/run.sh -m pytest -q tests/isaac
+#   docker/isaac/run.sh -m pytest -q tests/plugins/isaac
 #
 # Arguments go to Isaac's python. The repo is mounted read-only; files written to
 # /workspace/outputs appear in outputs/isaac/. Isaac's caches (shaders, Warp, PSF

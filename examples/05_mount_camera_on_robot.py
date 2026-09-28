@@ -21,8 +21,8 @@ os.environ.setdefault("MUJOCO_GL", "egl")
 import numpy as np  # noqa: E402
 
 from twinrobo import CameraSpec, CameraTwin, CatalogRegistry  # noqa: E402
-from twinrobo.mujoco import MujocoCameraTwin, RobosuiteRenderer, to_uint8  # noqa: E402
-from twinrobo.mujoco.mounts import CameraMount, mounted  # noqa: E402
+from twinrobo.plugins.mujoco import MujocoCameraTwin, RobosuiteRenderer, to_uint8  # noqa: E402
+from twinrobo.plugins.mujoco.mounts import CameraMount, mounted  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 CAMERAS = {  # catalog id -> label
@@ -31,7 +31,7 @@ CAMERAS = {  # catalog id -> label
     "examples/cellphone80deg": "Cellphone lens (80° DFoV)",
 }
 # On the wrist link, 8 cm ahead of the flange, aimed at the objects in the bin
-# (yaw, pitch, roll in the link's frame; see twinrobo.mujoco.mounts).
+# (yaw, pitch, roll in the link's frame; see twinrobo.plugins.mujoco.mounts).
 WRIST = CameraMount("wrist", body="robot0_right_hand", pos=(0.08, 0.0, 0.0), rpy_deg=(67, -48, 173))
 DETAIL_BODY, DETAIL_WIDTH = "Cereal_main", 0.2  # close-up on the cereal box: 20% of the width
 

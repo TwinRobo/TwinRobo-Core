@@ -16,7 +16,7 @@ import numpy as np
 from PIL import Image
 
 from twinrobo import CameraTwin
-from twinrobo.libero import CameraTwinLiberoEnv, make_env
+from twinrobo.datasets.libero import CameraTwinLiberoEnv, make_env
 from twinrobo.registry import BUILTIN_CATALOG
 
 ROOT = Path(__file__).resolve().parents[1]

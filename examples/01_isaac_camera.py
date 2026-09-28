@@ -26,8 +26,8 @@ import omni.usd  # noqa: E402
 from pxr import Gf, UsdGeom, UsdLux  # noqa: E402
 
 from twinrobo import CameraTwin  # noqa: E402
-from twinrobo.isaac import IsaacCameraTwin  # noqa: E402
 from twinrobo.isp.color import linear_to_srgb  # noqa: E402
+from twinrobo.plugins.isaac import IsaacCameraTwin  # noqa: E402
 
 
 def tabletop(stage) -> str:

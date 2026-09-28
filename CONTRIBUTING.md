@@ -79,9 +79,9 @@ camera.yaml with its provenance. See the
 
 - **Simulator adapters:** the rendering methods are simulator independent
   (lens rays + views + a ray caster). An adapter renders a camera's pinhole
-  RGB-D; see `twinrobo/mujoco/camera.py`. Isaac Sim is next on the roadmap.
+  RGB-D; see `twinrobo/plugins/mujoco/camera.py`. Isaac Sim is next on the roadmap.
 - **Robots:** new robot variants for LIBERO scenes go in
-  `twinrobo/libero/robots.py`.
+  `twinrobo/datasets/libero/robots.py`.
 - **Optics, sensor noise and ISP models:** interfaces live in
   `twinrobo/optics/base.py`, `twinrobo/sensor/base.py` and
   `twinrobo/isp/base.py`.

@@ -1,11 +1,11 @@
 # MuJoCo
 
-::: twinrobo.mujoco.camera
+::: twinrobo.plugins.mujoco.camera
     options:
       members: [MujocoCameraTwin, MujocoRenderer, RobosuiteRenderer, RenderBackend, to_uint8]
 
-::: twinrobo.mujoco.mounts
+::: twinrobo.plugins.mujoco.mounts
 
-::: twinrobo.mujoco.lensrender
+::: twinrobo.plugins.mujoco.lensrender
     options:
       members: [MujocoLensScene, SceneMesh, LensRayRenderer, geom_triangles]

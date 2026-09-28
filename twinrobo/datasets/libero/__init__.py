@@ -6,7 +6,7 @@ LIBERO runs on robosuite, which runs on MuJoCo. This package provides:
   (e.g. ``agentview_image``) with CameraTwin frames, keeping each key's shape,
   dtype and image convention, so policies and eval scripts run unchanged.
 - `make_env` / `make_env_from_bddl`: LIBERO envs with any registered robot
-  (`twinrobo.libero.robots`), and `replay` helpers for exact demo replay.
+  (`twinrobo.datasets.libero.robots`), and `replay` helpers for exact demo replay.
 
 Setup. LIBERO is not pip-installable as a package, since its ``libero/`` has
 no ``__init__.py``. Point ``LIBERO_ROOT`` at a LIBERO checkout. Also set
@@ -23,7 +23,7 @@ from pathlib import Path
 
 import numpy as np
 
-from ..exceptions import SimulatorError
+from ...exceptions import SimulatorError
 
 LIBERO_ROOT_ENV = "LIBERO_ROOT"
 LIBERO_CONFIG_ENV = "LIBERO_CONFIG_PATH"

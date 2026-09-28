@@ -11,10 +11,10 @@ import torch
 import torch.nn.functional as F
 from torch import Tensor
 
-from ..camera import CameraTwin
-from ..exceptions import SimulatorError
-from ..frame import CameraFrame
-from ..isp.color import linear_to_srgb, srgb_to_linear
+from ...camera import CameraTwin
+from ...exceptions import SimulatorError
+from ...frame import CameraFrame
+from ...isp.color import linear_to_srgb, srgb_to_linear
 
 
 class RenderBackend(Protocol):
@@ -171,7 +171,7 @@ class MujocoCameraTwin:
         rectify: Undistort the output like vendor SDKs (see `CameraTwin.process`).
         render: ``"psf"`` (pinhole render + PSF optics, fast), or trace every pixel
             through the real lens: ``"pupil"`` (pupil-sampled rasterization) or
-            ``"raycast"`` (per-ray ray casting). See `twinrobo.mujoco.lensrender`.
+            ``"raycast"`` (per-ray ray casting). See `twinrobo.plugins.mujoco.lensrender`.
         rays_per_pixel: Rays traced per pixel and wavelength (lens-ray methods).
         pupil_views: Views rendered across the lens' entrance pupil (lens-ray methods).
         shading: ``"corrected"`` (ISP lens-shading correction) or ``"raw"`` (sensor
@@ -313,7 +313,7 @@ class MujocoCameraTwin:
         ideal = srgb_to_linear(
             torch.from_numpy(ideal8).to(rgb.device).permute(2, 0, 1)[None].float() / 255.0
         )
-        from ..optics.lensrender import lens_frame
+        from ...optics.lensrender import lens_frame
 
         return lens_frame(
             self.twin, lr, rgb, depth, ideal, self.rectify, timestamp, {"camera": self.camera}

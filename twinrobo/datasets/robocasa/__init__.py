@@ -20,7 +20,7 @@ import os
 from pathlib import Path
 from typing import Any
 
-from ..exceptions import SimulatorError
+from ...exceptions import SimulatorError
 
 ASSET_PACK_ENV = "ROBOCASA_ASSETS"
 #: RoboCasa robots selectable in its kitchens (the demos are PandaOmron).

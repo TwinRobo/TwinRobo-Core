@@ -27,7 +27,8 @@ A simulator plugs in through a *lens scene* (`LensRayRenderer.render_scene`):
   looking along -z) and position, world frame, meters;
 - ``mesh(device)`` -> a `TriangleMesh` of the scene at the current state (ray cast only).
 
-Adapters: `twinrobo.mujoco.lensrender` (MuJoCo) and `twinrobo.isaac.lens` (Isaac Sim).
+Adapters: `twinrobo.plugins.mujoco.lensrender` (MuJoCo) and `twinrobo.plugins.isaac.lens`
+(Isaac Sim).
 Rays depend on lens, focus and sensor only, so they are traced once (`lens_rays`)
 and cached on the GPU.
 """

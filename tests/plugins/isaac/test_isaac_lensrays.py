@@ -1,6 +1,6 @@
 """Lens-ray rendering (ray cast, pupil raster) in Isaac Sim, as validated for MuJoCo.
 
-Run with docker/isaac/run.sh -m pytest tests/isaac. A camera at the origin looks
+Run with docker/isaac/run.sh -m pytest tests/plugins/isaac. A camera at the origin looks
 along -Z at a matte wall 3 m away.
 """
 
@@ -62,7 +62,7 @@ def frame_of(cam, settle=3):
 
 @pytest.mark.parametrize("method", ["raycast", "pupil"])
 def test_distortion_places_points_where_the_lens_does(app, method):
-    from twinrobo.isaac import IsaacCameraTwin
+    from twinrobo.plugins.isaac import IsaacCameraTwin
 
     new_stage(app, (MARKER, (0.04, 0.04, 0.002), (1, 0, 0)))  # flat: no side face in view
     twin = small_twin()
@@ -87,7 +87,7 @@ def test_distortion_places_points_where_the_lens_does(app, method):
 
 def test_raycast_defocused_occluder_edges_match_the_traced_rays(app):
     """A 6 mm post 0.3 m away, far in front of the 3 m focus: its blurred edges are exact."""
-    from twinrobo.isaac import IsaacCameraTwin
+    from twinrobo.plugins.isaac import IsaacCameraTwin
 
     half = 0.003
     new_stage(app, ((0, 0, -POST_Z), (2 * half, 2.0, 0.002), (0, 0, 0)))
@@ -118,7 +118,7 @@ def test_raycast_defocused_occluder_edges_match_the_traced_rays(app):
 
 
 def test_close_removes_the_pupil_views(app):
-    from twinrobo.isaac import IsaacCameraTwin
+    from twinrobo.plugins.isaac import IsaacCameraTwin
 
     stage = new_stage(app)
     cam = IsaacCameraTwin(small_twin(), "/World/Cam", render="raycast", pupil_views=3)

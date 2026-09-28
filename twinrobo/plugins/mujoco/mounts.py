@@ -355,7 +355,7 @@ def snap_to_body(
 
 def mount_module(mount: CameraMount, modules=None):
     """The stereo module of a mount, at the mount's baseline (``baseline_mm``) if it sets one."""
-    from ..stereo import ModuleRegistry
+    from ...stereo import ModuleRegistry
 
     module = (modules or ModuleRegistry()).load(mount.module)
     if mount.baseline_mm is not None:
@@ -410,7 +410,7 @@ def expand_mount(mount: CameraMount, modules=None) -> dict[str, CameraMount]:
     """
     if not mount.module:
         return {mount.name: mount}
-    from ..stereo import eye_name, eye_poses
+    from ...stereo import eye_name, eye_poses
 
     module = mount_module(mount, modules)
     out = {}

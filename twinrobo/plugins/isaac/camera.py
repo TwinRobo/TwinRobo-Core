@@ -2,7 +2,7 @@
 
 `IsaacCameraTwin` renders what the twin's pinhole sees from a USD camera's pose,
 with metric depth, and runs it through the CameraTwin pipeline, like
-`twinrobo.mujoco.MujocoCameraTwin` does for MuJoCo:
+`twinrobo.plugins.mujoco.MujocoCameraTwin` does for MuJoCo:
 
 - It does not change your camera. It adds a child camera prim
   (``<camera>/TwinRoboView``) that shares the camera's pose and far clip and carries
@@ -17,7 +17,7 @@ with metric depth, and runs it through the CameraTwin pipeline, like
 - ``render`` picks the method, as for MuJoCo: ``"psf"`` (pinhole render + PSF
   optics, fast) or a lens-ray method that traces every pixel's rays through the
   real lens, ``"pupil"`` or ``"raycast"`` (exact per-ray visibility against the
-  stage's triangles; see `twinrobo.isaac.lens`).
+  stage's triangles; see `twinrobo.plugins.isaac.lens`).
 
 Needs a running Isaac Sim app (`isaacsim.SimulationApp`) created before this is
 used. Import-time safe without Isaac: Isaac modules are imported inside methods.
@@ -27,10 +27,10 @@ from __future__ import annotations
 
 import torch
 
-from ..camera import CameraTwin
-from ..exceptions import SimulatorError
-from ..frame import CameraFrame
-from ..isp.color import srgb_to_linear
+from ...camera import CameraTwin
+from ...exceptions import SimulatorError
+from ...frame import CameraFrame
+from ...isp.color import srgb_to_linear
 from .bridge import require_isaac
 
 #: Name of the child camera prim that renders the twin's view.
@@ -77,7 +77,7 @@ class IsaacCameraTwin:
         shading: str = "corrected",
         view_oversample: float = 1.0,
     ):
-        from ..optics.lensrender import METHODS
+        from ...optics.lensrender import METHODS
 
         if render not in METHODS:
             raise ValueError(f"render must be one of {METHODS}, got {render!r}")
@@ -161,7 +161,7 @@ class IsaacCameraTwin:
 
     def _renderer(self):
         """The lens-ray renderer, cached on the twin (it holds the traced rays and views)."""
-        from ..optics.lensrender import LensRayRenderer, lens_rays
+        from ...optics.lensrender import LensRayRenderer, lens_rays
 
         cache = self.twin.__dict__.setdefault("_lens_renderers", {})
         key = (
@@ -256,7 +256,7 @@ class IsaacCameraTwin:
     def get_frame(self, timestamp: float | None = None, step: bool = True) -> CameraFrame:
         """Render and process one frame. ``frame.rgb`` is linear ``[1, 3, H, W]`` on ``device``."""
         if self.lens_renderer is not None:
-            from ..optics.lensrender import lens_frame
+            from ...optics.lensrender import lens_frame
 
             ideal, _ = self.render_ideal(step)
             rgb, depth = self.lens_renderer.render_scene(self._lens_scene)

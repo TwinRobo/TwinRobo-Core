@@ -9,7 +9,7 @@ Rendering goes through a `RenderBackend`:
   LIBERO. A second GL context in the same process corrupts robosuite's
   offscreen context, so inside robosuite always use this backend.
 
-MuJoCo is imported lazily; ``import twinrobo.mujoco`` does not need it.
+MuJoCo is imported lazily; ``import twinrobo.plugins.mujoco`` does not need it.
 """
 
 from .camera import MujocoCameraTwin, MujocoRenderer, RenderBackend, RobosuiteRenderer, to_uint8
