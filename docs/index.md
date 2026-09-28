@@ -7,7 +7,7 @@ hide:
 
 <div class="tr-hero" markdown>
 
-<div class="tr-badges"><span>AGPL-3.0 · commercial</span><span>Python 3.12</span><span>MuJoCo · Isaac Sim</span><span>alpha</span></div>
+<div class="tr-badges"><span>AGPL-3.0 · commercial</span><span>MuJoCo · Isaac Sim</span></div>
 
 # See through the camera <span class="tr-grad">you will deploy</span>
 
