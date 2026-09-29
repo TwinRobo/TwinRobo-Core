@@ -99,6 +99,7 @@
           el("small", {}, [`${c.width}×${c.height}`, c.fov && `${fmt(c.fov[0], 0)}° H`, c.mono ? "mono" : null]
             .filter(Boolean).join(" · ")));
         b.append(thumb, text);
+        if (c.nir) b.append(el("span", { class: "trc-badge is-ir", title: "Near-infrared camera" }, "IR"));
         if (c.status !== "estimated") b.append(el("span", { class: "trc-badge" }, "measured"));
         b.addEventListener("click", () => select(c.id));
         box.append(b);
@@ -198,6 +199,12 @@
         dl.append(fact);
       }
       aside.append(dl);
+      if (c.nir) {
+        aside.append(el("p", { class: "trp-irnote" },
+          "Near-infrared camera. Its geometry and lens hold in the near IR, so these views show them; " +
+          "they are rendered in visible light, as one channel. Near-IR appearance and the projector's " +
+          "dots are not simulated yet."));
+      }
       // the "Use this camera" panel
       $(".trp-usecode").textContent = `from twinrobo import CameraTwin\n\ncamera = CameraTwin.from_catalog("${c.id}")`;
       $(".trp-useyaml").href = c.yaml;

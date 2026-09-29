@@ -37,6 +37,25 @@
     },
     {
      "outputs_depth": false,
+     "id": "intel/realsense-d435/depth",
+     "label": "Intel RealSense D435 / D435i depth imager (one eye)",
+     "sensor": "1280×800, 3.0 µm",
+     "lens": "1.93 mm f/2.0",
+     "focus_m": 0.309,
+     "fov_deg": {
+      "h": 90.0,
+      "v": 64.0,
+      "d": 99.4
+     },
+     "status": "estimated",
+     "size": [
+      640,
+      400
+     ],
+     "dir": "mujoco-pickplace/intel--realsense-d435--depth"
+    },
+    {
+     "outputs_depth": false,
      "id": "intel/realsense-d455/color",
      "label": "Intel RealSense D455 RGB camera",
      "sensor": "1280×800, 3.0 µm",
@@ -53,6 +72,25 @@
       400
      ],
      "dir": "mujoco-pickplace/intel--realsense-d455--color"
+    },
+    {
+     "outputs_depth": false,
+     "id": "intel/realsense-d455/depth",
+     "label": "Intel RealSense D455 depth imager (one eye)",
+     "sensor": "1280×800, 3.0 µm",
+     "lens": "1.93 mm f/2.0",
+     "focus_m": 0.309,
+     "fov_deg": {
+      "h": 90.0,
+      "v": 64.0,
+      "d": 99.4
+     },
+     "status": "estimated",
+     "size": [
+      640,
+      400
+     ],
+     "dir": "mujoco-pickplace/intel--realsense-d455--depth"
     },
     {
      "outputs_depth": false,
@@ -240,6 +278,25 @@
     },
     {
      "outputs_depth": false,
+     "id": "intel/realsense-d435/depth",
+     "label": "Intel RealSense D435 / D435i depth imager (one eye)",
+     "sensor": "1280×800, 3.0 µm",
+     "lens": "1.93 mm f/2.0",
+     "focus_m": 0.309,
+     "fov_deg": {
+      "h": 90.0,
+      "v": 64.0,
+      "d": 99.4
+     },
+     "status": "estimated",
+     "size": [
+      640,
+      400
+     ],
+     "dir": "isaac-tabletop/intel--realsense-d435--depth"
+    },
+    {
+     "outputs_depth": false,
      "id": "intel/realsense-d455/color",
      "label": "Intel RealSense D455 RGB camera",
      "sensor": "1280×800, 3.0 µm",
@@ -256,6 +313,25 @@
       400
      ],
      "dir": "isaac-tabletop/intel--realsense-d455--color"
+    },
+    {
+     "outputs_depth": false,
+     "id": "intel/realsense-d455/depth",
+     "label": "Intel RealSense D455 depth imager (one eye)",
+     "sensor": "1280×800, 3.0 µm",
+     "lens": "1.93 mm f/2.0",
+     "focus_m": 0.309,
+     "fov_deg": {
+      "h": 90.0,
+      "v": 64.0,
+      "d": 99.4
+     },
+     "status": "estimated",
+     "size": [
+      640,
+      400
+     ],
+     "dir": "isaac-tabletop/intel--realsense-d455--depth"
     },
     {
      "outputs_depth": false,

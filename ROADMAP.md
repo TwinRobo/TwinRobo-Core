@@ -76,8 +76,8 @@ after stereo.
 **Today:** a camera's `sensor.spectrum: nir` (the RealSense IR imagers) says it sees
 near-infrared, and `sensor.color: mono` gives its one intensity channel
 (luminance). Its **geometry and optics** are modeled; its **image content** is
-not, because the simulators render visible light. The docs do not show these
-cameras for that reason.
+not, because the simulators render visible light: the docs show these cameras
+in visible light, as one channel, marked IR.
 
 **Geometry holds, blur shifts.** Tracing the D455 IR imager's (surrogate) lens at
 850 nm instead of 550 nm moves a point at the image edge by 0.7 px (a 0.13%

@@ -38,6 +38,15 @@ def outputs_depth(camera_id: str) -> bool:
     return CatalogRegistry().load(camera_id).outputs.depth
 
 
+def to_mono(srgb: np.ndarray) -> np.ndarray:
+    """A mono sensor's view: Rec. 709 luminance in linear light (as `CameraTwin.sensor_color`)."""
+    x = srgb.astype(np.float64) / 255
+    lin = np.where(x <= 0.04045, x / 12.92, ((x + 0.055) / 1.055) ** 2.4)
+    y = lin @ np.array([0.2126, 0.7152, 0.0722])
+    out = np.where(y <= 0.0031308, 12.92 * y, 1.055 * y ** (1 / 2.4) - 0.055)
+    return np.repeat((np.clip(out, 0, 1) * 255 + 0.5).astype(np.uint8)[..., None], 3, axis=2)
+
+
 def depth_rgb(depth: np.ndarray, near: float, far: float) -> np.ndarray:
     from matplotlib import colormaps
 
@@ -66,12 +75,12 @@ def assemble(out: Path) -> dict:
             scene["depth_m"] = [round(near, 3), round(far, 3)]
             cams = []
             for cam, depth in zip(meta["cameras"], depths, strict=True):
-                if CatalogRegistry().load(cam["id"]).sensor.spectrum == "nir":
-                    continue  # near-IR cameras: not rendered in their own light
+                mono = CatalogRegistry().load(cam["id"]).sensor.color == "mono"
                 dst = out / scene["id"] / slug(cam["id"])
                 dst.mkdir(parents=True, exist_ok=True)
                 for name in ["pinhole", *METHODS]:
-                    webp(sdir / cam["id"] / f"{name}.png", dst / f"{name}.webp")
+                    img = np.asarray(Image.open(sdir / cam["id"] / f"{name}.png").convert("RGB"))
+                    webp(to_mono(img) if mono else img, dst / f"{name}.webp")
                 cam = {"outputs_depth": outputs_depth(cam["id"]), **cam}
                 if cam["outputs_depth"]:  # only depth cameras have a Depth view
                     webp(depth_rgb(depth, near, far), dst / "depth.webp")

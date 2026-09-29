@@ -954,3 +954,14 @@
 .md-typeset .tr-why-link::after {
   content: " \2192";
 }
+.trc-badge.is-ir {
+  background: var(--tr-indigo);
+}
+.md-typeset .trp-irnote {
+  margin: 0.4rem 0 0;
+  padding: 0.5rem 0.7rem;
+  border-radius: 0.4rem;
+  font-size: 0.64rem;
+  color: var(--md-default-fg-color--light);
+  background: var(--tr-soft);
+}

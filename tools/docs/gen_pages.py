@@ -114,14 +114,13 @@ def camera_entry(path: Path, spec: dict) -> dict:
         "yaml": f"{REPO}/blob/main/{path.relative_to(ROOT).as_posix()}",
         "modules": [m["id"] for m in mods if spec["id"] in m["eyes"]],
         "views": spec["id"] in viewable,
+        # near-infrared: geometry and lens hold, the near-IR appearance is not simulated
+        "nir": (s.get("spectrum") or "visible") == "nir",
     }
 
 
-# Near-infrared cameras (e.g. RealSense IR imagers) are left out: TwinRobo renders visible
-# light, so their images would not show what they see (ROADMAP.md).
-shown = [(p, c) for p, c in cameras if (c["sensor"].get("spectrum") or "visible") != "nir"]
-cams = [camera_entry(p, c) for p, c in shown]
-listed = {c["id"] for c in cams}
+cams = [camera_entry(p, c) for p, c in cameras]
+listed = {c["id"] for c in cams if c["views"]}  # cameras the viewer can show
 with mkdocs_gen_files.open("assets/catalog.json", "w") as f:
     json.dump({"cameras": cams, "modules": mods, "status": STATUS}, f, indent=1)
 
@@ -147,17 +146,8 @@ lines = [
 ]
 SHOW = '<a class="trc-show" href="#cam={id}" data-camera="{id}">Show in browser</a>'
 SHOW_OFF = '<span class="trc-show is-off" aria-disabled="true" title="{tip}">Show in browser</span>'
-TIP_NIR = (
-    "Not viewable in the browser yet: a near-infrared camera, and TwinRobo renders visible "
-    "light (see the roadmap)"
-)
 TIP_NONE = "No in-browser preview yet: this camera's views have not been rendered for the docs"
-# the table lists every camera (the browser leaves near-infrared ones out)
-table = [
-    {**camera_entry(p, c), "nir": (c["sensor"].get("spectrum") or "visible") == "nir"}
-    for p, c in cameras
-]
-for c in sorted(table, key=lambda c: (c["maker"], c["product"])):
+for c in sorted(cams, key=lambda c: (c["maker"], c["product"])):
     sensor = ", ".join(
         x
         for x in (
@@ -170,10 +160,10 @@ for c in sorted(table, key=lambda c: (c["maker"], c["product"])):
     )
     lens = f"{c['focal_mm']} mm" + (f" f/{c['f_number']}" if c["f_number"] else "")
     fov = f"{c['fov'][0]:.0f}° × {c['fov'][1]:.0f}°" if c["fov"] else "from the lens file"
-    if c["views"] and not c["nir"]:  # the page script loads it into the viewer above
+    if c["views"]:  # the page script loads it into the viewer above
         show = SHOW.format(id=c["id"])
     else:
-        show = SHOW_OFF.format(tip=TIP_NIR if c["nir"] else TIP_NONE)
+        show = SHOW_OFF.format(tip=TIP_NONE)
     lines.append(
         f"| {c['maker']} {c['product']} | [`{c['id']}`]({c['yaml']}) | {sensor} | {lens} | {fov} "
         f"| {STATUS.get(c['status'], c['status'])} | {show} |"
@@ -192,7 +182,7 @@ TIP_STEREO = (
 for m in sorted(mods, key=lambda m: m["name"]):
     # an eye shown in the viewer links to it (#cam=... is the page script's state)
     link = '<a href="#cam={0}" data-camera="{0}"><code>{0}</code></a>'
-    eyes = ", ".join(link.format(e) if e in listed else f"`{e}` (IR)" for e in m["eyes"])
+    eyes = ", ".join(link.format(e) if e in listed else f"`{e}`" for e in m["eyes"])
     lines.append(
         f"| {m['name']} | [`{m['id']}`]({m['yaml']}) | {m['baseline_mm']:.0f} mm "
         f"| {eyes or '–'} | {m['output']} | {SHOW_OFF.format(tip=TIP_STEREO)} |"
@@ -211,7 +201,9 @@ lines += [
     "    ([depth output](cameras.md#depth-output)). Images are 640 px wide, rendered",
     "    offline with [`tools/docs/playground`](" + REPO + "/tree/main/tools/docs/playground).",
     "    For cameras on a robot, see the [simulator demo](playground.md). Near-infrared",
-    "    cameras (the RealSense IR imagers) are not shown: TwinRobo renders visible light",
+    "    cameras (the RealSense IR imagers, marked IR) keep their geometry and lens in the",
+    "    near IR, so their views show those; they are rendered in visible light as one",
+    "    channel, without near-IR appearance or the projector's dots",
     "    ([roadmap](" + REPO + "/blob/main/ROADMAP.md#infrared-cameras)).",
     "",
     '!!! tip "Your camera is missing?"',
