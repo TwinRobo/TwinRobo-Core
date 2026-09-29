@@ -53,9 +53,23 @@ _RAYS: OrderedDict[str, LensRays] = OrderedDict()
 _RAYS_MAX = 4
 
 
-def lens_rays(reference, rays_per_pixel: int = 8, status=None) -> LensRays:
-    """Traced rays of a `DeepLensOptics` (cached; the first trace takes seconds)."""
-    key = json.dumps(reference.lens_rays_key(rays_per_pixel), sort_keys=True)
+def lens_rays(
+    reference, rays_per_pixel: int = 8, status=None, intrinsics=None, distortion=None
+) -> LensRays:
+    """Traced rays of a `DeepLensOptics` (cached; the first trace takes seconds).
+
+    With ``intrinsics`` (and optionally ``distortion``), the rays take that
+    calibrated geometry and keep the lens' blur (`LensRays.with_geometry`); see
+    `CameraTwin.lens_geometry`. Without, the traced lens' own distortion is kept.
+    """
+    key = reference.lens_rays_key(rays_per_pixel)
+    if intrinsics is not None:
+        key["geometry"] = {
+            "intrinsics": [intrinsics.width, intrinsics.height, intrinsics.fx, intrinsics.fy,
+                           intrinsics.cx, intrinsics.cy],
+            "distortion": distortion.to_dict() if distortion is not None else None,
+        }  # fmt: skip
+    key = json.dumps(key, sort_keys=True)
     hit = _RAYS.get(key)
     if hit is not None:
         _RAYS.move_to_end(key)
@@ -65,6 +79,8 @@ def lens_rays(reference, rays_per_pixel: int = 8, status=None) -> LensRays:
     if status is not None:
         status("tracing the lens: every sensor pixel's rays (first use of a config, ~5-20 s)")
     rays = reference.trace_lens_rays(rays_per_pixel)
+    if intrinsics is not None:
+        rays = rays.with_geometry(intrinsics, distortion)
     if torch.cuda.is_available():  # the trace's scratch (GBs at full res) is not needed again;
         torch.cuda.empty_cache()  # hand it back so the renderer (e.g. Isaac's RTX) can use it
     _RAYS[key] = rays

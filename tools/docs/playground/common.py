@@ -1,7 +1,9 @@
 """Shared by the playground renderers: which cameras, at which size, and how outputs are saved.
 
 Each renderer writes, per scene, into ``<staging>/<scene>/``:
-``<camera>/<method>.png`` (the camera's image, sRGB), ``<camera>/pinhole.png`` (the
+``<camera>/<method>.png`` (the camera's raw sensor image, sRGB),
+``<camera>/<method>-cal.png`` (the same image calibrated: undistorted to the camera's
+pinhole, the lens blur kept, as vendor SDKs rectify), ``<camera>/pinhole.png`` (the
 simulator's pinhole at the same field of view), ``<camera>/depth.npy`` (metric z-depth)
 and ``meta.json``. `assemble.py` turns that into the site's assets and manifest.
 """
@@ -66,11 +68,23 @@ def to_srgb8(rgb) -> np.ndarray:
     return (x * 255 + 0.5).astype(np.uint8)
 
 
-def save_frame(out: Path, method: str, frame, pinhole: bool) -> None:
+def calibrated(twin, method: str, rgb):
+    """The camera image undistorted with its calibration, as `rectify=True` delivers it."""
+    import torch.nn.functional as F
+
+    if method == "psf":
+        return twin.warp.rectify(rgb) if twin.warp is not None else rgb
+    (renderer,) = twin.__dict__["_lens_renderers"].values()
+    grid = renderer.rays.rectify_grid()
+    return F.grid_sample(rgb, grid, mode="bilinear", padding_mode="zeros", align_corners=False)
+
+
+def save_frame(out: Path, method: str, frame, pinhole: bool, twin) -> None:
     import imageio.v3 as iio
 
     out.mkdir(parents=True, exist_ok=True)
     iio.imwrite(out / f"{method}.png", to_srgb8(frame.rgb))
+    iio.imwrite(out / f"{method}-cal.png", to_srgb8(calibrated(twin, method, frame.rgb)))
     if pinhole:
         iio.imwrite(out / "pinhole.png", to_srgb8(frame.rgb_ideal))
         np.save(out / "depth.npy", frame.depth[0, 0].detach().float().cpu().numpy())

@@ -3,6 +3,10 @@
 (function () {
   const VIEWS = { compare: "Slider", side: "Side by side", diff: "Difference" };
   const METHODS = { psf: "PSF", pupil: "Pupil", raycast: "Ray cast" };  // short labels for the bar
+  const OUTPUTS = {
+    raw: ["Raw sensor", "The image as the sensor records it: the lens' distortion, blur and vignetting"],
+    cal: ["Calibrated", "Undistorted with the camera's calibration, as a stereo SDK rectifies its streams; the lens blur stays"],
+  };
   const KEY = "tr-catalog";
 
   function el(tag, attrs, text) {
@@ -33,10 +37,11 @@
 
     // --- state: filters and viewer settings persist for the session; the camera is in the URL
     const isaac = views.scenes.findIndex((s) => s.simulator.startsWith("Isaac"));
-    const state = { scene: Math.max(0, isaac), method: "raycast", view: "side", camera: null,
+    const state = { scene: Math.max(0, isaac), method: "raycast", output: "raw", view: "side", camera: null,
                     q: "", sort: "maker", maker: "", kind: "", status: "", previews: false, hfov: "" };
     try { Object.assign(state, JSON.parse(sessionStorage.getItem(KEY) || "{}")); } catch (e) {}
     if (!views.scenes[state.scene]) state.scene = 0;
+    if (!(state.output in OUTPUTS) || !views.outputs) state.output = "raw";
     if (!(state.method in (views.methods || {}))) state.method = Object.keys(views.methods || {}).pop() || "psf";
     const fromHash = () => { const m = /cam=([^&]+)/.exec(location.hash); return m && decodeURIComponent(m[1]); };
     // default: the widest-angle camera with a preview (its lens shows most)
@@ -78,6 +83,9 @@
     const scene = () => views.scenes[state.scene];
     const viewOf = (id) => scene()?.cameras.find((v) => v.id === id);
     const url = (v, name) => new URL(`${v.dir}/${name}.webp`, base).href;
+    // Calibrated only differs from raw for entries whose calibration has distortion.
+    const output = () => (state.output === "cal" && byId.get(state.camera)?.distortion ? "cal" : "raw");
+    const image = () => (output() === "cal" ? `${state.method}-cal` : state.method);  // the camera's image
 
     function list() {
       const box = $(".trc-list"), shown = filtered();
@@ -93,7 +101,7 @@
         }
         const b = el("button", { type: "button", class: "trc-item", role: "option", "data-id": c.id });
         const v = viewOf(c.id);
-        const thumb = v ? el("img", { src: url(v, state.method), alt: "", loading: "lazy" }) : el("span", { class: "trc-nothumb" });
+        const thumb = v ? el("img", { src: url(v, image()), alt: "", loading: "lazy" }) : el("span", { class: "trc-nothumb" });
         const text = el("span", { class: "trc-text" });
         text.append(el("b", {}, c.product || c.id),
           el("small", {}, [`${c.width}×${c.height}`, c.fov && `${fmt(c.fov[0], 0)}° H`, c.mono ? "mono" : null]
@@ -119,8 +127,8 @@
     function buttons(key, items) {
       const g = $(`.trp-group[data-key="${key}"]`);
       g.replaceChildren();
-      for (const [value, label] of items) {
-        const b = el("button", { type: "button", "data-value": value }, label);
+      for (const [value, label, tip] of items) {
+        const b = el("button", { type: "button", "data-value": value, ...(tip && { title: tip }) }, label);
         b.addEventListener("click", () => {
           state[key] = key === "scene" ? Number(value) : value;
           save(); show(); if (key !== "view") list();
@@ -130,6 +138,8 @@
     }
     buttons("scene", views.scenes.map((s, i) => [String(i), s.simulator]));
     buttons("method", Object.keys(views.methods || {}).map((m) => [m, METHODS[m] || views.methods[m]]));
+    if (views.outputs) buttons("output", Object.entries(OUTPUTS).map(([k, [l, t]]) => [k, l, t]));
+    else $('.trp-group[data-key="output"]').remove();
     buttons("view", Object.entries(VIEWS));
 
     const frame = $(".trp-frame"), under = $(".trp-under"), over = $(".trp-over");
@@ -166,7 +176,7 @@
     }
     const load = (src) => new Promise((ok) => { const i = new Image(); i.onload = () => ok(i); i.src = src; });
     async function drawDiff(v) {
-      const [a, b] = await Promise.all([load(url(v, "pinhole")), load(url(v, state.method))]);
+      const [a, b] = await Promise.all([load(url(v, "pinhole")), load(url(v, image()))]);
       diff.width = a.naturalWidth; diff.height = a.naturalHeight;
       const ctx = diff.getContext("2d", { willReadFrequently: true });
       ctx.drawImage(a, 0, 0);
@@ -214,8 +224,14 @@
       const c = byId.get(state.camera) || filtered()[0] || cams[0];
       state.camera = c.id;
       const v = viewOf(c.id), s = scene();
+      const cal = root.querySelector('.trp-group[data-key="output"] button[data-value="cal"]');
+      if (cal) {
+        cal.disabled = !c.distortion;
+        cal.title = c.distortion ? OUTPUTS.cal[1]
+          : "This entry's calibration has no lens distortion, so its raw and calibrated images are the same";
+      }
       for (const g of root.querySelectorAll(".trp-group")) {
-        const cur = String(state[g.dataset.key]);
+        const cur = g.dataset.key === "output" ? output() : String(state[g.dataset.key]);
         for (const b of g.children) b.classList.toggle("is-active", b.dataset.value === cur);
       }
       $(".trp-none").hidden = !!v;
@@ -226,11 +242,11 @@
         aspect = w / v.size[1];
         fit();
         frame.dataset.view = state.view;
-        const method = views.methods[state.method];
+        const method = views.methods[state.method] + (output() === "cal" ? " · calibrated" : "");
         const [l, r] = { compare: ["Pinhole", method], side: ["Pinhole", method], diff: [`|${method} − pinhole|`, ""] }[state.view];
         $(".trp-tag-l").textContent = l; $(".trp-tag-r").textContent = r;
         under.src = url(v, "pinhole");
-        overImg.src = url(v, state.method);
+        overImg.src = url(v, image());
         diff.hidden = state.view !== "diff";
         if (state.view === "diff") drawDiff(v);
         setSplit();

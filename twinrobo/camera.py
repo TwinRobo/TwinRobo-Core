@@ -173,6 +173,25 @@ class CameraTwin:
         w = rgb.new_tensor(LUMA)[None, :, None, None]
         return (rgb * w).sum(1, keepdim=True).expand_as(rgb).contiguous()
 
+    def lens_geometry(self) -> dict[str, Any]:
+        """Keyword arguments of `lens_rays` giving the lens-ray methods this camera's geometry.
+
+        The spec's intrinsics and distortion (``lens.geometry: calibration``, the
+        default), so every rendering method has the catalog's field of view and
+        distortion. Empty, keeping the traced lens' own geometry, for
+        ``lens.geometry: lens``, for ``calibration.distortion.model: physical`` and
+        when the spec gives no intrinsics.
+        """
+        spec = self.spec
+        if spec is None or self.intrinsics is None or spec.lens.geometry == "lens":
+            return {}
+        given = spec.calibration.get("intrinsic") or {}
+        if any(given.get(k) is None for k in ("fx", "fy", "cx", "cy")):
+            return {}
+        if (spec.calibration.get("distortion") or {}).get("model") == "physical":
+            return {}
+        return {"intrinsics": self.intrinsics, "distortion": self.distortion}
+
     @property
     def outputs_depth(self) -> bool:
         """Whether the camera's depth output is simulated (``outputs.depth``).

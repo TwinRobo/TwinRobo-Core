@@ -4,6 +4,10 @@
   "pupil": "Pupil views",
   "raycast": "Ray cast"
  },
+ "outputs": {
+  "raw": "Raw sensor",
+  "cal": "Calibrated"
+ },
  "scenes": [
   {
    "id": "mujoco-pickplace",
@@ -38,7 +42,7 @@
     {
      "outputs_depth": false,
      "id": "intel/realsense-d435/depth",
-     "label": "Intel RealSense D435 / D435i depth imager (one eye)",
+     "label": "Intel RealSense D435 / D435i IR imager (one stereo eye)",
      "sensor": "1280×800, 3.0 µm",
      "lens": "1.93 mm f/2.0",
      "focus_m": 0.309,
@@ -76,7 +80,7 @@
     {
      "outputs_depth": false,
      "id": "intel/realsense-d455/depth",
-     "label": "Intel RealSense D455 depth imager (one eye)",
+     "label": "Intel RealSense D455 IR imager (one stereo eye)",
      "sensor": "1280×800, 3.0 µm",
      "lens": "1.93 mm f/2.0",
      "focus_m": 0.309,
@@ -279,7 +283,7 @@
     {
      "outputs_depth": false,
      "id": "intel/realsense-d435/depth",
-     "label": "Intel RealSense D435 / D435i depth imager (one eye)",
+     "label": "Intel RealSense D435 / D435i IR imager (one stereo eye)",
      "sensor": "1280×800, 3.0 µm",
      "lens": "1.93 mm f/2.0",
      "focus_m": 0.309,
@@ -317,7 +321,7 @@
     {
      "outputs_depth": false,
      "id": "intel/realsense-d455/depth",
-     "label": "Intel RealSense D455 depth imager (one eye)",
+     "label": "Intel RealSense D455 IR imager (one stereo eye)",
      "sensor": "1280×800, 3.0 µm",
      "lens": "1.93 mm f/2.0",
      "focus_m": 0.309,

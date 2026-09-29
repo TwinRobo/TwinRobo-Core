@@ -172,7 +172,7 @@ class IsaacCameraTwin:
             self.view_oversample,
         )
         if key not in cache:
-            rays = lens_rays(self.twin.reference, self.rays_per_pixel)
+            rays = lens_rays(self.twin.reference, self.rays_per_pixel, **self.twin.lens_geometry())
             cache.clear()  # one lens renderer per twin (they hold large GPU buffers)
             cache[key] = LensRayRenderer(
                 rays,

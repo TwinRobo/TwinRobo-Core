@@ -61,7 +61,7 @@ def main():
             cam = MujocoCameraTwin(twin, backend, camera="robot0_eye_in_hand", render=method)
             frame = cam.get_frame(force_depth=True)  # the page shows ground-truth depth
             torch.cuda.synchronize()
-            save_frame(scene_dir / cid, method, frame, pinhole=method == "psf")
+            save_frame(scene_dir / cid, method, frame, pinhole=method == "psf", twin=twin)
             print(f"{cid:40s} {method:8s} {time.perf_counter() - t:5.1f} s", flush=True)
         metas.append(camera_meta(cid, full, twin))
     write_meta(scene_dir, SCENE, metas)

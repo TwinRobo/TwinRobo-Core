@@ -60,6 +60,41 @@ def test_rectify_grid_inverts_the_chief_ray_map(rays):
     assert err < 2e-3, err  # < 0.5 px at fx ~ 254
 
 
+def test_with_geometry_takes_the_calibration_and_keeps_the_blur(rays):
+    from twinrobo.geometry import CameraIntrinsics
+    from twinrobo.optics.distortion import RadialDistortion
+
+    K0 = rays.intrinsics
+    K = CameraIntrinsics(K0.width, K0.height, K0.fx * 1.1, K0.fy * 1.1, K0.cx + 2, K0.cy - 1)
+    dist = RadialDistortion(k1=-0.05)
+    cal = rays.with_geometry(K, dist)
+    assert cal.intrinsics == K and cal.metadata["geometry"] == "calibration"
+    # chief rays follow the calibration: projecting them lands on their own pixels
+    t = cal.chief_tan
+    xd, yd = dist.distort(t[..., 0], -t[..., 1])
+    vv, uu = torch.meshgrid(
+        torch.arange(K.height, device=t.device), torch.arange(K.width, device=t.device),
+        indexing="ij",
+    )  # fmt: skip
+    assert float((xd * K.fx + K.cx - uu).abs().max()) < 0.05
+    assert float((yd * K.fy + K.cy - vv).abs().max()) < 0.05
+    # every ray of a pixel turned by the same angle: the spread around the chief ray is kept
+    row = slice(40, 60)
+    _, t0, w0 = rays.rays(1, row)
+    _, t1, _ = cal.rays(1, row)
+    ok = (w0 > 0)[..., None]
+    spread0 = (t0 - rays.chief_tan[row][:, :, None]).where(ok, 0)
+    spread1 = (t1 - cal.chief_tan[row][:, :, None]).where(ok, 0)
+    assert float((spread0 - spread1).abs().max()) < 2e-3  # fp16 residuals
+
+
+def test_catalog_surrogate_lenses_take_the_catalog_geometry():
+    twin = CameraTwin.from_catalog("intel/realsense-d455/color", device=DEV, build_psf=False)
+    geo = twin.lens_geometry()
+    assert geo["intrinsics"] == twin.intrinsics
+    assert small_twin().lens_geometry() == {}  # physical distortion: the lens' own
+
+
 # -- rendering (needs MuJoCo + GL) -----------------------------------------------------------------
 
 mujoco = pytest.importorskip("mujoco")

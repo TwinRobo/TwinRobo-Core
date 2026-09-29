@@ -3,7 +3,8 @@
     python tools/docs/playground/assemble.py   # -> docs/assets/playground/
 
 Reads ``outputs/playground/<scene>`` (MuJoCo) and ``outputs/isaac/playground/<scene>``
-(Isaac Sim), writes one WebP per camera and method, the pinhole view, a colour-mapped
+(Isaac Sim), writes two WebPs per camera and method (the raw sensor image and the
+calibrated, undistorted one), the pinhole view, a colour-mapped
 depth image (only for cameras whose depth output is simulated) and ``manifest.json``
 (scenes, cameras, what the page shows about them).
 """
@@ -26,6 +27,7 @@ METHODS = {
     "pupil": "Pupil views",
     "raycast": "Ray cast",
 }
+OUTPUTS = {"raw": "Raw sensor", "cal": "Calibrated"}  # <method>.webp, <method>-cal.webp
 QUALITY = 82
 
 
@@ -78,7 +80,7 @@ def assemble(out: Path) -> dict:
                 mono = CatalogRegistry().load(cam["id"]).sensor.color == "mono"
                 dst = out / scene["id"] / slug(cam["id"])
                 dst.mkdir(parents=True, exist_ok=True)
-                for name in ["pinhole", *METHODS]:
+                for name in ["pinhole", *METHODS, *(f"{m}-cal" for m in METHODS)]:
                     img = np.asarray(Image.open(sdir / cam["id"] / f"{name}.png").convert("RGB"))
                     webp(to_mono(img) if mono else img, dst / f"{name}.webp")
                 cam = {"outputs_depth": outputs_depth(cam["id"]), **cam}
@@ -89,7 +91,7 @@ def assemble(out: Path) -> dict:
             scenes.append(scene)
             print(f"{scene['id']}: {len(cams)} cameras, depth {near:.2f}–{far:.2f} m")
     scenes.sort(key=lambda s: s["simulator"] != "MuJoCo")
-    manifest = {"methods": METHODS, "scenes": scenes}
+    manifest = {"methods": METHODS, "outputs": OUTPUTS, "scenes": scenes}
     (out / "manifest.json").write_text(json.dumps(manifest, indent=1, ensure_ascii=False))
     return manifest
 

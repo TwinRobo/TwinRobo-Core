@@ -97,6 +97,44 @@ class LensRays:
             ty = max(ty, float(t[..., 1][ok].max()))
         return tx, ty
 
+    # -- geometry from a calibration ---------------------------------------------------------------
+    def with_geometry(self, intrinsics: CameraIntrinsics, distortion=None) -> LensRays:
+        """These rays with a calibrated camera's geometry and the traced lens' blur.
+
+        Every ray of a pixel is turned by the same small angle, so that the pixel's
+        chief ray points where the calibration (``intrinsics`` and OpenCV
+        ``distortion``, a `RadialDistortion` or ``None``) says it does. The spread of
+        the rays around it (blur, lateral color) and the vignetting stay the lens'
+        own. For a surrogate lens this keeps the catalog's geometry instead of the
+        surrogate design's distortion.
+        """
+        K = intrinsics
+        W, H = self.resolution
+        if (K.width, K.height) != (W, H):
+            raise ValueError(f"intrinsics are {K.width}x{K.height}, the rays {W}x{H}")
+        u = torch.arange(W, device=self.device, dtype=torch.float32)
+        v = torch.arange(H, device=self.device, dtype=torch.float32)
+        vv, uu = torch.meshgrid(v, u, indexing="ij")
+        xd, yd = (uu - K.cx) / K.fx, (vv - K.cy) / K.fy  # OpenCV: y down
+        x, y = (xd, yd) if distortion is None else distortion.undistort(xd, yd)
+        target = torch.stack([x, -y], -1)  # [H, W, 2] slopes, y up
+        meta = {k: v for k, v in self.metadata.items() if not k.startswith("_")}
+        out = LensRays(
+            intrinsics=K,
+            wavelengths_um=self.wavelengths_um,
+            origin=self.origin,
+            tan_res=self.tan_res,
+            weight=self.weight,
+            chief_tan=target,
+            illumination=self.illumination,
+            pupil_radius_m=self.pupil_radius_m,
+            metadata={**meta, "geometry": "calibration"},
+        )
+        # the per-pixel turn, re-expressed as a residual on the calibrated pinhole
+        shift = target - self.chief_tan + self.pinhole_tan() - out.pinhole_tan()
+        out.tan_res = (self.tan_res.float() + shift[None, :, :, None, :]).half()
+        return out
+
     # -- rectification (undistortion) from the chief-ray map --------------------------------------
     def rectify_grid(self, iterations: int = 6) -> Tensor:
         """``grid_sample`` grid ``[1, H, W, 2]`` undistorting a lens image to the paraxial pinhole.

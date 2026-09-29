@@ -292,6 +292,13 @@
   background: var(--tr-grad);
   color: #fff;
 }
+.trp-group button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.trp-group button:disabled:hover {
+  color: var(--md-default-fg-color--light);
+}
 .trp-main {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 15rem;
@@ -857,21 +864,21 @@
   margin: 0.2rem 0 0;
   font-size: 0.64rem;
 }
-/* catalog: the bar keeps "Use this camera" on its row */
+/* catalog: groups keep their buttons on one line; the bar wraps between groups, and
+   "Use this camera" stays at the right end */
 .trc-view .trp-bar {
-  flex-wrap: nowrap;
   gap: 0.5rem;
+}
+.trc-view .trp-group {
+  flex: none;
+  flex-wrap: nowrap;
 }
 .trc-view .trp-group button {
   padding: 0.3rem 0.65rem;
+  white-space: nowrap;
 }
 .trp-snip .md-clipboard {
   display: none; /* our own Copy button */
-}
-@media (max-width: 76em) {
-  .trc-view .trp-bar {
-    flex-wrap: wrap;
-  }
 }
 /* header: the site name links home; dropdown entries with an icon stand out */
 .md-header a.tr-head-title {

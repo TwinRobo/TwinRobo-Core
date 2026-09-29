@@ -58,6 +58,10 @@ class LensSpec:
     f_number: float | None = None
     focus_distance_m: float | None = None
     deeplens_model: DeepLensModelRef | None = None
+    # Where the lens-ray methods take the image geometry from: "calibration" (the spec's
+    # intrinsics and distortion; the lens model gives blur only, as for a surrogate lens) or
+    # "lens" (the traced lens' own distortion, for a real prescription).
+    geometry: str = "calibration"
 
 
 @dataclass
@@ -164,7 +168,10 @@ class CameraSpec:
             f_number=lens_d.get("f_number"),
             focus_distance_m=lens_d.get("focus_distance_m"),
             deeplens_model=deeplens_model,
+            geometry=lens_d.get("geometry", "calibration"),
         )
+        if lens.geometry not in ("calibration", "lens"):
+            raise SpecError(f"lens.geometry must be calibration|lens, got {lens.geometry!r}")
 
         out_d = data.get("outputs") or {}
         if not isinstance(out_d, dict):
