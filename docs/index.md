@@ -13,7 +13,8 @@ hide:
 
 <p class="tr-lead">Simulators render through a perfect pinhole; robots see through real lenses.
 TwinRobo renders simulated scenes through the actual optics of off-the-shelf cameras,
-so perception trained in simulation meets the same image on the robot.</p>
+so perception trained in simulation meets the same image on the robot.
+<a class="tr-why-link" href="why/">See why TwinRobo?</a></p>
 
 [Get started](getting-started.md){ .md-button .md-button--primary }
 [Browse cameras](catalog.md){ .md-button }

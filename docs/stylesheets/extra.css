@@ -929,3 +929,28 @@
   background: var(--md-default-fg-color--lightest);
   cursor: not-allowed;
 }
+/* Why TwinRobo: the episode videos */
+.md-typeset .tr-why-video {
+  margin: 1.2rem 0;
+}
+.tr-why-video video {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0.6rem;
+  background: #12131c;
+}
+.md-typeset .tr-why-video figcaption {
+  max-width: none;
+  margin-top: 0.4rem;
+  font-size: 0.7rem;
+  color: var(--md-default-fg-color--light);
+  text-align: left;
+}
+.md-typeset .tr-why-link {
+  font-weight: 650;
+  white-space: nowrap;
+}
+.md-typeset .tr-why-link::after {
+  content: " \2192";
+}
