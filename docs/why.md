@@ -19,9 +19,9 @@ camera's field of view and lens.
 |---|---|---|---|---|---|
 | Pinhole (LIBERO, the training camera) | 45° vertical | **85%** | 77–91% | – | 100 |
 | Logitech C920 | 70° × 43° | **84%** | 76–90% | -1 pts | 100 |
-| Luxonis OAK-D mono | 72° × 49°, monochrome | **65%** | 55–74% | -20 pts | 92 |
+| Luxonis OAK-D mono | 72° × 49°, monochrome | **65%** | 55–74% | -20 pts | 100 |
 | Intel RealSense D455 RGB | 90° × 64° | **0%** | 0–4% | -85 pts | 100 |
-| Stereolabs ZED X 2.2 mm | 110° × 80° | **0%** | 0–4% | -85 pts | 90 |
+| Stereolabs ZED X 2.2 mm | 110° × 80° | **0%** | 0–4% | -85 pts | 100 |
 
 Cameras framed close to the training camera hold up; the wide ones break the
 policy entirely. The scene is framed twice as wide, the objects cover a few
