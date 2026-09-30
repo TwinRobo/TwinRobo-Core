@@ -90,10 +90,10 @@ def make_env(env_args: dict[str, Any], robot: str | None = None, seed: int = 0):
 
     kw = dict(env_args.get("env_kwargs") or {})
     kw.pop("env_name", None)
-    if robot is not None:
-        kw["robots"] = robot
-        if robot != env_args.get("env_kwargs", {}).get("robots"):
-            kw.pop("controller_configs", None)
+    if robot is not None and robot != kw.get("robots"):
+        kw.update(robot_kwargs(robot))
+        kw.pop("controller_configs", None)  # the recording robot's controllers
+        kw["render_camera"] = None  # the default names a PandaOmron camera
     kw.update(
         has_renderer=False,
         has_offscreen_renderer=True,
@@ -107,6 +107,34 @@ def make_env(env_args: dict[str, Any], robot: str | None = None, seed: int = 0):
     kw.pop("camera_widths", None)
     kw.pop("camera_depths", None)
     return robosuite.make(env_args["env_name"], **kw)
+
+
+def robot_kwargs(robot: str) -> dict[str, Any]:
+    """robosuite's arguments for a catalog robot, e.g. ``UR5eOmron``: a UR5e on the Omron base
+    (`twinrobo.datasets.libero.robots.ROBOT_CATALOG`); other names are robosuite's own."""
+    from twinrobo.datasets.libero.robots import ROBOT_CATALOG
+
+    info = next((r for r in ROBOT_CATALOG if r["name"] == robot), None)
+    return dict((info or {}).get("robosuite") or {"robots": robot})
+
+
+def reset_to_layout(env, ep_meta: dict[str, Any], robot: str) -> None:
+    """An episode's kitchen rebuilt around another robot: RoboCasa regenerates the layout,
+    style and objects from ``ep_meta`` (the episode's model XML holds the recording robot).
+
+    The recorded robot base pose is kept for robots on the same mobile base; others are
+    placed by RoboCasa (a humanoid stands higher)."""
+    from twinrobo.datasets.libero.robots import ROBOT_CATALOG
+
+    info = next((r for r in ROBOT_CATALOG if r["name"] == robot), {})
+    meta = dict(ep_meta)
+    if not info.get("keep_pose", False):
+        meta = {k: v for k, v in meta.items() if not k.startswith("init_robot_base")}
+    if hasattr(env, "set_ep_meta"):
+        env.set_ep_meta(meta)
+    else:
+        env.set_attrs_from_ep_meta(meta)
+    env.reset()
 
 
 def reset_to_episode(env, model_xml: str, ep_meta: dict[str, Any]) -> None:

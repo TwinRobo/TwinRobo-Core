@@ -138,11 +138,14 @@ def body_id(model, body: str) -> int:
 
 
 def mountable_bodies(model) -> list[str]:
-    """Bodies a camera can be attached to: the world, then robot, gripper and mount links."""
+    """Bodies a camera can be attached to: the world, then robot, gripper, mount and mobile
+    base links."""
     import mujoco
 
     names = [mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_BODY, b) for b in range(1, model.nbody)]
-    robot = [n for n in names if n and n.startswith(("robot0_", "gripper0_", "mount0_"))]
+    robot = [
+        n for n in names if n and n.startswith(("robot0_", "gripper0_", "mount0_", "mobilebase0_"))
+    ]
     return [WORLD] + robot
 
 

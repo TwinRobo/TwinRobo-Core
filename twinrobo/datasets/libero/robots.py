@@ -75,6 +75,43 @@ ROBOT_CATALOG = [
         "policy_size": 256,  # RoboCasa's recorded videos
         "robot_cameras": ["agentview_left", "agentview_right", "eye_in_hand"],
     },
+    # Other robots in RoboCasa kitchens. The kitchens place a robot through its mobile base,
+    # so the fixed arms ride robosuite's Omron base, as the PandaOmron does. They have no
+    # recorded demos: they start at their home pose. ``robosuite`` is how robosuite builds
+    # them; ``keep_pose``: the recorded episode's base pose fits (the same Omron base).
+    *[
+        {
+            "name": f"{arm}Omron",
+            "label": f"{label} on Omron mobile base",
+            "category": "Mobile manipulators",
+            "base": f"{arm}Omron",
+            "simulator": "robocasa",
+            "policy_size": 256,
+            "robot_cameras": ["agentview_left", "agentview_right", "eye_in_hand"],
+            "robosuite": {"robots": arm, "base_types": "OmronMobileBase"},
+            "keep_pose": True,
+        }
+        for arm, label in [
+            ("UR5e", "Universal Robots UR5e"),
+            ("Kinova3", "Kinova Gen3"),
+            ("IIWA", "KUKA LBR iiwa"),
+            ("Jaco", "Kinova Jaco"),
+            ("Sawyer", "Rethink Sawyer"),
+            ("XArm7", "UFACTORY xArm 7"),
+            ("PandaDexRH", "Franka Panda with a dexterous hand"),
+        ]
+    ],
+    {
+        "name": "GR1FloatingBody",
+        "label": "Fourier GR1 humanoid",
+        "category": "Humanoids",
+        "base": "GR1FloatingBody",
+        "simulator": "robocasa",
+        "policy_size": 256,
+        "robot_cameras": ["agentview_center", "eye_in_right_hand", "eye_in_left_hand"],
+        "robosuite": {"robots": "GR1FloatingBody"},
+        "keep_pose": False,  # RoboCasa places it (it stands higher than a mobile base)
+    },
 ]
 # Cameras physically on the robot. robosuite's "robotview" is a free third-person viewpoint
 # (it floats in front of the base), so it is a scene camera, not one of the robot's.
