@@ -11,12 +11,7 @@
 [![Docs](https://img.shields.io/badge/docs-API%20reference-indigo)](https://twinrobo.github.io/TwinRobo-Core/)
 [![Demo](https://img.shields.io/badge/demo-TwinRobo%20Preview-teal)](https://twinrobo.github.io/TwinRobo-Preview/)
 
-Simulators render through a perfect pinhole. Robots see through real cameras:
-lenses that blur, distort and vignette, with fixed focus and a specific field
-of view. Policies trained on pinhole images meet a different image at
-deployment. TwinRobo closes that gap: it renders simulated scenes through the
-actual optics of the camera you will deploy, as a drop-in for the simulators
-robot learning already uses.
+Existing simulators render through a perfect pinhole camera, while in the real world robots see through real cameras: lenses with their own field of view, defocus blur, distortion, aberration and vignetting. Policies trained on pinhole images meet a different image at deployment, causing a significant [domain gap](https://twinrobo.github.io/TwinRobo-Core/why/) between simulation and reality. TwinRobo closes that gap: it renders scenes through the actual optics of the camera you will deploy, as a drop-in for the simulators robot learning already uses.
 
 **One environment, any real camera.** TwinRobo is an open environment for aligning
 perception with off-the-shelf cameras: pick a camera from the
@@ -34,13 +29,13 @@ models of their products.
 |---|---|---|
 | Adapter | `twinrobo.plugins.mujoco.MujocoCameraTwin` | `twinrobo.plugins.isaac.IsaacCameraTwin` |
 | `psf`: pinhole + lens blur and distortion | ✅ | ✅ |
-| `pupil`: lens rays across the aperture | ✅ | ✅ |
+| `pupil`: lens rays looked up in views across the lens pupil | ✅ | ✅ |
 | `raycast`: lens rays cast into the scene | ✅ | ✅ |
 | RGB on the GPU, ground-truth depth on request | ✅ | ✅ |
 | Cameras on robot links, stereo modules | ✅ | any USD camera prim |
 | Setup | `pip install` | Docker recipe included |
 
-**Cameras:** 13 in the catalog, including Intel RealSense D435 / D455,
+**Cameras:** 12 in the catalog, including Intel RealSense D435 / D455,
 Stereolabs ZED X, ZED X Mini and ZED 2i, Luxonis OAK-D, Logitech C920 and the
 Raspberry Pi Camera Module 3, as single cameras or stereo pairs with rectified
 output. Every camera works in every simulator and rendering method.
@@ -50,12 +45,14 @@ output. Every camera works in every simulator and rendering method.
 
 - **Real lens optics.** Lenses are traced with
   [DeepLens](https://github.com/vccimaging/DeepLens): depth- and field-dependent
-  blur, the lens' own distortion, chromatic aberration and vignetting, from a
-  lens prescription instead of a hand-tuned filter.
+  blur, aberration and vignetting from a lens prescription instead of a
+  hand-tuned filter, and distortion from the camera's calibration or the lens'
+  own.
 - **Three rendering methods, per camera.** A fast 2.5D PSF renderer, and two
   lens-ray renderers that trace every pixel's rays through the lens into the
-  scene: *pupil raster* and GPU *ray cast* (NVIDIA Warp), exact even for
-  defocused foreground objects. [More](docs/rendering.md)
+  scene: *pupil* (rasterized views across the lens pupil) and GPU *ray cast*
+  (NVIDIA Warp), exact even for defocused foreground objects.
+  [More](docs/rendering.md)
 - **Drop-in for robot simulators.** MuJoCo, LIBERO (robosuite 1.4), RoboCasa
   kitchens (robosuite 1.5) and NVIDIA Isaac Sim (any USD stage, RTX rendering).
   `CameraTwinLiberoEnv` swaps a camera's observations in place, so policies and
@@ -68,11 +65,12 @@ output. Every camera works in every simulator and rendering method.
 - **Calibrate a real unit.** `python -m twinrobo.calibration` turns ChArUco,
   slanted-edge and flat-field captures into a `measured` entry: intrinsics,
   distortion, focus, vignetting and stereo baseline. [More](docs/calibration.md)
-- **Validated, in both simulators.** The PSF renderer matches DeepLens' reference
-  renderer at about 46 dB. Points land within a pixel of where the lens' chief
-  rays point (within 0.1 px in Isaac). On a defocused foreground object, ray cast
-  reproduces the exact partially covered edge to within ~0.03 (Isaac) and ~0.05
-  (MuJoCo), where pinhole + PSF errs by 0.13–0.4.
+- **Validated in both simulators.** The PSF renderer matches DeepLens' reference
+  renderer at about 46 dB PSNR. With the lens-ray methods, points land within a
+  pixel of where the lens' chief rays point (within 0.1 px in Isaac). On a
+  defocused foreground object, ray cast reproduces the exact coverage of its
+  partially covered edge to within ~0.03 (Isaac) and ~0.05 (MuJoCo), where
+  pinhole + PSF errs by 0.13–0.4.
 
 ## Installation
 
@@ -131,10 +129,10 @@ with mounted(env.sim.model._model, env.sim.data._data, wrist) as host:
 
 image = to_uint8(frame.rgb)  # the real camera's image, uint8 [H, W, 3]
 pinhole = to_uint8(frame.rgb_ideal)  # the simulator's ideal pinhole, same camera
-depth = frame.depth[0, 0]  # ground-truth z-depth (m): a label, the ZED X outputs none
+depth = frame.depth[0, 0]  # ground-truth z-depth (m): a label, not the ZED X's own depth
 ```
 
-The first call builds the lens's PSF bank with DeepLens (about 20 s on a GPU)
+The first call builds the lens' PSF bank with DeepLens (about 20 s on a GPU)
 and caches it; after that a frame takes a fraction of a second. The mount moves
 with the link, so it follows the robot as it acts or replays a demo.
 
@@ -150,7 +148,7 @@ MUJOCO_GL=egl python examples/05_mount_camera_on_robot.py   # writes outputs/05_
 
 Read it top to bottom:
 
-- **Simulator pinhole / TwinRobo camera:** the field of view is each lens's
+- **Simulator pinhole / TwinRobo camera:** the field of view is each lens'
   own. The ZED X 2.2 mm's wide lens shows its barrel distortion, which a
   pinhole cannot.
 - **Close-up:** the same patch at native resolution; the real lens softens the
@@ -199,12 +197,12 @@ Read it top to bottom:
 | Method | How | Per frame, 1920×1200 (RTX 3090) | Best for |
 |---|---|---|---|
 | `psf` | pinhole render + depth- and field-dependent PSF blur | ~0.1–0.4 s | fast training data |
-| `pupil` | lens rays looked up in views rendered across the aperture | ~0.5 s | real distortion, chromatic aberration, vignetting |
+| `pupil` | lens rays looked up in views rasterized across the lens pupil | ~0.5 s | defocus across the aperture, aberration, vignetting |
 | `raycast` | lens rays intersected with the scene on the GPU | ~0.9 s (MuJoCo), ~1.5 s (Isaac) | exact defocus around occluders |
 
 The methods are simulator independent (`twinrobo.optics.lensrender`): a
-simulator supplies the camera pose, views rendered from points on the lens'
-aperture, and the scene's triangles.
+simulator supplies the camera pose, views rasterized from points across the
+lens pupil, and the scene's triangles.
 
 [Details and validation](docs/rendering.md)
 
@@ -261,7 +259,7 @@ just as welcome. The full guide is in
 
 ## For camera makers: become a partner
 
-**Put your camera in every robot-learning simulator.** Robot teams now choose
+**Put your camera in every robot-learning simulator.** Robot teams can now choose
 and validate cameras in simulation before they buy hardware. The TwinRobo
 Camera Partner program lets camera and lens makers ship
 `manufacturer_verified` models of their products, and lets companies sponsor
@@ -302,6 +300,7 @@ for what is planned (simulated depth cameras first).
 
 ## Roadmap
 
+- Simulated depth cameras: depth from the stereo modules, with a real sensor's errors
 - Faster lens-ray rendering in Isaac Sim (fewer, shared pupil views)
 - Sensor noise and ISP models (interfaces are in place)
 - `measured` catalog entries from calibration captures of real units
