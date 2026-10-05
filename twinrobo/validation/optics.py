@@ -48,7 +48,7 @@ def compare_to_reference(renderer, reference, rgb: Tensor, depth: Tensor, psf_gr
         depth,
         psf_grid=psf_grid or bank.grid,
         depths_m=bank.depths_m,
-        far_m=float(bank.depths_m[0]),
+        far_m=float(bank.depths_m[0]),  # inf is mapped to DEFAULT_FAR_M
     )
     return {
         "psnr_vs_reference": psnr(out, ref),

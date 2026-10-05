@@ -49,11 +49,6 @@ calibration:
     cy: 1295.5
   psf:
     model: deeplens
-    field_samples: [17, 11]
-    depth_samples: 16
-    near_m: 0.1
-    far_m: 20.0
-    ks: 65
 
 sensor_model:
   shot_noise: false

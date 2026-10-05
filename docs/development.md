@@ -70,8 +70,9 @@ pip install -e ".[dev]" --no-deps && pip install numpy pyyaml pytest ruff
 
 - `calc_focal_plane` is Monte Carlo and unstable for lenses focused near
   infinity, so TwinRobo picks depth layers itself.
-- Even PSF kernel sizes are centered half a pixel off, so TwinRobo uses odd
-  kernel sizes (default 65).
+- Even PSF kernel sizes are centered half a pixel off, so the default is odd
+  (65). For an explicit even size TwinRobo traces one size larger and drops the
+  last row and column, keeping the center at index `ks // 2`.
 
 ## Regenerating the camera views
 
