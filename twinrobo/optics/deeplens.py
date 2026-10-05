@@ -76,10 +76,11 @@ class DeepLensOptics(OpticsModel):
             focus stored in the lens file; ``float('inf')`` focuses at infinity).
         device: Torch device. Defaults to CUDA when available.
         dtype: Torch dtype for the lens.
-        psf_ks: PSF kernel size in pixels. Use an **odd** size. DeepLens centers
-            even-size PSFs between pixels (on-axis centroid at ``ks/2 - 0.5``),
-            while PSF convolution treats index ``ks // 2`` as zero shift, so even
-            sizes shift the rendered image by about half a pixel.
+        psf_ks: PSF kernel size in pixels. DeepLens centers even-size PSFs between
+            pixels (on-axis centroid at ``ks/2 - 0.5``), while PSF convolution treats
+            index ``ks // 2`` as zero shift. `generate_psf` therefore traces an even
+            size one larger and drops the last row and column, so every size is
+            centered on ``ks // 2``.
     """
 
     def __init__(
@@ -176,7 +177,8 @@ class DeepLensOptics(OpticsModel):
         Args:
             field_positions: ``[N, 2]`` normalized field coordinates ``(x, y)`` in
                 ``[-1, 1]`` (DeepLens convention, ``+y`` up).
-            depths: ``[D]`` object depths in **meters** (positive).
+            depths: ``[D]`` object depths in **meters** (positive; ``inf`` is traced at
+                ``DEFAULT_FAR_M``, DeepLens' "approximately infinity").
             wavelengths: Wavelengths in micrometers. Defaults to the lens RGB
                 wavelengths, giving an RGB PSF stack.
             ks: Kernel size in pixels (defaults to ``self.psf_ks``).
@@ -193,10 +195,12 @@ class DeepLensOptics(OpticsModel):
         if bool((field.abs() > 1).any()):
             raise ValueError("field_positions must lie in [-1, 1]")
         depths_m = torch.as_tensor(depths, dtype=dt, device=dev).reshape(-1)
-        if not bool((torch.isfinite(depths_m) & (depths_m > 0)).all()):
-            raise ValueError("depths must be finite and positive (meters)")
+        if not bool((depths_m > 0).all()):  # also rejects nan
+            raise ValueError("depths must be positive (meters, inf allowed)")
+        depths_m = torch.where(depths_m.isinf(), torch.full_like(depths_m, DEFAULT_FAR_M), depths_m)
 
-        kwargs: dict[str, Any] = {"ks": ks}
+        trace_ks = ks + 1 - ks % 2  # an odd kernel is centered on a pixel; see ``psf_ks``
+        kwargs: dict[str, Any] = {"ks": trace_ks}
         if spp is not None:
             kwargs["spp"] = spp
 
@@ -204,10 +208,13 @@ class DeepLensOptics(OpticsModel):
         for d in depths_m:
             z = torch.full_like(field[:, :1], -float(d) * M_TO_MM)
             points = torch.cat([field, z], dim=-1)  # [N, 3]
-            per_wvln = [
-                self._lens.psf(points=points, wvln=w, **kwargs).reshape(-1, ks, ks)
-                for w in wavelengths
-            ]
+            per_wvln = []
+            for w in wavelengths:
+                p = self._lens.psf(points=points, wvln=w, **kwargs).reshape(-1, trace_ks, trace_ks)
+                if trace_ks != ks:  # drop the last row/column: index ks // 2 stays the center
+                    p = p[:, :ks, :ks]
+                    p = p / p.sum((-1, -2), keepdim=True).clamp_min(1e-30)
+                per_wvln.append(p)
             out.append(torch.stack(per_wvln, dim=1))  # [N, C, ks, ks]
         return torch.stack(out, dim=0)
 
@@ -549,8 +556,8 @@ class DeepLensOptics(OpticsModel):
     def build_psf_bank(
         self,
         grid: tuple[int, int] = (17, 11),
-        near_m: float = 0.3,
-        far_m: float = DEFAULT_FAR_M,
+        near_m: float = 0.1,
+        far_m: float = math.inf,
         num_depths: int = 16,
         ks: int | None = None,
         spp: int | None = None,
@@ -623,6 +630,10 @@ class DeepLensOptics(OpticsModel):
         if depths_m is None:
             depths_m = self.sample_depths(near_m, far_m, num_layers)
         depths_m = torch.as_tensor(depths_m, dtype=self._lens.dtype, device=self.device)
+        # DeepLens' "approximately infinity" stands in for an infinite layer or far plane
+        depths_m = torch.where(depths_m.isinf(), torch.full_like(depths_m, DEFAULT_FAR_M), depths_m)
+        far_m = DEFAULT_FAR_M if math.isinf(far_m) else far_m
+        ks = self.psf_ks + 1 - self.psf_ks % 2  # odd: centered on a pixel (see ``psf_ks``)
 
         rgb = rgb.to(self.device, self._lens.dtype)
         depth = depth.to(self.device, self._lens.dtype)
@@ -631,7 +642,7 @@ class DeepLensOptics(OpticsModel):
         psf_map = torch.stack(
             [
                 self._lens.psf_map_rgb(
-                    grid=tuple(psf_grid), ks=self.psf_ks, depth=-float(d) * M_TO_MM
+                    grid=tuple(psf_grid), ks=ks, depth=-float(d) * M_TO_MM
                 )
                 for d in depths_m
             ],

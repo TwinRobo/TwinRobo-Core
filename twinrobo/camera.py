@@ -8,6 +8,7 @@ from a simulator camera (`twinrobo.plugins.mujoco.MujocoCameraTwin`,
 
 from __future__ import annotations
 
+import math
 from pathlib import Path
 from typing import Any
 
@@ -43,14 +44,19 @@ def build_reference_optics(spec: CameraSpec, device: str | torch.device | None =
 
 
 def psf_bank_params(spec: CameraSpec) -> dict[str, Any]:
-    """PSF bank sampling from ``calibration.psf`` (``field_samples`` is ``[grid_w, grid_h]``)."""
+    """PSF bank sampling from ``calibration.psf`` (``field_samples`` is ``[grid_w, grid_h]``).
+
+    Defaults: a field grid 16 wide, the height following the sensor's aspect ratio
+    (16:9 -> 9, 4:3 -> 12, 16:10 -> 10); 16 depth layers from 0.1 m to infinity.
+    """
     psf = spec.calibration.get("psf") or {}
-    gw, gh = psf.get("field_samples", [17, 11])
+    res = spec.sensor.resolution
+    gw, gh = psf.get("field_samples") or (16, max(1, round(16 * res.height / res.width)))
     return {
         "grid": (int(gw), int(gh)),
         "num_depths": int(psf.get("depth_samples", 16)),
-        "near_m": float(psf.get("near_m", 0.3)),
-        "far_m": float(psf.get("far_m", 20.0)),
+        "near_m": float(psf.get("near_m", 0.1)),
+        "far_m": float(psf.get("far_m", math.inf)),
         "spp": psf.get("spp"),
     }
 
