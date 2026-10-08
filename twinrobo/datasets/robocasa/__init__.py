@@ -36,19 +36,26 @@ def setup_robocasa(asset_pack: str | Path | None = None) -> Path:
     Missing top-level asset folders in the installed package are symlinked to it;
     nothing in the pack is modified.
     """
+    import importlib.util
+    from importlib import metadata
+
     os.environ.setdefault("MUJOCO_GL", "egl")
     os.environ.setdefault("PYOPENGL_PLATFORM", os.environ["MUJOCO_GL"])
+    # Find RoboCasa without importing it: it indexes its object assets on import, so the pack
+    # must be linked in first (else its registry stays empty and every kitchen fails to build).
+    spec = importlib.util.find_spec("robocasa")
     try:
-        import robocasa
-        import robosuite
-    except ImportError as e:
+        version = metadata.version("robosuite")
+    except metadata.PackageNotFoundError:
+        version = None
+    if spec is None or spec.origin is None or version is None:
         raise SimulatorError(
             "RoboCasa is not installed in this environment (needs robosuite 1.5; "
             "use the twinrobo-robocasa environment)"
-        ) from e
-    if not robosuite.__version__.startswith("1.5"):
-        raise SimulatorError(f"RoboCasa needs robosuite 1.5, found {robosuite.__version__}")
-    assets = Path(robocasa.__file__).parent / "models" / "assets"
+        )
+    if not version.startswith("1.5"):
+        raise SimulatorError(f"RoboCasa needs robosuite 1.5, found {version}")
+    assets = Path(spec.origin).parent / "models" / "assets"
     pack = asset_pack or os.environ.get(ASSET_PACK_ENV)
     if pack:
         pack = Path(pack).expanduser()
