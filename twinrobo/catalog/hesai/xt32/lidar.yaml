@@ -1,0 +1,28 @@
+# LidarSpec (schema 0.1; pre-1.0, may change).
+#
+# Hesai XT32 (product page, https://www.hesaitech.com/product/xt16-32-32m/; RESEPI XT-32
+# datasheet, https://inertiallabs.com/wp-content/uploads/2023/08/RESEPI-Hesai-XT-32_Datasheet_rev-1.01_Aug_2023.pdf):
+#   32 channels, vertical FoV 31 deg (-16 to +15 deg, 1 deg apart), 360 deg horizontal,
+#   horizontal resolution 0.18 deg at 10 Hz (2000 columns), range 0.05-120 m, precision
+#   0.5 cm (1-sigma), accuracy +/-1 cm.
+# Assumed (not in the cited sheets): the reflectivity of the 120 m figure (taken as 10 %).
+schema_version: 0.1
+type: lidar
+id: hesai/xt32
+manufacturer: Hesai
+product: XT32
+scan:
+  pattern: spinning
+  channels: 32
+  vertical_deg: {min: -16.0, max: 15.0}
+  columns: 2000
+  frame_hz: 10
+range:
+  min_m: 0.05
+  max_m: 120.0
+  at_reflectivity: 0.1
+noise:
+  range_sigma_m: 0.005
+validation:
+  status: estimated
+  version: 1

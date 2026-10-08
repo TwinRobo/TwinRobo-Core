@@ -297,7 +297,10 @@ class TriangleMesh:
         self.local = torch.from_numpy(np.ascontiguousarray(local, np.float32)).to(self.device)
         self.owner = torch.from_numpy(np.asarray(owner, np.int64)).to(self.device)
         self.points = torch.zeros_like(self.local)
+        self.faces = torch.from_numpy(np.asarray(faces, np.int64)).to(self.device)  # [F, 3]
         self.num_triangles = int(len(faces))
+        self.R: Tensor | None = None  # owners' poses at the last `update` ([P, 3, 3], [P, 3])
+        self.t: Tensor | None = None
         self._wdev = f"cuda:{self.device.index or 0}" if self.device.type == "cuda" else "cpu"
         self._wp_points = wp.from_torch(self.points, dtype=wp.vec3)
         self._idx = torch.from_numpy(np.asarray(faces, np.int32).reshape(-1)).to(self.device)
@@ -309,6 +312,7 @@ class TriangleMesh:
 
         ``R [P, 3, 3]`` rotations (with scale, if any) and ``t [P, 3]`` translations.
         """
+        self.R, self.t = R, t
         R, t = R[self.owner], t[self.owner]
         self.points.copy_(torch.einsum("vij,vj->vi", R, self.local) + t)
         if self.mesh is None:
@@ -340,8 +344,69 @@ class TriangleMesh:
         )
         return out
 
+    def cast_faces(
+        self, origins: Tensor, dirs: Tensor, max_t: float = 100.0
+    ) -> tuple[Tensor, Tensor]:
+        """Hit distance along unit ``dirs`` (``1e30`` for a miss) and the face hit (``-1``)."""
+        import warp as wp
+
+        n = origins.shape[0]
+        dist = torch.empty(n, device=self.device, dtype=torch.float32)
+        face = torch.empty(n, device=self.device, dtype=torch.int32)
+        wp.launch(
+            _raycast_face_kernel(),
+            dim=n,
+            inputs=[
+                self.mesh.id,
+                wp.from_torch(origins.contiguous(), dtype=wp.vec3),
+                wp.from_torch(dirs.contiguous(), dtype=wp.vec3),
+                float(max_t),
+            ],
+            outputs=[wp.from_torch(dist), wp.from_torch(face)],
+            device=self._wdev,
+        )
+        return dist, face
+
+    def face_owner(self, face: Tensor) -> Tensor:
+        """The owner (rigid frame) of each face ``[M]`` (faces of one owner share it)."""
+        return self.owner[self.faces[face.long(), 0]]
+
+    def face_normal(self, face: Tensor) -> Tensor:
+        """World-frame unit normals of faces ``[M]`` at the last `update`."""
+        v = self.points[self.faces[face.long()]]  # [M, 3, 3]
+        n = torch.cross(v[:, 1] - v[:, 0], v[:, 2] - v[:, 0], dim=1)
+        return n / n.norm(dim=1, keepdim=True).clamp_min(1e-12)
+
 
 _KERNEL = None
+_FACE_KERNEL = None
+
+
+def _raycast_face_kernel():
+    global _FACE_KERNEL
+    if _FACE_KERNEL is None:
+        import warp as wp
+
+        @wp.kernel
+        def raycast_face(
+            mesh: wp.uint64,
+            o: wp.array(dtype=wp.vec3),
+            d: wp.array(dtype=wp.vec3),
+            max_t: float,
+            out: wp.array(dtype=float),
+            face: wp.array(dtype=wp.int32),
+        ):
+            i = wp.tid()
+            q = wp.mesh_query_ray(mesh, o[i], d[i], max_t)
+            if q.result:
+                out[i] = q.t
+                face[i] = q.face
+            else:
+                out[i] = 1.0e30
+                face[i] = -1
+
+        _FACE_KERNEL = raycast_face
+    return _FACE_KERNEL
 
 
 def _raycast_kernel():
