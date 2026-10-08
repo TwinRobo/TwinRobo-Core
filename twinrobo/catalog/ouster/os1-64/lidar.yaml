@@ -1,0 +1,27 @@
+# LidarSpec (schema 0.1; pre-1.0, may change).
+#
+# Ouster OS1, 64 channels, Rev7 (datasheet, https://data.ouster.io/downloads/datasheets/datasheet-rev7-v3p1-os1.pdf):
+#   vertical FoV 42.4 deg (+21.2 to -21.2 deg; 64 uniform channels), 360 deg horizontal,
+#   1024 columns at 10 Hz (512/2048 configurable), range 90 m at >90 % detection on 10 %
+#   Lambertian reflectivity (1024 @ 10 Hz), range precision 0.5-3 cm 1-sigma (1.5 cm used).
+# Assumed (not in the cited sheet's summary): minimum range 0.5 m.
+schema_version: 0.1
+type: lidar
+id: ouster/os1-64
+manufacturer: Ouster
+product: OS1-64 (Rev7)
+scan:
+  pattern: spinning
+  channels: 64
+  vertical_deg: {min: -21.2, max: 21.2}
+  columns: 1024
+  frame_hz: 10
+range:
+  min_m: 0.5
+  max_m: 90.0
+  at_reflectivity: 0.1
+noise:
+  range_sigma_m: 0.015
+validation:
+  status: estimated
+  version: 1

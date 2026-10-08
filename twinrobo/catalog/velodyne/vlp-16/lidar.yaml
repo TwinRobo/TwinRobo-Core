@@ -1,0 +1,29 @@
+# LidarSpec (schema 0.1; pre-1.0, may change).
+#
+# Velodyne Puck VLP-16 (Ouster/Velodyne product page, https://ouster.com/products/hardware/vlp-16;
+# Puck datasheet, https://hexagondownloads.blob.core.windows.net/public/AutonomouStuff/wp-content/uploads/2019/05/Puck__Datasheet_whitelabel.pdf):
+#   16 channels, vertical FoV 30 deg (+/-15 deg, 2.0 deg apart), 360 deg horizontal, horizontal
+#   resolution 0.1-0.4 deg (0.2 deg at 10 Hz is used: 1800 columns), range up to 100 m,
+#   typical accuracy +/-3 cm (used as the 1-sigma range noise).
+# Assumed (not in the cited sheets): the reflectivity of the 100 m figure (taken as 80 %),
+#   minimum range 0.5 m.
+schema_version: 0.1
+type: lidar
+id: velodyne/vlp-16
+manufacturer: Velodyne
+product: Puck VLP-16
+scan:
+  pattern: spinning
+  channels: 16
+  vertical_deg: {min: -15.0, max: 15.0}
+  columns: 1800
+  frame_hz: 10
+range:
+  min_m: 0.5
+  max_m: 100.0
+  at_reflectivity: 0.8
+noise:
+  range_sigma_m: 0.03
+validation:
+  status: estimated
+  version: 1

@@ -130,7 +130,7 @@ _SCENES: OrderedDict[tuple, SceneMesh] = OrderedDict()
 
 
 def scene_mesh(model, groups: set[int], device) -> SceneMesh:
-    key = (id(model), int(model.ngeom), tuple(sorted(groups)))
+    key = (id(model), int(model.ngeom), tuple(sorted(groups)), str(torch.device(device)))
     hit = _SCENES.get(key)
     if hit is not None:
         _SCENES.move_to_end(key)
