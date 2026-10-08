@@ -2,7 +2,7 @@
    and a viewer of its pre-rendered views (assets/playground/manifest.json). */
 (function () {
   const VIEWS = { compare: "Slider", side: "Side by side", diff: "Difference" };
-  const METHODS = { psf: "PSF", pupil: "Pupil", raycast: "Ray cast" };  // short labels for the bar
+  const METHODS = { psf: "PSF", raycast: "Ray cast" };  // short labels for the bar
   const OUTPUTS = {
     raw: ["Raw sensor", "The image as the sensor records it: the lens' distortion, blur and vignetting"],
     cal: ["Calibrated", "Undistorted with the camera's calibration, as a stereo SDK rectifies its streams; the lens blur stays"],

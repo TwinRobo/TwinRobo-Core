@@ -1,31 +1,22 @@
 """Lens-ray rendering: sensor -> real lens -> scene, for any simulator.
 
-Two methods share the traced `LensRays` (every sensor pixel's rays through the
-lens, per RGB wavelength) and the simulator's own shading (no PBR):
-
-``"pupil"`` (method A, pupil-sampled rasterization)
-    The entrance pupil is split into ``views`` cells. For each cell the simulator
-    rasterizes one wide pinhole view (RGB + depth) from the cell's center. Every
-    ray is looked up in the view of its cell; the lookup is refined with that
-    view's depth so the ray's own origin, not the cell center, sets the parallax.
-    Exact except where a ray's scene point is hidden from its cell center
-    (disocclusion at depth edges), where it takes the occluder's color.
-
-``"raycast"`` (method B, per-ray ray casting)
-    Every ray is intersected with the scene's triangles on the GPU (NVIDIA Warp
-    BVH) for its exact hit point. The hit's color comes from the pupil views, from
-    the nearest view in which the hit point is visible (a depth test). This gives
-    exact per-ray visibility with the simulator's shading, which is view-dependent
-    only through specular highlights.
+``"raycast"`` traces every sensor pixel's rays through the lens (`LensRays`, per RGB
+wavelength) and intersects each with the scene's triangles on the GPU (NVIDIA Warp
+BVH) for its exact hit point. The hit's color is the simulator's own shading (no
+PBR): the entrance pupil is split into ``views`` cells, the simulator rasterizes one
+wide pinhole view (RGB + depth) from each cell's center, and a hit takes its color
+from the nearest view in which it is visible (a depth test). This gives exact per-ray
+visibility with the simulator's shading, which is view-dependent only through
+specular highlights.
 
 A simulator plugs in through a *lens scene* (`LensRayRenderer.render_scene`):
 
 - ``render_views(views)`` -> ``(rgb [k, 3, h, w] linear, depth [k, 1, h, w] m)``: the
-  pupil views, pinholes of ``views.fovy_deg`` at ``views.width x views.height``, from
+  views across the pupil, pinholes of ``views.fovy_deg`` at ``views.width x views.height``, from
   the camera shifted by each ``views.centers`` offset (m, camera frame);
 - ``camera_pose()`` -> ``(R [3, 3], p [3])``: camera axes as columns (x right, y up,
   looking along -z) and position, world frame, meters;
-- ``mesh(device)`` -> a `TriangleMesh` of the scene at the current state (ray cast only).
+- ``mesh(device)`` -> a `TriangleMesh` of the scene at the current state.
 
 Adapters: `twinrobo.plugins.mujoco.lensrender` (MuJoCo) and `twinrobo.plugins.isaac.lens`
 (Isaac Sim).
@@ -48,7 +39,8 @@ from torch import Tensor
 
 from .lensrays import LensRays
 
-METHODS = ("psf", "pupil", "raycast")
+METHODS = ("psf", "raycast")
+REMOVED_METHODS = {"pupil": "raycast"}  # a removed method -> what to use instead
 _RAYS: OrderedDict[str, LensRays] = OrderedDict()
 _RAYS_MAX = 4
 
@@ -228,7 +220,7 @@ class PupilViews:
         return sum(img[idx] * w for idx, w in taps)
 
 
-# -- scene triangles for ray casting (method B) ---------------------------------------------
+# -- scene triangles for ray casting ---------------------------------------------
 
 
 def _box():
@@ -436,37 +428,45 @@ def _raycast_kernel():
 # -- the renderer ----------------------------------------------------------------------------------
 
 
+def check_method(method: str, allowed=METHODS) -> None:
+    """Raise a clear error for an unknown or removed rendering method."""
+    if method in REMOVED_METHODS:
+        raise ValueError(
+            f"render method {method!r} was removed; use {REMOVED_METHODS[method]!r} "
+            f"(or 'psf'). Methods: {', '.join(allowed)}"
+        )
+    if method not in allowed:
+        raise ValueError(f"render method must be one of {allowed}, got {method!r}")
+
+
 class LensRayRenderer:
-    """Render a camera through a real lens with method ``"pupil"`` or ``"raycast"``.
+    """Render a camera through a real lens by ray casting (``"raycast"``).
 
     Args:
         rays: traced `LensRays` of the camera's lens and sensor.
-        method: ``"pupil"`` (A) or ``"raycast"`` (B).
-        views: number of pupil cells / rasterized views (1 = depth reprojection only).
+        method: ``"raycast"`` (the only lens-ray method).
+        views: number of pupil cells / rasterized shading views.
         oversample: resolution of the views relative to the sensor. Above 1 resolves
             detail thinner than a sensor pixel (the views are the shading source).
         shading: ``"corrected"`` divides out relative illumination, as a camera ISP's
             lens-shading correction does; ``"raw"`` keeps sensor irradiance falloff.
-        refine: depth-refinement iterations of the pupil lookup.
         chunk: rays per GPU batch.
     """
 
     def __init__(
         self,
         rays: LensRays,
-        method: str = "pupil",
+        method: str = "raycast",
         views: int = 7,
         shading: str = "corrected",
-        refine: int = 2,
         chunk: int = 4_000_000,
         oversample: float = 1.0,
     ):
-        if method not in ("pupil", "raycast"):
-            raise ValueError(f"method must be 'pupil' or 'raycast', got {method!r}")
+        check_method(method, ("raycast",))
         if shading not in ("corrected", "raw"):
             raise ValueError("shading must be 'corrected' or 'raw'")
         self.rays, self.method, self.shading = rays, method, shading
-        self.refine, self.chunk = int(refine), int(chunk)
+        self.chunk = int(chunk)
         self.views = PupilViews(rays, int(views), oversample=float(oversample))
         self.stats: dict[str, Any] = {}
 
@@ -478,12 +478,10 @@ class LensRayRenderer:
         t0 = time.perf_counter()
         self.views.set_views(*scene.render_views(self.views))
         t_views = time.perf_counter() - t0
-        mesh = Rc = pc = None
-        if self.method == "raycast":
-            mesh = scene.mesh(dev)
-            Rc, pc = scene.camera_pose()
-            Rc = torch.as_tensor(Rc, dtype=torch.float32, device=dev)
-            pc = torch.as_tensor(pc, dtype=torch.float32, device=dev)
+        mesh = scene.mesh(dev)
+        Rc, pc = scene.camera_pose()
+        Rc = torch.as_tensor(Rc, dtype=torch.float32, device=dev)
+        pc = torch.as_tensor(pc, dtype=torch.float32, device=dev)
         W, H = R.resolution
         out = torch.zeros(R.channels, H, W, device=dev)
         unresolved = total = 0
@@ -495,12 +493,9 @@ class LensRayRenderer:
                 cell = self.views.cell[c, sl].long()
                 h = o.shape[0]
                 o, t, w, cell = o.reshape(-1, 2), t.reshape(-1, 2), w.reshape(-1), cell.reshape(-1)
-                if self.method == "pupil":
-                    col = self._pupil(o, t, cell, c)
-                else:
-                    col, miss = self._raycast(o, t, cell, c, mesh, Rc, pc)
-                    unresolved += int(miss)
-                    total += o.shape[0]
+                col, miss = self._raycast(o, t, cell, c, mesh, Rc, pc)
+                unresolved += int(miss)
+                total += o.shape[0]
                 col = col.view(h, W, R.n)
                 wv = w.view(h, W, R.n)
                 ws = wv.sum(-1)
@@ -517,27 +512,13 @@ class LensRayRenderer:
             "view_size": [self.views.width, self.views.height],
             "t_views_s": t_views,
             "t_total_s": time.perf_counter() - t0,
-            **(
-                {"unresolved_fraction": unresolved / max(total, 1), "triangles": mesh.num_triangles}
-                if mesh
-                else {}
-            ),
+            "unresolved_fraction": unresolved / max(total, 1),
+            "triangles": mesh.num_triangles,
         }
         return out[None], depth[None, None]
 
-    def _pupil(self, o, t, cell, c):
-        """Method A: look each ray up in its cell's view, refined with that view's depth."""
-        V = self.views
-        off = o - V.centers[cell]  # origin offset from the cell's view center (m)
-        look = t
-        for _ in range(self.refine):
-            z = V.depth_at(cell, look)
-            look = t + off / z.clamp_min(1e-3)[:, None]
-        col, _, _ = V.shade(cell, look, c, V.depth_at(cell, look))
-        return col
-
     def _raycast(self, o, t, cell, c, mesh, Rc, pc):
-        """Method B: exact hit per ray, shaded from the nearest pupil view that sees the hit."""
+        """Exact hit per ray, shaded from the nearest pupil view that sees the hit."""
         V = self.views
         dcam = torch.cat([t, -torch.ones_like(t[:, :1])], 1)
         norm = dcam.norm(dim=1, keepdim=True)

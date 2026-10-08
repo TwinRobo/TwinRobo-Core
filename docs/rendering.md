@@ -2,7 +2,7 @@
 
 TwinRobo turns what a simulator renders into what a real camera would record.
 This page covers how an image is formed: the PSF pipeline, lens distortion, and
-the three rendering methods a camera can use.
+the two rendering methods a camera can use.
 
 ## Conventions
 
@@ -64,8 +64,7 @@ Each TwinRobo camera picks how its image is formed, per `MujocoCameraTwin`.
 | Method | How | Per frame, 1920×1200 (RTX 3090) | Gets right |
 |---|---|---|---|
 | `psf` (default) | pinhole render + depth- and field-dependent PSF blur (2.5D) | ~0.1–0.4 s | blur of what the pinhole sees |
-| `pupil` | every pixel's rays traced through the real lens (DeepLens); one MuJoCo view per pupil cell (7), each ray looked up in its cell's view, refined with depth | ~0.5 s | defocus across the aperture, chromatic aberration, vignetting; approximate behind occluders |
-| `raycast` | the same lens rays intersected with the scene's triangles on the GPU (NVIDIA Warp BVH); each hit shaded from a pupil view that sees it | ~0.9 s | as `pupil`, with exact per-ray visibility (see-through around defocused foreground) |
+| `raycast` | every pixel's rays traced through the real lens (DeepLens) and intersected with the scene's triangles on the GPU (NVIDIA Warp BVH); each hit shaded from a view rendered across the pupil that sees it | ~0.9 s | defocus across the aperture, chromatic aberration, vignetting, with exact per-ray visibility (see-through around defocused foreground) |
 
 ```python
 from twinrobo.plugins.mujoco import MujocoCameraTwin
@@ -91,16 +90,16 @@ frame = cam.get_frame()  # frame.metadata has the render stats
   - Brightness is a separate, densely traced relative-illumination map, so a
     few rays per pixel don't turn vignetting into noise. Strongly vignetted
     pixels are retraced with 4x candidates.
-- **Shading is the simulator's own** (no PBR). The pupil views are MuJoCo
-  rasterizations from points on the entrance pupil, and hits look up colors
-  there with depth-aware filtering.
+- **Shading is the simulator's own** (no PBR). The shading views
+  (`pupil_views`) are MuJoCo rasterizations from points on the entrance pupil,
+  and hits look up colors there with depth-aware filtering.
 - **Lens shading:** `corrected` (default) is what a camera ISP outputs after
   lens-shading correction; `raw` keeps the sensor's vignetting and cos^4 falloff.
 - **Geometry** (`lens.geometry` in the spec):
   - `calibration` (default): every pixel's rays are turned together so that its
     chief ray follows the spec's intrinsics and distortion
     (`LensRays.with_geometry`). The lens file then sets blur, chromatic
-    aberration and vignetting only; all three methods have the same geometry.
+    aberration and vignetting only; both methods have the same geometry.
     This is right for the catalog, whose lens files are surrogates (a published
     design scaled to the camera's focal length), not the camera's own lens.
   - `lens`: the traced lens' own distortion, for a real lens prescription. Specs
@@ -112,7 +111,7 @@ frame = cam.get_frame()  # frame.metadata has the render stats
     pinhole says 287).
   - A post 0.3 m in front of the focus plane: its partially covered, defocused
     edges match the exact answer computed from the traced rays to ~0.05 with
-    ray cast (pupil raster ~0.1, pinhole + PSF 0.2–0.4).
+    ray cast (pinhole + PSF 0.2–0.4).
 - **Limits:**
   - Objects thinner than a sensor pixel: MuJoCo multisamples color, so their
     silhouettes are blends in every view. Raise `view_oversample` for them.

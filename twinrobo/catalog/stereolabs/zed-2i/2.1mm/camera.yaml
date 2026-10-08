@@ -15,7 +15,7 @@
 #   (DeepLens rf16mm_f2.8 (Canon RF16mm F2.8, JP 2022-085382 Ex. 3)) scaled to f 2.2952 mm and stopped to f/2.0
 #   (tools/catalog/make_surrogate_lens.py); its half-field 52.53 deg vs 52.7 deg needed.
 #   The design's field is slightly short of this sensor's corners: with the
-#   lens-ray methods (pupil, raycast) the extreme corners render dark.
+#   ray-cast method (raycast) the extreme corners render dark.
 # Focus: fixed and unpublished; set near the hyperfocal distance (CoC 2 px).
 schema_version: 0.1
 

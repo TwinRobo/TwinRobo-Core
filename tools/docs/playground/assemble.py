@@ -24,7 +24,6 @@ ROOT = Path(__file__).resolve().parents[3]
 SOURCES = [ROOT / "outputs/playground", ROOT / "outputs/isaac/playground"]
 METHODS = {
     "psf": "PSF bank",
-    "pupil": "Pupil views",
     "raycast": "Ray cast",
 }
 OUTPUTS = {"raw": "Raw sensor", "cal": "Calibrated"}  # <method>.webp, <method>-cal.webp

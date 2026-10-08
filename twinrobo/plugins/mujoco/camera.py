@@ -169,15 +169,15 @@ class MujocoCameraTwin:
         resolution: ``(W, H)`` render size. Only for twins without intrinsics.
         device: Torch device for the CameraTwin pipeline.
         rectify: Undistort the output like vendor SDKs (see `CameraTwin.process`).
-        render: ``"psf"`` (pinhole render + PSF optics, fast), or trace every pixel
-            through the real lens: ``"pupil"`` (pupil-sampled rasterization) or
-            ``"raycast"`` (per-ray ray casting). See `twinrobo.plugins.mujoco.lensrender`.
-        rays_per_pixel: Rays traced per pixel and wavelength (lens-ray methods).
-        pupil_views: Views rendered across the lens' entrance pupil (lens-ray methods).
+        render: ``"psf"`` (pinhole render + PSF optics, fast), or ``"raycast"`` (trace
+            every pixel through the real lens and ray cast it into the scene). See
+            `twinrobo.plugins.mujoco.lensrender`.
+        rays_per_pixel: Rays traced per pixel and wavelength (ray cast).
+        pupil_views: Shading views rendered across the lens' entrance pupil (ray cast).
         shading: ``"corrected"`` (ISP lens-shading correction) or ``"raw"`` (sensor
-            vignetting and cos^4 falloff kept); lens-ray methods.
+            vignetting and cos^4 falloff kept); ray cast.
         view_oversample: Resolution of the pupil views relative to the sensor; above
-            1 resolves detail thinner than a pixel (lens-ray methods).
+            1 resolves detail thinner than a pixel (ray cast).
     """
 
     def __init__(
@@ -195,10 +195,9 @@ class MujocoCameraTwin:
         shading: str = "corrected",
         view_oversample: float = 1.0,
     ):
-        from .lensrender import METHODS
+        from .lensrender import check_method
 
-        if render not in METHODS:
-            raise ValueError(f"render must be one of {METHODS}, got {render!r}")
+        check_method(render)
         if render != "psf" and getattr(twin, "reference", None) is None:
             raise ValueError(f"render={render!r} needs a CameraTwin with a lens model (DeepLens)")
         self.twin = twin
@@ -283,7 +282,7 @@ class MujocoCameraTwin:
             force_depth=force_depth,
         )
 
-    # -- lens-ray methods (A: pupil raster, B: ray cast) ------------------------------------
+    # -- the ray-cast method ---------------------------------------------------------------
     def _lens_frame(self, timestamp, status, force_depth=False) -> CameraFrame:
         from .lensrender import LensRayRenderer, lens_rays
 

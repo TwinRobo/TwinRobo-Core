@@ -72,7 +72,7 @@ def main():
     ap.add_argument("--usd", help="open this stage instead of the built-in tabletop")
     ap.add_argument("--camera", default=None, help="USD camera prim (with --usd)")
     ap.add_argument("--catalog", default="stereolabs/zed-x/2.2mm", help="catalog camera id")
-    ap.add_argument("--render", default="psf", choices=["psf", "pupil", "raycast"])
+    ap.add_argument("--render", default="psf", choices=["psf", "raycast"])
     ap.add_argument("--out", default="/workspace/outputs/isaac_camera.png")
     args = ap.parse_args()
 

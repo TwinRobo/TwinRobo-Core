@@ -15,9 +15,9 @@ with metric depth, and runs it through the CameraTwin pipeline, like
 - Frames stay on the GPU: annotator data is read as Warp arrays and viewed as torch
   tensors without a copy.
 - ``render`` picks the method, as for MuJoCo: ``"psf"`` (pinhole render + PSF
-  optics, fast) or a lens-ray method that traces every pixel's rays through the
-  real lens, ``"pupil"`` or ``"raycast"`` (exact per-ray visibility against the
-  stage's triangles; see `twinrobo.plugins.isaac.lens`).
+  optics, fast) or ``"raycast"``, which traces every pixel's rays through the real
+  lens with exact per-ray visibility against the stage's triangles (see
+  `twinrobo.plugins.isaac.lens`).
 
 Needs a running Isaac Sim app (`isaacsim.SimulationApp`) created before this is
 used. Import-time safe without Isaac: Isaac modules are imported inside methods.
@@ -52,13 +52,13 @@ class IsaacCameraTwin:
         near_clip_m: Near clipping distance in meters. USD's default near clip is 1
             scene unit (1 m on a meter stage), which would hide what a robot camera
             sees up close, so the view uses this instead of the camera's.
-        render: ``"psf"``, ``"pupil"`` or ``"raycast"`` (see the module docs).
-        rays_per_pixel: Rays traced per pixel and wavelength (lens-ray methods).
-        pupil_views: Views rendered across the lens' entrance pupil (lens-ray methods).
+        render: ``"psf"`` or ``"raycast"`` (see the module docs).
+        rays_per_pixel: Rays traced per pixel and wavelength (ray cast).
+        pupil_views: Shading views rendered across the lens' entrance pupil (ray cast).
         shading: ``"corrected"`` (ISP lens-shading correction) or ``"raw"`` (sensor
-            vignetting and cos^4 falloff kept); lens-ray methods.
+            vignetting and cos^4 falloff kept); ray cast.
         view_oversample: Resolution of the pupil views relative to the sensor; above
-            1 resolves detail thinner than a pixel (lens-ray methods).
+            1 resolves detail thinner than a pixel (ray cast).
     """
 
     def __init__(
@@ -77,10 +77,9 @@ class IsaacCameraTwin:
         shading: str = "corrected",
         view_oversample: float = 1.0,
     ):
-        from ...optics.lensrender import METHODS
+        from ...optics.lensrender import check_method
 
-        if render not in METHODS:
-            raise ValueError(f"render must be one of {METHODS}, got {render!r}")
+        check_method(render)
         if render != "psf" and getattr(twin, "reference", None) is None:
             raise ValueError(f"render={render!r} needs a CameraTwin with a lens model (DeepLens)")
         if render != "psf" and not match_fov:
@@ -243,7 +242,7 @@ class IsaacCameraTwin:
         return srgb_to_linear(rgb), depth * self._meters_per_unit
 
     def _step(self) -> None:
-        """Render one frame of every render product (main view and pupil views)."""
+        """Render one frame of every render product (main view and the views across the pupil)."""
         import omni.replicator.core as rep
 
         rep.orchestrator.step(rt_subframes=self.rt_subframes, pause_timeline=False)
@@ -251,7 +250,7 @@ class IsaacCameraTwin:
             if self._lens_scene is None or self._lens_scene.ready():
                 return
             rep.orchestrator.step(rt_subframes=self.rt_subframes, pause_timeline=False)
-        raise SimulatorError("the pupil views produced no frame")
+        raise SimulatorError("the shading views across the pupil produced no frame")
 
     def get_frame(
         self, timestamp: float | None = None, step: bool = True, force_depth: bool = False

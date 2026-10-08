@@ -1,9 +1,9 @@
 """Lens-ray rendering in Isaac Sim: a USD camera as a lens scene.
 
-The methods (``"pupil"``, ``"raycast"``) are simulator independent
+The ray-cast method (``"raycast"``) is simulator independent
 (`twinrobo.optics.lensrender`); this module supplies Isaac's side:
 
-- **pupil views:** child cameras of the camera prim (``TwinRoboPupil<i>``), each
+- **shading views across the pupil:** child cameras of the camera prim (``TwinRoboPupil<i>``), each
   shifted in the camera's own frame to a pupil cell center, with the views' wide
   FoV, each with a Replicator render product (``rgb`` + ``distance_to_image_plane``).
   They render in the same Replicator step as the main view.

@@ -1,8 +1,8 @@
 """Lens-ray rendering of MuJoCo scenes (see `twinrobo.optics.lensrender`).
 
-The methods (``"pupil"``, ``"raycast"``) are simulator independent; this module is
-their MuJoCo scene: pupil views rasterized by MuJoCo from the shifted camera, the
-camera pose from ``data``, and the drawn geoms as ray-cast triangles.
+The ray-cast method (``"raycast"``) is simulator independent; this module is its
+MuJoCo scene: the shading views rasterized by MuJoCo from the camera shifted across the
+pupil, the camera pose from ``data``, and the drawn geoms as ray-cast triangles.
 """
 
 from __future__ import annotations
@@ -21,6 +21,7 @@ from ...optics.lensrender import (  # noqa: F401  (re-exported: the public names
     _box,
     _cylinder,
     _sphere,
+    check_method,
     lens_rays,
     pupil_centers,
 )

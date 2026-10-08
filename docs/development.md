@@ -15,7 +15,7 @@ twinrobo/          the SDK (simulator independent core + simulator adapters)
   catalog/           built-in cameras (<id>/camera.yaml + lens.json) and stereo modules
   optics/            DeepLensOptics, PSFBank/PSFCache, DenseDepthRenderer, LensRays,
                      RadialDistortion + DistortionWarp
-  optics/lensrender.py  lens-ray methods (pupil raster, ray cast), simulator independent
+  optics/lensrender.py  lens-ray rendering (ray cast), simulator independent
   sensor/  isp/      interfaces + ideal pass-throughs
   calibration/       real-camera calibration -> measured catalog entries
   plugins/           simulator plugins, each importing its simulator lazily
@@ -59,11 +59,11 @@ pip install -e ".[dev]" --no-deps && pip install numpy pyyaml pytest ruff
 
 | Area | State |
 |---|---|
-| Optics: PSF renderer, distortion, lens-ray renderers (pupil raster, ray cast) | working, validated against DeepLens |
+| Optics: PSF renderer, distortion, lens-ray renderer (ray cast) | working, validated against DeepLens |
 | MuJoCo, LIBERO and RoboCasa adapters | working |
 | Camera catalog | Stereolabs ZED X family, `estimated` (datasheet geometry, surrogate lenses) |
 | Sensor noise and ISP models | interfaces with ideal pass-throughs |
-| Isaac Sim adapter | working (`psf`); lens-ray methods planned |
+| Isaac Sim adapter | working (`psf`, `raycast`) |
 | Real-camera validation (`measured` catalog entries) | planned |
 
 ## Notes on DeepLens
