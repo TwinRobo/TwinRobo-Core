@@ -1,4 +1,4 @@
-"""Lens-ray rendering (ray cast, pupil raster) in Isaac Sim, as validated for MuJoCo.
+"""Lens-ray rendering (ray cast) in Isaac Sim, as validated for MuJoCo.
 
 Run with docker/isaac/run.sh -m pytest tests/plugins/isaac. A camera at the origin looks
 along -Z at a matte wall 3 m away.
@@ -60,7 +60,7 @@ def frame_of(cam, settle=3):
     return cam.get_frame()
 
 
-@pytest.mark.parametrize("method", ["raycast", "pupil"])
+@pytest.mark.parametrize("method", ["raycast"])
 def test_distortion_places_points_where_the_lens_does(app, method):
     from twinrobo.plugins.isaac import IsaacCameraTwin
 

@@ -17,7 +17,7 @@ from pathlib import Path
 import numpy as np
 
 WIDTH = 640  # playground images: every camera read out at this width (its own aspect)
-METHODS = ("psf", "pupil", "raycast")
+METHODS = ("psf", "raycast")
 SKIP: set[str] = set()  # catalog ids to leave out
 
 

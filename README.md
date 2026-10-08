@@ -29,7 +29,6 @@ models of their products.
 |---|---|---|
 | Adapter | `twinrobo.plugins.mujoco.MujocoCameraTwin` | `twinrobo.plugins.isaac.IsaacCameraTwin` |
 | `psf`: pinhole + lens blur and distortion | ✅ | ✅ |
-| `pupil`: lens rays looked up in views across the lens pupil | ✅ | ✅ |
 | `raycast`: lens rays cast into the scene | ✅ | ✅ |
 | RGB on the GPU, ground-truth depth on request | ✅ | ✅ |
 | Cameras on robot links, stereo modules | ✅ | any USD camera prim |
@@ -48,10 +47,9 @@ output. Every camera works in every simulator and rendering method.
   blur, aberration and vignetting from a lens prescription instead of a
   hand-tuned filter, and distortion from the camera's calibration or the lens'
   own.
-- **Three rendering methods, per camera.** A fast 2.5D PSF renderer, and two
-  lens-ray renderers that trace every pixel's rays through the lens into the
-  scene: *pupil* (rasterized views across the lens pupil) and GPU *ray cast*
-  (NVIDIA Warp), exact even for defocused foreground objects.
+- **Two rendering methods, per camera.** A fast 2.5D PSF renderer, and a GPU
+  *ray cast* (NVIDIA Warp) that traces every pixel's rays through the lens into
+  the scene, exact even for defocused foreground objects.
   [More](docs/rendering.md)
 - **Drop-in for robot simulators.** MuJoCo, LIBERO (robosuite 1.4), RoboCasa
   kitchens (robosuite 1.5) and NVIDIA Isaac Sim (any USD stage, RTX rendering).
@@ -160,8 +158,8 @@ Read it top to bottom:
 
 ### Next steps
 
-- **Other rendering methods:** pass `render="pupil"` or `render="raycast"` to
-  `MujocoCameraTwin` to trace real lens rays into the scene (see
+- **Ray casting:** pass `render="raycast"` to `MujocoCameraTwin` to trace real
+  lens rays into the scene (see
   [Rendering methods](#rendering-methods)).
 - **Isaac Sim:** the same twin on any USD camera prim:
 
@@ -197,12 +195,11 @@ Read it top to bottom:
 | Method | How | Per frame, 1920×1200 (RTX 3090) | Best for |
 |---|---|---|---|
 | `psf` | pinhole render + depth- and field-dependent PSF blur | ~0.1–0.4 s | fast training data |
-| `pupil` | lens rays looked up in views rasterized across the lens pupil | ~0.5 s | defocus across the aperture, aberration, vignetting |
-| `raycast` | lens rays intersected with the scene on the GPU | ~0.9 s (MuJoCo), ~1.5 s (Isaac) | exact defocus around occluders |
+| `raycast` | lens rays intersected with the scene on the GPU | ~0.9 s (MuJoCo), ~1.5 s (Isaac) | defocus across the aperture, aberration, vignetting; exact defocus around occluders |
 
-The methods are simulator independent (`twinrobo.optics.lensrender`): a
+Ray casting is simulator independent (`twinrobo.optics.lensrender`): a
 simulator supplies the camera pose, views rasterized from points across the
-lens pupil, and the scene's triangles.
+lens pupil (for shading), and the scene's triangles.
 
 [Details and validation](docs/rendering.md)
 
@@ -210,10 +207,10 @@ lens pupil, and the scene's triangles.
 
 | Simulator | Scenes and data | Rendering methods |
 |---|---|---|
-| MuJoCo | any MJCF scene | `psf`, `pupil`, `raycast` |
-| LIBERO | LIBERO tasks and demos; Panda, Sawyer, UR5e, iiwa, Jaco, Gen3, multi-camera variants | `psf`, `pupil`, `raycast` |
-| RoboCasa | procedurally generated kitchens, LeRobot demo datasets, PandaOmron | `psf`, `pupil`, `raycast` |
-| NVIDIA Isaac Sim 6.x | any USD stage, RTX rendering (Docker recipe included) | `psf`, `pupil`, `raycast` |
+| MuJoCo | any MJCF scene | `psf`, `raycast` |
+| LIBERO | LIBERO tasks and demos; Panda, Sawyer, UR5e, iiwa, Jaco, Gen3, multi-camera variants | `psf`, `raycast` |
+| RoboCasa | procedurally generated kitchens, LeRobot demo datasets, PandaOmron | `psf`, `raycast` |
+| NVIDIA Isaac Sim 6.x | any USD stage, RTX rendering (Docker recipe included) | `psf`, `raycast` |
 
 ## Camera catalog
 
@@ -285,7 +282,7 @@ The documentation site, with the API reference, is at
 
 | | |
 |---|---|
-| [Optics and rendering](docs/rendering.md) | PSF pipeline, distortion, the three rendering methods, validation |
+| [Optics and rendering](docs/rendering.md) | PSF pipeline, distortion, the two rendering methods, validation |
 | [Cameras and stereo](docs/cameras.md) | CameraSpec, catalog, stereo modules, spec overrides |
 | [Simulators](docs/simulators.md) | MuJoCo, LIBERO, RoboCasa and Isaac Sim: setup, behavior, limits |
 | [API reference](https://twinrobo.github.io/TwinRobo-Core/api/) | every public class and function, from the docstrings |
@@ -301,7 +298,7 @@ for what is planned (simulated depth cameras first).
 ## Roadmap
 
 - Simulated depth cameras: depth from the stereo modules, with a real sensor's errors
-- Faster lens-ray rendering in Isaac Sim (fewer, shared pupil views)
+- Faster ray casting in Isaac Sim (fewer, shared shading views)
 - Sensor noise and ISP models (interfaces are in place)
 - `measured` catalog entries from calibration captures of real units
 - More cameras and lenses in the catalog

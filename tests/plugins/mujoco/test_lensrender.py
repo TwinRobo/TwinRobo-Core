@@ -1,4 +1,4 @@
-"""Lens-ray rendering (pupil raster, ray cast): geometry, occlusion, shading, agreement."""
+"""Lens-ray rendering (ray cast): geometry, occlusion, shading."""
 
 import os
 from pathlib import Path
@@ -127,7 +127,7 @@ def backend(extra):
 
 
 @pytest.mark.gl
-@pytest.mark.parametrize("method", ["pupil", "raycast"])
+@pytest.mark.parametrize("method", ["raycast"])
 def test_distortion_places_points_where_the_lens_does(method):
     from twinrobo.plugins.mujoco import MujocoCameraTwin
 
@@ -165,28 +165,34 @@ def test_defocused_occluder_edges_match_traced_rays(rays, half_width):
     cols = slice(140, 180)
     assert ((exact[cols] > 0.05) & (exact[cols] < 0.95)).any()  # partially covered edge pixels
     errs = {}
-    for method in ("raycast", "pupil"):
-        img, _ = LensRayRenderer(rays, method, 7, oversample=2).render(be, "cam", 0)
-        errs[method] = np.abs(img[0, 1, 100].cpu().numpy()[cols] - exact[cols]).max()
+    img, _ = LensRayRenderer(rays, "raycast", 7, oversample=2).render(be, "cam", 0)
+    errs["raycast"] = np.abs(img[0, 1, 100].cpu().numpy()[cols] - exact[cols]).max()
     twin = small_twin()
     twin_psf = CameraTwin.from_spec(twin.spec, device=DEV)  # same camera, PSF renderer
     psf = MujocoCameraTwin(twin_psf, be, camera="cam", render="psf").get_frame().rgb
     errs["psf"] = np.abs(psf[0, 1, 100].cpu().numpy()[cols] - exact[cols]).max()
     # measured ~0.05 (residual: MuJoCo's multisampled silhouette colors); PSF ~0.2-0.4
     assert errs["raycast"] < 0.08, errs
-    assert errs["pupil"] < 0.15, errs
     assert errs["psf"] > 2 * errs["raycast"], errs
 
 
+def test_removed_method_is_named_in_the_error():
+    from twinrobo.optics.lensrender import check_method
+
+    with pytest.raises(ValueError, match="'pupil' was removed; use 'raycast'"):
+        check_method("pupil")
+    with pytest.raises(ValueError, match="must be one of"):
+        check_method("nope")
+    check_method("raycast")
+    check_method("psf")
+
+
 @pytest.mark.gl
-def test_methods_agree_and_shading_modes(rays):
+def test_shading_modes_and_depth(rays):
     from twinrobo.plugins.mujoco.lensrender import LensRayRenderer
 
     be = backend(MARKER)
-    a, _ = LensRayRenderer(rays, "pupil", 7).render(be, "cam", 0)
     b, depth = LensRayRenderer(rays, "raycast", 7).render(be, "cam", 0)
-    mse = torch.mean((a - b) ** 2).item()
-    assert 10 * np.log10(1 / mse) > 40
     # uniform emissive wall: corrected shading is flat, raw shows relative illumination
     assert abs(float(b[0, 1, 100, 100]) - 1) < 0.02
     raw, _ = LensRayRenderer(rays, "raycast", 7, shading="raw").render(be, "cam", 0)

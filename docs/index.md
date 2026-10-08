@@ -40,11 +40,11 @@ so perception trained in simulation meets the same image on the robot.
 
     [:octicons-arrow-right-24: Optics and rendering](rendering.md)
 
--   :material-ray-start-arrow:{ .lg .middle } __Three rendering methods__
+-   :material-ray-start-arrow:{ .lg .middle } __Two rendering methods__
 
     ---
 
-    A fast 2.5D PSF renderer, plus lens-ray renderers that trace every pixel's
+    A fast 2.5D PSF renderer, plus a ray caster that traces every pixel's
     rays through the lens into the scene, exact even around defocused
     foreground objects.
 
@@ -77,7 +77,6 @@ so perception trained in simulation meets the same image on the robot.
 |---|---|---|
 | Adapter | `MujocoCameraTwin` | `IsaacCameraTwin` |
 | `psf`: pinhole + lens blur and distortion | :material-check-bold: | :material-check-bold: |
-| `pupil`: lens rays across the aperture | :material-check-bold: | :material-check-bold: |
 | `raycast`: lens rays cast into the scene | :material-check-bold: | :material-check-bold: |
 | RGB on the GPU, ground-truth depth on request | :material-check-bold: | :material-check-bold: |
 | Cameras on robot links, stereo modules | :material-check-bold: | any USD camera prim |

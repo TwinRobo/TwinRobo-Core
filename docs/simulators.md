@@ -5,7 +5,7 @@
 | MuJoCo | any MJCF model; `mujoco.Renderer` or robosuite backends | supported |
 | LIBERO (robosuite 1.4) | LIBERO tasks and HDF5 demo datasets, 9 robot options | supported |
 | RoboCasa (robosuite 1.5) | procedurally generated kitchens, LeRobot demo datasets | supported |
-| Isaac Sim 6.x | any USD stage, RTX rendering | supported: `psf`, `pupil`, `raycast` |
+| Isaac Sim 6.x | any USD stage, RTX rendering | supported: `psf`, `raycast` |
 
 ## MuJoCo
 
@@ -106,7 +106,7 @@ env.sim.set_state_from_flattened(states[t])  # then render any camera at frame t
 - Loading an episode takes about 10 s: every episode has its own kitchen.
   Frames within an episode are fast.
 - Ray cast costs about 2.2 s per 1920x1200 frame in a kitchen (570k
-  triangles); pupil raster costs the same as in LIBERO.
+  triangles).
 - Robot: PandaOmron, the robot the demos were recorded with.
 
 ## Isaac Sim
@@ -141,15 +141,15 @@ cam.close()                                   # removes what it added to the sta
 - **Near clip:** USD's default near clip is 1 scene unit, 1 m on a meter stage,
   which hides what a robot camera sees up close; the view uses
   `near_clip_m=0.01` instead.
-- **Lens-ray methods:** `render="pupil"` or `render="raycast"` trace every
-  pixel's rays through the real lens, as in MuJoCo:
+- **Ray casting:** `render="raycast"` traces every pixel's rays through the
+  real lens, as in MuJoCo:
 
   ```python
   twin = CameraTwin.from_catalog("stereolabs/zed-x/2.2mm", build_psf=False)
   cam = IsaacCameraTwin(twin, "/World/Camera", render="raycast")
   ```
 
-  The pupil views are child cameras (`<camera>/TwinRoboPupil<i>`) shifted across
+  The shading views are child cameras (`<camera>/TwinRoboPupil<i>`) shifted across
   the lens' entrance pupil; they render in the same Replicator step as the main
   view. Ray cast intersects every ray with the stage's triangles: every visible
   mesh, cube, sphere, cylinder, capsule, cone and plane (instance proxies
@@ -160,7 +160,7 @@ cam.close()                                   # removes what it added to the sta
     predict; depth is metric (the wall 2.99 m away, an object 30 cm away);
     `match_fov=False` keeps the camera's lens; `close()` leaves the stage as it
     was.
-  - `raycast` and `pupil`: a marker lands within 0.1 px of where the lens' chief
+  - `raycast`: a marker lands within 0.1 px of where the lens' chief
     ray points (a paraxial pinhole would put it ~5 px away).
   - `raycast`: the blurred edges of a 6 mm post 0.3 m away (the lens focused at
     3 m) match the exact coverage computed from the traced rays to ~0.03;
@@ -190,9 +190,9 @@ shaders (about 2 minutes); later runs start in under a minute.
 | 1920×1200, ZED X 2.2 mm, RTX 3090 | Time per frame | GPU memory (whole process) |
 |---|---|---|
 | `psf` | ~0.2 s of optics after the RTX render | not measured |
-| `raycast`, 7 pupil views | ~1.5 s (0.9 s of it lens rays) | ~16 GB |
+| `raycast`, 7 shading views | ~1.5 s (0.9 s of it lens rays) | ~16 GB |
 
-- Each pupil view is a full RTX render product (2594×1662 for this wide lens),
+- Each shading view is a full RTX render product (2594×1662 for this wide lens),
   so memory grows with `pupil_views`; use `pupil_views=3` or a lower sensor
   resolution on smaller GPUs. The one-time lens trace needs ~4 GB of scratch,
   released before rendering.

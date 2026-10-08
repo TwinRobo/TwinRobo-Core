@@ -1,7 +1,6 @@
 {
  "methods": {
   "psf": "PSF bank",
-  "pupil": "Pupil views",
   "raycast": "Ray cast"
  },
  "outputs": {

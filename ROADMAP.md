@@ -90,7 +90,7 @@ yet, grows with wavelength: at f/2 the Airy radius goes from about 0.45 px to
 
 1. **A spectral band per camera:** trace the lens over the sensor's band (e.g.
    800-900 nm for an IR imager, weighted by its quantum efficiency) as one
-   channel, instead of the three visible wavelengths. The PSF, pupil and ray-cast
+   channel, instead of the three visible wavelengths. The PSF and ray-cast
    methods take any wavelengths already.
 2. **Diffraction in the PSFs:** it matters at every wavelength and most in the
    infrared.

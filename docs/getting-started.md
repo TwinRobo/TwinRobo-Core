@@ -88,12 +88,12 @@ MUJOCO_GL=egl python examples/05_mount_camera_on_robot.py   # writes outputs/05_
 
 -   :material-ray-start-arrow: __Trace real lens rays__
 
-    Pass `render="pupil"` or `render="raycast"` to `MujocoCameraTwin`.
+    Pass `render="raycast"` to `MujocoCameraTwin`.
     [Rendering methods](rendering.md#rendering-methods)
 
 -   :material-cube-outline: __Isaac Sim__
 
-    The same twin on any USD camera prim, with all three methods.
+    The same twin on any USD camera prim, with both methods.
     [Isaac Sim](simulators.md#isaac-sim)
 
 -   :material-robot: __A LIBERO policy's camera__

@@ -14,19 +14,19 @@ nav_icon: material/robot-industrial
 
 Every catalog camera works in every simulator below, with every rendering
 method: **PSF** (the simulator's pinhole render, blurred and distorted by the
-lens; fastest), **pupil** and **ray cast** (every pixel traced through the real
-lens; occlusion-aware blur, the lens' own distortion).
+lens; fastest) and **ray cast** (every pixel traced through the real lens;
+occlusion-aware blur, the lens' own distortion).
 
 | Simulator | What you get | Environment | Methods |
 |---|---|---|---|
-| MuJoCo | any MJCF model, `mujoco.Renderer` or robosuite | `pip install -e ".[libero]"` | PSF, pupil, ray cast |
-| LIBERO | LIBERO tasks and demos, policies unchanged | robosuite 1.4 | PSF, pupil, ray cast |
-| RoboCasa | procedural kitchens, human demos replayed exactly | robosuite 1.5 (own environment) | PSF, pupil, ray cast |
-| Isaac Sim 6.x | any USD stage, RTX rendering | Docker image in `docker/isaac/` | PSF, pupil, ray cast |
+| MuJoCo | any MJCF model, `mujoco.Renderer` or robosuite | `pip install -e ".[libero]"` | PSF, ray cast |
+| LIBERO | LIBERO tasks and demos, policies unchanged | robosuite 1.4 | PSF, ray cast |
+| RoboCasa | procedural kitchens, human demos replayed exactly | robosuite 1.5 (own environment) | PSF, ray cast |
+| Isaac Sim 6.x | any USD stage, RTX rendering | Docker image in `docker/isaac/` | PSF, ray cast |
 
 Each adapter renders the simulator's camera at the twin's resolution and field
 of view, from the same pose, and returns a `CameraFrame` (`frame.rgb`, linear, on
-the GPU). Pass `render="pupil"` or `render="raycast"` for the lens-ray methods.
+the GPU). Pass `render="raycast"` to trace the real lens.
 
 === "MuJoCo"
 
