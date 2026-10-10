@@ -8,20 +8,20 @@
 [![Camera catalog: Apache-2.0](https://img.shields.io/badge/camera%20catalog-Apache--2.0-green)](twinrobo/catalog/LICENSE)
 ![Python 3.12](https://img.shields.io/badge/python-3.12-blue)
 ![Status: alpha](https://img.shields.io/badge/status-alpha-orange)
-[![Docs](https://img.shields.io/badge/docs-API%20reference-indigo)](https://twinrobo.github.io/TwinRobo-Core/)
+[![Docs](https://img.shields.io/badge/docs-API%20reference-indigo)](https://twinrobo.github.io/)
 [![Demo](https://img.shields.io/badge/demo-TwinRobo%20Preview-teal)](https://twinrobo.github.io/TwinRobo-Preview/)
 
-Existing simulators render through a perfect pinhole camera, while in the real world robots see through real cameras: lenses with their own field of view, defocus blur, distortion, aberration and vignetting. Policies trained on pinhole images meet a different image at deployment, causing a significant [domain gap](https://twinrobo.github.io/TwinRobo-Core/why/) between simulation and reality. TwinRobo closes that gap: it renders scenes through the actual optics of the camera you will deploy, as a drop-in for the simulators robot learning already uses.
+Existing simulators render through a perfect pinhole camera, while in the real world robots see through real cameras: lenses with their own field of view, defocus blur, distortion, aberration and vignetting. Policies trained on pinhole images meet a different image at deployment, causing a significant [domain gap](https://twinrobo.github.io/why/) between simulation and reality. TwinRobo closes that gap: it renders scenes through the actual optics of the camera you will deploy, as a drop-in for the simulators robot learning already uses.
 
 **One environment, any real camera.** TwinRobo is an open environment for aligning
 perception with off-the-shelf cameras: pick a camera from the
-[catalog](https://twinrobo.github.io/TwinRobo-Core/catalog/), and every simulator, rendering method and dataset
+[catalog](https://twinrobo.github.io/catalog/), and every simulator, rendering method and dataset
 replay in TwinRobo sees through it. The catalog grows with the community:
 [add a camera](#add-your-camera) and it works everywhere at once; camera makers
 can [become partners](#for-camera-makers-become-a-partner) and ship verified
 models of their products.
 
-![An Isaac Sim tabletop: the simulator's pinhole (left) and the Stereolabs ZED X 2.2 mm, every pixel ray-traced through its lens (right)](docs/images/isaac-raycast.jpg)
+![An Isaac Sim tabletop: the simulator's pinhole (left) and the Stereolabs ZED X 2.2 mm, every pixel ray-traced through its lens (right)](images/isaac-raycast.jpg)
 
 ## At a glance
 
@@ -38,7 +38,7 @@ models of their products.
 Stereolabs ZED X, ZED X Mini and ZED 2i, Luxonis OAK-D, Logitech C920 and the
 Raspberry Pi Camera Module 3, as single cameras or stereo pairs with rectified
 output. Every camera works in every simulator and rendering method.
-[Add yours](#add-your-camera) or [calibrate one](docs/calibration.md).
+[Add yours](#add-your-camera) or [calibrate one](https://twinrobo.github.io/calibration/).
 
 ## Features
 
@@ -50,19 +50,19 @@ output. Every camera works in every simulator and rendering method.
 - **Two rendering methods, per camera.** A fast 2.5D PSF renderer, and a GPU
   *ray cast* (NVIDIA Warp) that traces every pixel's rays through the lens into
   the scene, exact even for defocused foreground objects.
-  [More](docs/rendering.md)
+  [More](https://twinrobo.github.io/rendering/)
 - **Drop-in for robot simulators.** MuJoCo, LIBERO (robosuite 1.4), RoboCasa
   kitchens (robosuite 1.5) and NVIDIA Isaac Sim (any USD stage, RTX rendering).
   `CameraTwinLiberoEnv` swaps a camera's observations in place, so policies and
   eval scripts run unchanged; recorded demos replay exactly, so any camera can
-  be placed in an existing episode. [More](docs/simulators.md)
+  be placed in an existing episode. [More](https://twinrobo.github.io/simulators/)
 - **Camera catalog and stereo.** The cameras robots use (RealSense, ZED, OAK-D,
   webcams, Raspberry Pi), stereo modules with rectified output and adjustable
   baselines, and cameras mountable on any robot link. Adding a camera is a YAML
-  file and a lens file. [More](docs/cameras.md)
+  file and a lens file. [More](https://twinrobo.github.io/cameras/)
 - **Calibrate a real unit.** `python -m twinrobo.calibration` turns ChArUco,
   slanted-edge and flat-field captures into a `measured` entry: intrinsics,
-  distortion, focus, vignetting and stereo baseline. [More](docs/calibration.md)
+  distortion, focus, vignetting and stereo baseline. [More](https://twinrobo.github.io/calibration/)
 - **Validated in both simulators.** The PSF renderer matches DeepLens' reference
   renderer at about 46 dB PSNR. With the lens-ray methods, points land within a
   pixel of where the lens' chief rays point (within 0.1 px in Isaac). On a
@@ -84,7 +84,7 @@ pip install -e ".[libero]"       # + MuJoCo, NVIDIA Warp and LIBERO support
 
 LIBERO itself is used from a checkout (`LIBERO_ROOT`). RoboCasa needs
 robosuite 1.5 and gets its own environment; see
-[simulators](docs/simulators.md#robocasa). **Isaac Sim** runs in NVIDIA's
+[simulators](https://twinrobo.github.io/simulators/#robocasa). **Isaac Sim** runs in NVIDIA's
 container, with TwinRobo installed on Isaac's own Python and torch:
 
 ```bash
@@ -142,7 +142,7 @@ one gives you:
 MUJOCO_GL=egl python examples/05_mount_camera_on_robot.py   # writes outputs/05_mount_camera.jpg
 ```
 
-![Three catalog cameras on the same wrist mount: pinhole vs TwinRobo image, close-up, difference and depth](docs/images/quickstart_cameras.jpg)
+![Three catalog cameras on the same wrist mount: pinhole vs TwinRobo image, close-up, difference and depth](images/quickstart_cameras.jpg)
 
 Read it top to bottom:
 
@@ -172,7 +172,7 @@ Read it top to bottom:
   ```
 
   `docker/isaac/run.sh examples/01_isaac_camera.py --render raycast` renders the
-  image at the top of this page. [More](docs/simulators.md#isaac-sim)
+  image at the top of this page. [More](https://twinrobo.github.io/simulators/#isaac-sim)
 - **A LIBERO policy's camera:** wrap an env so its observations come from the
   twin, and eval scripts run unchanged:
 
@@ -188,7 +188,7 @@ Read it top to bottom:
   RGB `[B,3,H,W]` and metric depth `[B,1,H,W]` on the GPU (depth sets each pixel's
   defocus) and returns the camera's image.
 - **Your own camera:** copy a catalog spec, or add one for everyone; see
-  [Cameras](docs/cameras.md) and [CONTRIBUTING](CONTRIBUTING.md#adding-a-camera).
+  [Cameras](https://twinrobo.github.io/cameras/) and [CONTRIBUTING](CONTRIBUTING.md#adding-a-camera).
 
 ## Rendering methods
 
@@ -201,7 +201,7 @@ Ray casting is simulator independent (`twinrobo.optics.lensrender`): a
 simulator supplies the camera pose, views rasterized from points across the
 lens pupil (for shading), and the scene's triangles.
 
-[Details and validation](docs/rendering.md)
+[Details and validation](https://twinrobo.github.io/rendering/)
 
 ## Supported simulators
 
@@ -224,7 +224,7 @@ lens pupil (for shading), and the scene's triangles.
 
 All entries are `estimated` today: geometry fitted to the datasheet fields of
 view, blur from a surrogate lens of matching field, every number sourced in the
-entry's header. The [catalog page](https://twinrobo.github.io/TwinRobo-Core/catalog/) lists each with its sensor,
+entry's header. The [catalog page](https://twinrobo.github.io/catalog/) lists each with its sensor,
 lens and field of view, generated from the catalog files.
 
 > **The camera catalog is Apache-2.0.** Everything in
@@ -271,22 +271,22 @@ the open environment their customers use:
   docs site, a showcase example with your camera, and early integration of
   new products.
 
-[Read about the program](docs/partners.md) or
+[Read about the program](https://twinrobo.github.io/partners/) or
 [open a partner inquiry](../../issues/new?template=camera_partner.md).
 
 ## Documentation
 
 The documentation site, with the API reference, is at
-**[twinrobo.github.io/TwinRobo-Core](https://twinrobo.github.io/TwinRobo-Core/)**. Build it locally with
-`pip install -e ".[docs]" && mkdocs serve`.
+**[twinrobo.github.io](https://twinrobo.github.io/)**; its source is in
+[TwinRobo/twinrobo.github.io](https://github.com/TwinRobo/twinrobo.github.io).
 
 | | |
 |---|---|
-| [Optics and rendering](docs/rendering.md) | PSF pipeline, distortion, the two rendering methods, validation |
-| [Cameras and stereo](docs/cameras.md) | CameraSpec, catalog, stereo modules, spec overrides |
-| [Simulators](docs/simulators.md) | MuJoCo, LIBERO, RoboCasa and Isaac Sim: setup, behavior, limits |
-| [API reference](https://twinrobo.github.io/TwinRobo-Core/api/) | every public class and function, from the docstrings |
-| [Development](docs/development.md) | layout, tests, status |
+| [Optics and rendering](https://twinrobo.github.io/rendering/) | PSF pipeline, distortion, the two rendering methods, validation |
+| [Cameras and stereo](https://twinrobo.github.io/cameras/) | CameraSpec, catalog, stereo modules, spec overrides |
+| [Simulators](https://twinrobo.github.io/simulators/) | MuJoCo, LIBERO, RoboCasa and Isaac Sim: setup, behavior, limits |
+| [API reference](https://twinrobo.github.io/api/) | every public class and function, from the docstrings |
+| [Development](https://twinrobo.github.io/development/) | layout, tests, status |
 
 ## Contributing
 

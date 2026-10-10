@@ -20,14 +20,6 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Documentation site (mkdocs serve / mkdocs build)
-docs = [
-    "mkdocs>=1.6,<2",
-    "mkdocs-material>=9.5",
-    "mkdocstrings[python]>=0.26",
-    "mkdocs-gen-files>=0.5",
-    "pyyaml>=6.0",
-]
 dev = [
     "pytest>=8.0",
     "ruff>=0.6",

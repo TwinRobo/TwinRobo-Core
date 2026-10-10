@@ -78,7 +78,7 @@ camera: `python -m twinrobo.calibration` fits intrinsics and distortion from
 ChArUco views, the focus from slanted edges, vignetting from flat fields and a
 stereo module's baseline from simultaneous pairs, and writes the `measured`
 camera.yaml with its provenance. See the
-[calibration guide](docs/calibration.md).
+[calibration guide](https://twinrobo.github.io/calibration/).
 
 ## Other contributions
 
