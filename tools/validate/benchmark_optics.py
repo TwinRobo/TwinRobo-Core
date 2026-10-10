@@ -1,6 +1,6 @@
 """Phase 1 benchmark: DenseDepthRenderer speed/memory and agreement with the DeepLens reference.
 
-python tools/validate/benchmark_optics.py --out docs/benchmarks/phase1_optics.md
+python tools/validate/benchmark_optics.py --out ../twinrobo.github.io/docs/optics-validation.md
 """
 
 import argparse

@@ -1,9 +1,12 @@
-name: Docs
+name: Docs redirect
 
+# The documentation site moved to https://twinrobo.github.io/ (source:
+# TwinRobo/twinrobo.github.io). This repository's own Pages site only redirects its old
+# addresses there: twinrobo.github.io/TwinRobo-Core/<page> -> twinrobo.github.io/<page>.
 on:
   push:
     branches: [main]
-  pull_request:
+    paths: [".github/redirect/**", ".github/workflows/docs.yml"]
   workflow_dispatch:
 
 permissions:
@@ -16,32 +19,15 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    env:
-      DISABLE_MKDOCS_2_WARNING: "true"
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: pip
-      # The API reference is read from the source (griffe); nothing is imported,
-      # so neither DeepLens nor any simulator is installed here.
-      - run: pip install "mkdocs>=1.6,<2" "mkdocs-material>=9.5" "mkdocstrings[python]>=0.26" "mkdocs-gen-files>=0.5" pyyaml
-      - run: mkdocs build --strict
-      - uses: actions/upload-pages-artifact@v3
-        if: github.event_name != 'pull_request'
-        with:
-          path: site
-
   deploy:
-    if: github.event_name != 'pull_request'
-    needs: build
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .github/redirect
       - id: deployment
         uses: actions/deploy-pages@v4

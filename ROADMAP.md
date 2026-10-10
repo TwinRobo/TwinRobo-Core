@@ -10,7 +10,7 @@ vignetting, sensor and ISP), not what depth cameras *measure*. No catalog camera
 outputs depth (`outputs.depth: false`); `frame.depth` raises
 `DepthUnavailableError`. `force_depth=True` still returns the simulator's
 ground truth for labels and evaluation (see
-[depth output](docs/cameras.md#depth-output)).
+[depth output](https://twinrobo.github.io/cameras/#depth-output)).
 
 **Why not ground truth:** the simulator's depth is the exact scene depth. A
 depth camera's is not, and a policy trained on exact depth meets a very
