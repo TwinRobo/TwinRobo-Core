@@ -75,6 +75,16 @@ output. Every camera works in every simulator and rendering method.
 TwinRobo requires **Python 3.12** (inherited from DeepLens) and a CUDA GPU
 for practical speeds.
 
+The current release, [v0.1.0](https://github.com/TwinRobo/TwinRobo-Core/releases/tag/v0.1.0)
+([changes](CHANGELOG.md)):
+
+```bash
+conda create -n twinrobo python=3.12 -y && conda activate twinrobo
+pip install "twinrobo-core[mujoco] @ git+https://github.com/TwinRobo/TwinRobo-Core@v0.1.0"
+```
+
+From a checkout, for development or the LIBERO support:
+
 ```bash
 git clone https://github.com/TwinRobo/TwinRobo-Core.git && cd TwinRobo-Core
 conda create -n twinrobo python=3.12 -y && conda activate twinrobo
