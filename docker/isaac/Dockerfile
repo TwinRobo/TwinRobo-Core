@@ -1,8 +1,9 @@
 # TwinRobo inside NVIDIA Isaac Sim.
 #
-# DeepLens pins torch 2.10; Isaac Sim ships its own torch (2.11 in 6.1). DeepLens and
-# its pure-Python dependencies are installed without dependencies so they run on
-# Isaac's torch. The TwinRobo source is mounted at /workspace/twinrobo-core by
+# Isaac Sim ships its own torch (2.11 in 6.1) in extension folders that pip does not see,
+# so a plain install would pull a second torch (and its CUDA libraries). DeepLens (from
+# PyPI, deeplens-core>=2.5.6, which accepts torch>=2.10) and its pure-Python dependencies
+# are installed without dependencies, so they run on Isaac's torch. The TwinRobo source is mounted at /workspace/twinrobo-core by
 # docker/isaac/run.sh, not copied, so edits apply without a rebuild.
 ARG ISAAC_IMAGE=nvcr.io/nvidia/isaac-sim:6.1.0
 FROM ${ISAAC_IMAGE}
@@ -15,9 +16,8 @@ RUN mkdir -p /isaac-sim/.cache /isaac-sim/.nv/ComputeCache /isaac-sim/.local/sha
     && chown -R isaac-sim:isaac-sim /isaac-sim/.cache /isaac-sim/.nv /isaac-sim/.local \
         /isaac-sim/.nvidia-omniverse /workspace
 
-ARG DEEPLENS_SHA=278e4f720a4549187a51edaea57bb658548911ce
 RUN /isaac-sim/python.sh -m pip install --no-cache-dir --no-deps \
-        "deeplens-core @ https://github.com/vccimaging/DeepLens/archive/${DEEPLENS_SHA}.tar.gz" \
+        "deeplens-core>=2.5.6" \
         einops lpips scikit-image opencv-python-headless tqdm lazy_loader imageio tifffile \
         pyyaml pytest iniconfig pluggy pygments packaging \
     && chown -R isaac-sim:isaac-sim /isaac-sim/kit/python

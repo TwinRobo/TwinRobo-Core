@@ -8,6 +8,7 @@ and saves the simulator's pinhole view next to the TwinRobo image.
     docker/isaac/run.sh examples/01_isaac_camera.py --render raycast  # trace every pixel's rays
     docker/isaac/run.sh examples/01_isaac_camera.py \
         --usd /workspace/outputs/scene.usd --camera /World/Cam      # your own stage
+    python examples/01_isaac_camera.py --out outputs/isaac_camera.png  # with twinrobo-core[isaac]
 
 The first run compiles Isaac's shaders and builds the camera's PSF bank (a few
 minutes); both are cached, so later runs start in under a minute.
@@ -15,6 +16,7 @@ minutes); both are cached, so later runs start in under a minute.
 
 import argparse
 import time
+from pathlib import Path
 
 from isaacsim import SimulationApp
 
@@ -95,6 +97,7 @@ def main():
     frame = cam.get_frame()
     print(f"frame in {time.perf_counter() - t:.2f} s ({args.render})")
     k = twin.intrinsics
+    Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     iio.imwrite(args.out, np.concatenate([to_png(frame.rgb_ideal), to_png(frame.rgb)], axis=1))
     print(f"pinhole | {args.catalog} ({k.width}x{k.height}) -> {args.out}")
     cam.close()

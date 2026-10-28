@@ -3,9 +3,9 @@
 **Physically grounded digital twins of real cameras for robot learning in simulation.**
 
 [![CI](https://github.com/TwinRobo/TwinRobo-Core/actions/workflows/ci.yml/badge.svg)](https://github.com/TwinRobo/TwinRobo-Core/actions/workflows/ci.yml)
-[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
-[![Commercial license](https://img.shields.io/badge/commercial-license-indigo)](COMMERCIAL.md)
-[![Camera catalog: Apache-2.0](https://img.shields.io/badge/camera%20catalog-Apache--2.0-green)](twinrobo/catalog/LICENSE)
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](https://github.com/TwinRobo/TwinRobo-Core/blob/main/LICENSE)
+[![Commercial license](https://img.shields.io/badge/commercial-license-indigo)](https://github.com/TwinRobo/TwinRobo-Core/blob/main/COMMERCIAL.md)
+[![Camera catalog: Apache-2.0](https://img.shields.io/badge/camera%20catalog-Apache--2.0-green)](https://github.com/TwinRobo/TwinRobo-Core/blob/main/twinrobo/catalog/LICENSE)
 ![Python 3.12](https://img.shields.io/badge/python-3.12-blue)
 ![Status: alpha](https://img.shields.io/badge/status-alpha-orange)
 [![Docs](https://img.shields.io/badge/docs-API%20reference-indigo)](https://twinrobo.github.io/)
@@ -21,7 +21,7 @@ replay in TwinRobo sees through it. The catalog grows with the community:
 can [become partners](#for-camera-makers-become-a-partner) and ship verified
 models of their products.
 
-![An Isaac Sim tabletop: the simulator's pinhole (left) and the Stereolabs ZED X 2.2 mm, every pixel ray-traced through its lens (right)](images/isaac-raycast.jpg)
+![An Isaac Sim tabletop: the simulator's pinhole (left) and the Stereolabs ZED X 2.2 mm, every pixel ray-traced through its lens (right)](https://raw.githubusercontent.com/TwinRobo/TwinRobo-Core/main/images/isaac-raycast.jpg)
 
 ## At a glance
 
@@ -75,12 +75,19 @@ output. Every camera works in every simulator and rendering method.
 TwinRobo requires **Python 3.12** (inherited from DeepLens) and a CUDA GPU
 for practical speeds.
 
-The current release, [v0.1.0](https://github.com/TwinRobo/TwinRobo-Core/releases/tag/v0.1.0)
-([changes](CHANGELOG.md)):
+The current release, v0.1.0 ([changes](https://github.com/TwinRobo/TwinRobo-Core/blob/main/CHANGELOG.md)),
+from PyPI:
 
 ```bash
 conda create -n twinrobo python=3.12 -y && conda activate twinrobo
-pip install "twinrobo-core[mujoco] @ git+https://github.com/TwinRobo/TwinRobo-Core@v0.1.0"
+pip install "twinrobo-core[mujoco]"     # TwinRobo, DeepLens, MuJoCo and NVIDIA Warp
+```
+
+or with Isaac Sim 6.1 (Ubuntu 22.04 or later; one package comes from NVIDIA's index;
+use its own environment, as Isaac Sim brings its own MuJoCo):
+
+```bash
+pip install "twinrobo-core[isaac]" --extra-index-url https://pypi.nvidia.com
 ```
 
 From a checkout, for development or the LIBERO support:
@@ -94,8 +101,8 @@ pip install -e ".[libero]"       # + MuJoCo, NVIDIA Warp and LIBERO support
 
 LIBERO itself is used from a checkout (`LIBERO_ROOT`). RoboCasa needs
 robosuite 1.5 and gets its own environment; see
-[simulators](https://twinrobo.github.io/simulators/#robocasa). **Isaac Sim** runs in NVIDIA's
-container, with TwinRobo installed on Isaac's own Python and torch:
+[simulators](https://twinrobo.github.io/simulators/#robocasa). **Isaac Sim** also runs in
+NVIDIA's container, with TwinRobo installed on Isaac's own Python and torch:
 
 ```bash
 docker pull nvcr.io/nvidia/isaac-sim:6.1.0        # needs the NVIDIA Container Toolkit
@@ -144,7 +151,7 @@ The first call builds the lens' PSF bank with DeepLens (about 20 s on a GPU)
 and caches it; after that a frame takes a fraction of a second. The mount moves
 with the link, so it follows the robot as it acts or replays a demo.
 
-[`examples/05_mount_camera_on_robot.py`](examples/05_mount_camera_on_robot.py)
+[`examples/05_mount_camera_on_robot.py`](https://github.com/TwinRobo/TwinRobo-Core/blob/main/examples/05_mount_camera_on_robot.py)
 does this for three catalog cameras on the same wrist mount and draws what each
 one gives you:
 
@@ -152,7 +159,7 @@ one gives you:
 MUJOCO_GL=egl python examples/05_mount_camera_on_robot.py   # writes outputs/05_mount_camera.jpg
 ```
 
-![Three catalog cameras on the same wrist mount: pinhole vs TwinRobo image, close-up, difference and depth](images/quickstart_cameras.jpg)
+![Three catalog cameras on the same wrist mount: pinhole vs TwinRobo image, close-up, difference and depth](https://raw.githubusercontent.com/TwinRobo/TwinRobo-Core/main/images/quickstart_cameras.jpg)
 
 Read it top to bottom:
 
@@ -198,7 +205,7 @@ Read it top to bottom:
   RGB `[B,3,H,W]` and metric depth `[B,1,H,W]` on the GPU (depth sets each pixel's
   defocus) and returns the camera's image.
 - **Your own camera:** copy a catalog spec, or add one for everyone; see
-  [Cameras](https://twinrobo.github.io/cameras/) and [CONTRIBUTING](CONTRIBUTING.md#adding-a-camera).
+  [Cameras](https://twinrobo.github.io/cameras/) and [CONTRIBUTING](https://github.com/TwinRobo/TwinRobo-Core/blob/main/CONTRIBUTING.md#adding-a-camera).
 
 ## Rendering methods
 
@@ -238,8 +245,8 @@ entry's header. The [catalog page](https://twinrobo.github.io/catalog/) lists ea
 lens and field of view, generated from the catalog files.
 
 > **The camera catalog is Apache-2.0.** Everything in
-> [`twinrobo/catalog/`](twinrobo/catalog) (camera specs, stereo modules and lens
-> files) is licensed under the [Apache License 2.0](twinrobo/catalog/LICENSE),
+> [`twinrobo/catalog/`](https://github.com/TwinRobo/TwinRobo-Core/blob/main/twinrobo/catalog) (camera specs, stereo modules and lens
+> files) is licensed under the [Apache License 2.0](https://github.com/TwinRobo/TwinRobo-Core/blob/main/twinrobo/catalog/LICENSE),
 > separately from the AGPL-3.0 code: use the camera data in any project,
 > commercial or not, with or without TwinRobo.
 
@@ -261,8 +268,8 @@ not here, it is the most valuable contribution you can make:
 
 Calibrated a real unit? Upgrading an entry from `estimated` to `measured` is
 just as welcome. The full guide is in
-[CONTRIBUTING](CONTRIBUTING.md#adding-a-camera); to ask for a camera instead,
-[open a camera request](../../issues/new?template=new_camera.md).
+[CONTRIBUTING](https://github.com/TwinRobo/TwinRobo-Core/blob/main/CONTRIBUTING.md#adding-a-camera); to ask for a camera instead,
+[open a camera request](https://github.com/TwinRobo/TwinRobo-Core/blob/main/../../issues/new?template=new_camera.md).
 
 ## For camera makers: become a partner
 
@@ -282,7 +289,7 @@ the open environment their customers use:
   new products.
 
 [Read about the program](https://twinrobo.github.io/partners/) or
-[open a partner inquiry](../../issues/new?template=camera_partner.md).
+[open a partner inquiry](https://github.com/TwinRobo/TwinRobo-Core/blob/main/../../issues/new?template=camera_partner.md).
 
 ## Documentation
 
@@ -302,7 +309,7 @@ The documentation site, with the API reference, is at
 
 Beyond cameras, also wanted: new simulator adapters (a lens scene is three
 methods; see `twinrobo.optics.lensrender`), sensor noise and ISP models, and
-documentation. See [CONTRIBUTING](CONTRIBUTING.md), and the [ROADMAP](ROADMAP.md)
+documentation. See [CONTRIBUTING](https://github.com/TwinRobo/TwinRobo-Core/blob/main/CONTRIBUTING.md), and the [ROADMAP](https://github.com/TwinRobo/TwinRobo-Core/blob/main/ROADMAP.md)
 for what is planned (simulated depth cameras first).
 
 ## Roadmap
@@ -320,14 +327,14 @@ lens modeling, [MuJoCo](https://mujoco.org),
 [NVIDIA Isaac Sim](https://developer.nvidia.com/isaac/sim),
 [robosuite](https://robosuite.ai), [LIBERO](https://libero-project.github.io),
 [RoboCasa](https://robocasa.ai) and [NVIDIA Warp](https://github.com/NVIDIA/warp).
-Third-party files and their licenses are listed in [`NOTICE`](NOTICE).
+Third-party files and their licenses are listed in [`NOTICE`](https://github.com/TwinRobo/TwinRobo-Core/blob/main/NOTICE).
 
 ## License
 
-TwinRobo is dual-licensed: the **GNU AGPL-3.0** ([`LICENSE`](LICENSE), with an
+TwinRobo is dual-licensed: the **GNU AGPL-3.0** ([`LICENSE`](https://github.com/TwinRobo/TwinRobo-Core/blob/main/LICENSE), with an
 additional permission for NVIDIA Isaac Sim / Omniverse in
-[`LICENSE-EXCEPTION.md`](LICENSE-EXCEPTION.md)), free for research, education and
+[`LICENSE-EXCEPTION.md`](https://github.com/TwinRobo/TwinRobo-Core/blob/main/LICENSE-EXCEPTION.md)), free for research, education and
 open-source use, or a **commercial license** for proprietary products and hosted
-services ([`COMMERCIAL.md`](COMMERCIAL.md)). The camera catalog
+services ([`COMMERCIAL.md`](https://github.com/TwinRobo/TwinRobo-Core/blob/main/COMMERCIAL.md)). The camera catalog
 (`twinrobo/catalog/`) is Apache-2.0, free to use anywhere. Third-party material is
-listed in [`NOTICE`](NOTICE).
+listed in [`NOTICE`](https://github.com/TwinRobo/TwinRobo-Core/blob/main/NOTICE).
