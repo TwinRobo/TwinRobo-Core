@@ -10,14 +10,21 @@ readme = "README.md"
 authors = [{name = "TwinRobo contributors"}]
 license = "AGPL-3.0-only AND Apache-2.0"  # the code; the camera catalog (twinrobo/catalog/) is Apache-2.0
 license-files = ["LICENSE", "LICENSE-EXCEPTION.md", "COMMERCIAL.md", "NOTICE", "twinrobo/catalog/LICENSE"]
-# DeepLens (deeplens-core) requires Python 3.12 and pins torch; TwinRobo inherits both.
+# DeepLens (deeplens-core) requires Python 3.12; TwinRobo inherits it.
 requires-python = ">=3.12,<3.13"
 dependencies = [
-    # DeepLens v2.5.4. Pin by commit SHA; never depend on DeepLens main.
-    "deeplens-core @ git+https://github.com/vccimaging/DeepLens@278e4f720a4549187a51edaea57bb658548911ce",
+    # DeepLens (PyPI); 2.5.6 is the first to accept torch>=2.10 (Isaac Sim 6.1 ships 2.11)
+    "deeplens-core>=2.5.6",
     "numpy>=1.24",
     "pyyaml>=6.0",
 ]
+
+[project.urls]
+Homepage = "https://twinrobo.github.io/"
+Documentation = "https://twinrobo.github.io/"
+Repository = "https://github.com/TwinRobo/TwinRobo-Core"
+Changelog = "https://github.com/TwinRobo/TwinRobo-Core/blob/main/CHANGELOG.md"
+Issues = "https://github.com/TwinRobo/TwinRobo-Core/issues"
 
 [project.optional-dependencies]
 dev = [
@@ -28,6 +35,11 @@ dev = [
 mujoco = [
     "mujoco==3.3.2",
     "warp-lang>=1.17",  # GPU ray casting for render="raycast"
+]
+# Isaac Sim adapter: Isaac Sim 6.1 from PyPI (it brings torch 2.11 and its own MuJoCo, so it
+# does not combine with the mujoco extra); or use the container, docker/isaac/run.sh
+isaac = [
+    "isaacsim[all,extscache]==6.1.0.0",
 ]
 # LIBERO plugin (LIBERO itself: set LIBERO_ROOT to a checkout, see twinrobo/datasets/libero)
 libero = [

@@ -165,3 +165,28 @@ def test_point_response_matches_direct_trace(optics):
     nearest = torch.tensor([r["l1_nearest"] for r in res])
     assert l1.max() < 0.4
     assert l1.mean() <= nearest.mean()  # interpolation beats nearest-node lookup
+
+
+def test_lens_and_psf_bank_are_reproducible():
+    """DeepLens samples rays at random when it focuses and traces a lens: loading the same
+    lens twice gives the same focus, and building a bank twice gives the same bank, bit for
+    bit, without touching the caller's random numbers."""
+    lens = Path(__file__).resolve().parent.parent / "data" / "cellphone80deg" / "lens.json"
+
+    def load():
+        return DeepLensOptics(
+            lens, sensor_resolution=(160, 100), focus_distance_m=0.5, device=DEVICE, psf_ks=17
+        )
+
+    torch.manual_seed(123)
+    expected = torch.rand(3)
+    torch.manual_seed(123)
+    a, b = load(), load()
+    assert torch.equal(torch.rand(3), expected)  # the caller's random state is untouched
+    assert float(a._lens.d_sensor) == float(b._lens.d_sensor)
+    bank_a = a.build_psf_bank(grid=(3, 3), num_depths=2, spp=256)
+    bank_b = b.build_psf_bank(grid=(3, 3), num_depths=2, spp=256)
+    assert torch.equal(bank_a.psfs, bank_b.psfs)
+    other = a.build_psf_bank(grid=(3, 3), num_depths=2, spp=256, seed=1)
+    assert not torch.equal(other.psfs, bank_a.psfs)  # the seed is what fixes them
+    assert other.metadata["seed"] == 1 and bank_a.metadata["seed"] == 0

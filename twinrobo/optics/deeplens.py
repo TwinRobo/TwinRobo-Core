@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Sequence
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -35,6 +36,16 @@ from .psf import PSFBank, field_grid
 
 M_TO_MM = 1000.0
 DEFAULT_FAR_M = 20.0  # also DeepLens' "approximately infinity" object depth
+
+
+@contextmanager
+def seeded(device, seed: int = 0):
+    """Fix torch's random numbers for a block (DeepLens samples rays at random when it loads,
+    focuses and traces a lens), leaving the caller's random state as it was."""
+    devices = [device] if torch.device(device).type == "cuda" else []
+    with torch.random.fork_rng(devices=devices):
+        torch.manual_seed(seed)
+        yield
 
 
 def deeplens_version() -> str:
@@ -103,16 +114,19 @@ class DeepLensOptics(OpticsModel):
         self.psf_ks = psf_ks
         # Requested focus; None = focus stored in the lens file (d_sensor as given).
         self.focus_distance_m = None if focus_distance_m is None else float(focus_distance_m)
-        self._lens = GeoLens(filename=str(model_path), device=torch.device(device), dtype=dtype)
-        if sensor_resolution is not None:
-            self._lens.set_sensor_res(tuple(int(v) for v in sensor_resolution))
-        if focus_distance_m is not None:
-            if focus_distance_m <= 0:
-                raise ValueError("focus_distance_m must be positive (meters) or inf")
-            foc = (
-                float("inf") if math.isinf(focus_distance_m) else -float(focus_distance_m) * M_TO_MM
-            )
-            self._lens.refocus(foc_dist=foc)
+        if focus_distance_m is not None and focus_distance_m <= 0:
+            raise ValueError("focus_distance_m must be positive (meters) or inf")
+        with seeded(device):  # the same lens state (focus, pupils) every time it is loaded
+            self._lens = GeoLens(filename=str(model_path), device=torch.device(device), dtype=dtype)
+            if sensor_resolution is not None:
+                self._lens.set_sensor_res(tuple(int(v) for v in sensor_resolution))
+            if focus_distance_m is not None:
+                foc = (
+                    float("inf")
+                    if math.isinf(focus_distance_m)
+                    else -float(focus_distance_m) * M_TO_MM
+                )
+                self._lens.refocus(foc_dist=foc)
 
     # ------------------------------------------------------------------
     # Properties (TwinRobo units)
@@ -162,7 +176,8 @@ class DeepLensOptics(OpticsModel):
             raise ValueError("focus_distance_m must be positive (meters) or inf")
         self.focus_distance_m = float(focus_distance_m)
         foc = float("inf") if math.isinf(focus_distance_m) else -float(focus_distance_m) * M_TO_MM
-        self._lens.refocus(foc_dist=foc)
+        with seeded(self.device):
+            self._lens.refocus(foc_dist=foc)
 
     def generate_psf(
         self,
@@ -260,6 +275,7 @@ class DeepLensOptics(OpticsModel):
         num_depths: int,
         ks: int | None = None,
         spp: int | None = None,
+        seed: int = 0,
     ) -> dict[str, Any]:
         """Content-based cache key for `build_psf_bank` (see `twinrobo.optics.cache`)."""
         return {
@@ -278,6 +294,7 @@ class DeepLensOptics(OpticsModel):
             "num_depths": int(num_depths),
             "ks": int(self.psf_ks if ks is None else ks),
             "spp": spp,
+            "seed": int(seed),
         }
 
     def lens_rays_key(self, rays_per_pixel: int, seed: int = 0, overfill: float = 1.15) -> dict:
@@ -561,12 +578,18 @@ class DeepLensOptics(OpticsModel):
         num_depths: int = 16,
         ks: int | None = None,
         spp: int | None = None,
+        seed: int = 0,
     ) -> PSFBank:
-        """Precompute the runtime `PSFBank` on a ``(Gw, Gh)`` field grid x depth layers."""
+        """Precompute the runtime `PSFBank` on a ``(Gw, Gh)`` field grid x depth layers.
+
+        DeepLens samples rays at random; ``seed`` fixes them, so a bank is the same every
+        time it is built on a device (the caller's random state is left untouched).
+        """
         ks = self.psf_ks if ks is None else ks
         depths = self.sample_depths(near_m, far_m, num_depths)
         nodes = field_grid(grid, device=self.device)  # [Gh, Gw, 2]
-        psf = self.generate_psf(nodes.reshape(-1, 2), depths, ks=ks, spp=spp)
+        with seeded(self.device, seed):
+            psf = self.generate_psf(nodes.reshape(-1, 2), depths, ks=ks, spp=spp)
         gw, gh = grid
         psfs = psf.reshape(len(depths), gh, gw, psf.shape[2], ks, ks).float().contiguous()
         return PSFBank(
@@ -574,7 +597,7 @@ class DeepLensOptics(OpticsModel):
             depths_m=depths.to(psfs.device),
             sensor_resolution=self.sensor_resolution,
             wavelengths_um=self.wavelengths_rgb_um,
-            metadata=self.bank_key(grid, near_m, far_m, num_depths, ks, spp),
+            metadata=self.bank_key(grid, near_m, far_m, num_depths, ks, spp, seed),
         )
 
     # ------------------------------------------------------------------
@@ -641,9 +664,7 @@ class DeepLensOptics(OpticsModel):
 
         psf_map = torch.stack(
             [
-                self._lens.psf_map_rgb(
-                    grid=tuple(psf_grid), ks=ks, depth=-float(d) * M_TO_MM
-                )
+                self._lens.psf_map_rgb(grid=tuple(psf_grid), ks=ks, depth=-float(d) * M_TO_MM)
                 for d in depths_m
             ],
             dim=2,

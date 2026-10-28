@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.1.0 (2026-10-12)
+## v0.1.0 (2026-10-28)
 
 The first release: digital twins of real cameras for robot simulators.
 
@@ -36,9 +36,16 @@ The first release: digital twins of real cameras for robot simulators.
   intensity proxy, dropout by reflectivity, seeded noise, FMCW radial velocity), with
   Velodyne VLP-16, Ouster OS1-64 and Hesai XT32 catalog entries.
 
-**Install:** Python 3.12;
-`pip install "twinrobo-core[mujoco] @ git+https://github.com/TwinRobo/TwinRobo-Core@v0.1.0"`.
-DeepLens is installed from its pinned commit, so this release is not on PyPI.
+**Reproducible optics.** DeepLens samples rays at random when it focuses a lens and builds
+its point-spread functions; both are now seeded (without touching the caller's random
+state), so a camera's PSF bank is the same every time it is built on a device.
+
+**Install** (Python 3.12): `pip install "twinrobo-core[mujoco]"` from PyPI, with DeepLens
+`deeplens-core>=2.5.6` (any torch from 2.10). For Isaac Sim,
+`pip install "twinrobo-core[isaac]" --extra-index-url https://pypi.nvidia.com` brings Isaac
+Sim 6.1 and its torch 2.11 (Ubuntu 22.04 or later; in an environment of its own, since
+Isaac Sim pins its own MuJoCo); or use the container recipe (`docker/isaac/run.sh`), which
+installs DeepLens on the Isaac Sim image's own Python and torch.
 
 **Known limits:** catalog lenses are surrogates, not the cameras' own prescriptions;
 sensor noise, exposure and motion are not simulated; the simulators render visible light
