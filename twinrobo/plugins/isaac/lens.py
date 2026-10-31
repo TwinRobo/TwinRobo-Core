@@ -206,6 +206,15 @@ class IsaacLensScene:
             self.annotators.append(ann)
         self._mesh: UsdSceneMesh | None = None
 
+    def move_views(self, views: PupilViews) -> None:
+        """Move the view cameras to ``views.centers``, keeping their render products."""
+        from pxr import Gf, UsdGeom
+
+        k = self.meters_per_unit * self._world_scale()
+        for path, (cx, cy) in zip(self.paths, views.centers.tolist(), strict=True):
+            op = UsdGeom.Xformable(self.stage.GetPrimAtPath(path)).GetOrderedXformOps()[0]
+            op.Set(Gf.Vec3d(cx, cy, 0.0) / k)
+
     def _world_matrix(self) -> np.ndarray:
         from pxr import Usd, UsdGeom
 

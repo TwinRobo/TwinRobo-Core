@@ -118,6 +118,7 @@ class PupilViews:
 
     def __init__(self, rays: LensRays, k: int, margin: float = 0.06, oversample: float = 1.0):
         self.rays = rays
+        self.margin = margin
         self.centers = pupil_centers(rays, k)  # [k, 2] m
         tx, ty = rays.max_tan()
         K = rays.intrinsics
@@ -137,6 +138,20 @@ class PupilViews:
                 )
         self.rgb: Tensor | None = None  # [k, 3, h, w] linear
         self.depth: Tensor | None = None  # [k, 1, h, w] z-depth (m)
+
+    def match_frame(self, width: int, height: int, f: float) -> bool:
+        """Take another view size and focal length if they cover this lens' field (else False).
+
+        Lets a refocused lens keep the simulator's existing views: focus breathing changes
+        the field by little, and new render products are expensive. Coverage includes the
+        margin of a freshly sized view, which holds hits close to the lens, off the pupil axis.
+        """
+        tx, ty = self.rays.max_tan()
+        if tx + self.margin > width / (2 * f) or ty + self.margin > height / (2 * f):
+            return False
+        self.width, self.height, self.f = width, height, f
+        self.fovy_deg = math.degrees(2 * math.atan(height / 2 / f))
+        return True
 
     def set_views(self, rgb: Tensor, depth: Tensor) -> None:
         """Install rendered views: ``rgb [k, 3, h, w]`` linear, ``depth [k, 1, h, w]`` m."""

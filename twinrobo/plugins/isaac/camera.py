@@ -25,6 +25,8 @@ used. Import-time safe without Isaac: Isaac modules are imported inside methods.
 
 from __future__ import annotations
 
+import copy
+
 import torch
 
 from ...camera import CameraTwin
@@ -98,6 +100,10 @@ class IsaacCameraTwin:
         self.near_clip_m = float(near_clip_m)
         if render != "psf":  # the ideal view is the lens' paraxial pinhole of the sensor
             self.lens_renderer = self._renderer()
+            self._lens_focus = twin.reference.focus_distance_m
+            self._views_stale = False  # refocused, but not rendered at the new view positions yet
+            views = self.lens_renderer.views
+            self._view_frame = views.width, views.height, views.f
             k = self.lens_renderer.rays.intrinsics
         else:
             k = twin.render_intrinsics if match_fov else twin.intrinsics
@@ -159,7 +165,10 @@ class IsaacCameraTwin:
             self._lens_scene = IsaacLensScene(camera, self.lens_renderer.views, self.near_clip_m)
 
     def _renderer(self):
-        """The lens-ray renderer, cached on the twin (it holds the traced rays and views)."""
+        """The lens-ray renderer, cached on the twin (it holds the traced rays and views).
+
+        Rays depend on the focus, so a refocused lens gets a new renderer.
+        """
         from ...optics.lensrender import LensRayRenderer, lens_rays
 
         cache = self.twin.__dict__.setdefault("_lens_renderers", {})
@@ -169,10 +178,11 @@ class IsaacCameraTwin:
             self.pupil_views,
             self.shading,
             self.view_oversample,
+            self.twin.reference.focus_distance_m,
         )
         if key not in cache:
-            rays = lens_rays(self.twin.reference, self.rays_per_pixel, **self.twin.lens_geometry())
             cache.clear()  # one lens renderer per twin (they hold large GPU buffers)
+            rays = lens_rays(self.twin.reference, self.rays_per_pixel, **self.twin.lens_geometry())
             cache[key] = LensRayRenderer(
                 rays,
                 self.render_method,
@@ -181,6 +191,37 @@ class IsaacCameraTwin:
                 oversample=self.view_oversample,
             )
         return cache[key]
+
+    def _follow_focus(self) -> bool:
+        """Pick up a lens refocused since the last frame; True if it was."""
+        focus = self.twin.reference.focus_distance_m
+        if self.lens_renderer is not None and focus == self._lens_focus:
+            return False
+        self.lens_renderer = None  # its rays go before the new ones are traced
+        # This camera's own views object: other cameras of the twin share the cached renderer,
+        # and their render products have their own frame.
+        lr = copy.copy(self._renderer())
+        lr.views = copy.copy(lr.views)
+        self.lens_renderer = lr
+        self._pinhole = lr.rays.intrinsics
+        if self.view is not None:
+            import omni.usd
+            from pxr import UsdGeom
+
+            stage = omni.usd.get_context().get_stage()
+            self._set_intrinsics(UsdGeom.Camera(stage.GetPrimAtPath(self.view)), self._pinhole)
+        if self._lens_scene is not None:
+            if lr.views.match_frame(*self._view_frame):
+                self._lens_scene.move_views(lr.views)
+            else:
+                from .lens import IsaacLensScene
+
+                self._lens_scene.close()
+                self._lens_scene = IsaacLensScene(self.camera, lr.views, self.near_clip_m)
+        self._view_frame = lr.views.width, lr.views.height, lr.views.f
+        self._lens_focus = focus
+        self._views_stale = True
+        return True
 
     @staticmethod
     def _set_intrinsics(view, k) -> None:
@@ -241,15 +282,21 @@ class IsaacCameraTwin:
         depth = wp.to_torch(dist).to(self.device).reshape(1, 1, H, W).float()
         return srgb_to_linear(rgb), depth * self._meters_per_unit
 
-    def _step(self) -> None:
-        """Render one frame of every render product (main view and the views across the pupil)."""
+    def _step(self, delta_time: float | None = None) -> None:
+        """Render one frame of every render product (main view and the views across the pupil).
+
+        ``delta_time=0.0`` holds the timeline; ``None`` is Replicator's default.
+        """
         import omni.replicator.core as rep
 
-        rep.orchestrator.step(rt_subframes=self.rt_subframes, pause_timeline=False)
+        step = {"rt_subframes": self.rt_subframes, "pause_timeline": False}
+        if delta_time is not None:
+            step["delta_time"] = delta_time
+        rep.orchestrator.step(**step)
         for _ in range(20):  # render products added since the last step need a frame first
             if self._lens_scene is None or self._lens_scene.ready():
                 return
-            rep.orchestrator.step(rt_subframes=self.rt_subframes, pause_timeline=False)
+            rep.orchestrator.step(**step)
         raise SimulatorError("the shading views across the pupil produced no frame")
 
     def get_frame(
@@ -260,10 +307,14 @@ class IsaacCameraTwin:
         ``frame.depth`` is readable only if the camera's depth output is simulated
         (``outputs.depth`` in its spec) or with ``force_depth=True`` (simulator ground truth).
         """
-        if self.lens_renderer is not None:
+        if self.render_method != "psf":
             from ...optics.lensrender import lens_frame
 
+            self._follow_focus()
+            if self._views_stale and not step:
+                self._step(delta_time=0.0)  # the moved views need a render; the caller's time holds
             ideal, _ = self.render_ideal(step)
+            self._views_stale = False
             rgb, depth = self.lens_renderer.render_scene(self._lens_scene)
             return lens_frame(
                 self.twin,
