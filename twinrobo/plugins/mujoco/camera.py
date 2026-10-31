@@ -203,6 +203,7 @@ class MujocoCameraTwin:
         self.twin = twin
         self.rectify = rectify
         self.render_method = render
+        self._lens_focus = None
         self.rays_per_pixel = int(rays_per_pixel)
         self.pupil_views = int(pupil_views)
         self.shading = shading
@@ -288,7 +289,8 @@ class MujocoCameraTwin:
 
         if self.camera is None:
             raise SimulatorError("call attach(camera) first")
-        if self.lens_renderer is None:
+        focus = self.twin.reference.focus_distance_m
+        if self.lens_renderer is None or focus != self._lens_focus:
             # Cached on the twin: pupil views and ray-to-cell assignment are per lens config.
             cache = self.twin.__dict__.setdefault("_lens_renderers", {})
             key = (
@@ -297,15 +299,17 @@ class MujocoCameraTwin:
                 self.pupil_views,
                 self.shading,
                 self.view_oversample,
+                focus,
             )
             if key not in cache:
+                self.lens_renderer = None
+                cache.clear()  # one lens renderer per twin (they hold large GPU buffers)
                 rays = lens_rays(
                     self.twin.reference,
                     self.rays_per_pixel,
                     status=status,
                     **self.twin.lens_geometry(),
                 )
-                cache.clear()  # one lens renderer per twin (they hold large GPU buffers)
                 cache[key] = LensRayRenderer(
                     rays,
                     self.render_method,
@@ -314,6 +318,7 @@ class MujocoCameraTwin:
                     oversample=self.view_oversample,
                 )
             self.lens_renderer = cache[key]
+            self._lens_focus = focus
         lr = self.lens_renderer
         rgb, depth = lr.render(self.backend, self.camera, self._cam_id)
         # The pinhole reference: the paraxial camera of the same sensor.

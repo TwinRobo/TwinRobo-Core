@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+**Fixes**
+
+- Ray casting follows the lens: after `twin.reference.set_focus()`, the next frame of
+  `IsaacCameraTwin` and `MujocoCameraTwin` uses the new focus instead of the first one.
+  Isaac keeps its pupil-view render products across a refocus where they cover the field.
+
 ## v0.1.0 (2026-10-28)
 
 The first release: digital twins of real cameras for robot simulators.

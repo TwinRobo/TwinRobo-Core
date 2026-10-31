@@ -85,6 +85,116 @@ def test_distortion_places_points_where_the_lens_does(app, method):
         cam.close()
 
 
+def test_refocusing_the_lens_changes_the_next_frame(app):
+    """The pupil views are kept across a refocus; the next frame uses the new rays."""
+    from twinrobo.plugins.isaac import IsaacCameraTwin
+
+    new_stage(app, (MARKER, (0.04, 0.04, 0.002), (1, 0, 0)))
+    cam = IsaacCameraTwin(small_twin(), "/World/Cam", render="raycast", rt_subframes=4)
+    try:
+        sharp = frame_of(cam).rgb
+        before = cam.lens_renderer
+        paths = list(cam._lens_scene.paths)
+        cam.twin.reference.set_focus(0.05)  # far from the marker, 3 m away
+        blurred = frame_of(cam).rgb
+        assert cam.lens_renderer is not before
+        assert cam._lens_scene.paths == paths  # the same render products
+        assert (blurred - sharp).abs().max() > 0.05
+    finally:
+        cam.close()
+
+
+def test_refocus_leaves_other_cameras_of_the_twin_working(app):
+    from pxr import UsdGeom
+
+    from twinrobo.plugins.isaac import IsaacCameraTwin
+
+    stage = new_stage(app)
+    UsdGeom.Camera.Define(stage, "/World/Cam2")
+    twin = small_twin()
+    a = IsaacCameraTwin(twin, "/World/Cam", render="raycast", rt_subframes=2, pupil_views=3)
+    b = None
+    try:
+        frame_of(a, settle=1)
+        twin.reference.set_focus(0.05)
+        b = IsaacCameraTwin(twin, "/World/Cam2", render="raycast", rt_subframes=2, pupil_views=3)
+        frame_of(a, settle=1)  # a refocuses and keeps its own frame; b's must not change
+        assert b.lens_renderer.views is not a.lens_renderer.views
+        frame_of(b, settle=1)
+    finally:
+        a.close()
+        if b is not None:
+            b.close()
+
+
+def test_refocus_with_step_false_holds_the_timeline(app, monkeypatch):
+    import omni.replicator.core as rep
+
+    from twinrobo.plugins.isaac import IsaacCameraTwin
+
+    new_stage(app)
+    cam = IsaacCameraTwin(small_twin(), "/World/Cam", render="raycast", rt_subframes=2)
+    try:
+        frame_of(cam, settle=1)
+        cam.twin.reference.set_focus(0.05)
+        calls = []
+        real = rep.orchestrator.step
+        monkeypatch.setattr(
+            rep.orchestrator, "step", lambda **kw: (calls.append(kw), real(**kw))[1]
+        )
+        cam.get_frame(step=False)
+        assert calls and all(c.get("delta_time") == 0.0 for c in calls)
+    finally:
+        cam.close()
+
+
+def test_failed_render_after_a_refocus_is_retried(app, monkeypatch):
+    from twinrobo.plugins.isaac import IsaacCameraTwin
+
+    new_stage(app)
+    cam = IsaacCameraTwin(small_twin(), "/World/Cam", render="raycast", rt_subframes=2)
+    try:
+        frame_of(cam, settle=1)
+        cam.twin.reference.set_focus(0.05)
+        real, calls = cam._step, []
+
+        def fail(**kw):
+            calls.append(kw)
+            raise RuntimeError("render failed")
+
+        monkeypatch.setattr(cam, "_step", fail)
+        with pytest.raises(RuntimeError, match="render failed"):
+            cam.get_frame(step=False)
+        monkeypatch.setattr(cam, "_step", lambda **kw: (calls.append(kw), real(**kw))[1])
+        cam.get_frame(step=False)
+        assert calls == [{"delta_time": 0.0}, {"delta_time": 0.0}]
+    finally:
+        cam.close()
+
+
+def test_failed_refocus_is_retried_and_never_falls_back_to_the_psf_path(app, monkeypatch):
+    from twinrobo.plugins.isaac import IsaacCameraTwin
+
+    new_stage(app)
+    cam = IsaacCameraTwin(small_twin(), "/World/Cam", render="raycast", rt_subframes=2)
+    try:
+        frame_of(cam, settle=1)
+        cam.twin.reference.set_focus(0.05)
+        real = cam._renderer
+
+        def fail():
+            raise RuntimeError("out of GPU memory")
+
+        monkeypatch.setattr(cam, "_renderer", fail)
+        for _ in range(2):
+            with pytest.raises(RuntimeError, match="out of GPU memory"):
+                cam.get_frame()
+        monkeypatch.setattr(cam, "_renderer", real)
+        assert cam.get_frame().metadata["render"] == "raycast"
+    finally:
+        cam.close()
+
+
 def test_raycast_defocused_occluder_edges_match_the_traced_rays(app):
     """A 6 mm post 0.3 m away, far in front of the 3 m focus: its blurred edges are exact."""
     from twinrobo.plugins.isaac import IsaacCameraTwin

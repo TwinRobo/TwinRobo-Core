@@ -145,6 +145,54 @@ def test_distortion_places_points_where_the_lens_does(method):
 
 
 @pytest.mark.gl
+def test_refocusing_the_lens_changes_the_next_frame():
+    from twinrobo.plugins.mujoco import MujocoCameraTwin
+
+    be = backend(MARKER)
+    cam = MujocoCameraTwin(small_twin(), be, camera="cam", render="raycast", rays_per_pixel=8)
+    before = cam.get_frame().rgb
+    cam.twin.reference.set_focus(0.05)  # far from the marker, 3 m away
+    refocused = cam.get_frame().rgb
+    fresh = (
+        MujocoCameraTwin(
+            small_twin(focus=0.05), be, camera="cam", render="raycast", rays_per_pixel=8
+        )
+        .get_frame()
+        .rgb
+    )
+    assert (refocused - before).abs().max() > 0.05  # the focus change reached the image
+    assert torch.allclose(refocused, fresh, atol=1e-3)  # same as a camera built at that focus
+
+
+@pytest.mark.gl
+def test_cameras_of_one_twin_keep_their_renderers():
+    from twinrobo.plugins.mujoco import MujocoCameraTwin
+
+    twin, be = small_twin(), backend(MARKER)
+    raw = MujocoCameraTwin(
+        twin, be, camera="cam", render="raycast", rays_per_pixel=8, shading="raw"
+    )
+    flat = MujocoCameraTwin(
+        twin, be, camera="cam", render="raycast", rays_per_pixel=8, shading="corrected"
+    )
+    raw.get_frame(), flat.get_frame()
+    kept = raw.lens_renderer, flat.lens_renderer
+    raw.get_frame(), flat.get_frame()
+    assert raw.lens_renderer is kept[0] and flat.lens_renderer is kept[1]
+
+
+def test_kept_views_must_cover_the_field_with_a_fresh_views_margin(rays):
+    from twinrobo.optics.lensrender import PupilViews
+
+    views = PupilViews(rays, 3)
+    w, h, f = views.width, views.height, views.f
+    assert views.match_frame(w, h, f)
+    tx, ty = rays.max_tan()
+    assert not views.match_frame(int(2 * (tx + 0.04) * f), h, f)  # covers rays, not the margin
+    assert (views.width, views.height, views.f) == (w, h, f)
+
+
+@pytest.mark.gl
 @pytest.mark.parametrize("half_width", [0.0015, 0.003])  # 3 mm and 6 mm posts (2.5 / 5 px)
 def test_defocused_occluder_edges_match_traced_rays(rays, half_width):
     """A post in front of the focus plane, blurred by the aperture: its partially covered edges.
