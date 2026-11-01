@@ -1,0 +1,13 @@
+# Builds the API reference (Read the Docs reads this; nothing is imported from twinrobo,
+# so neither DeepLens nor any simulator is installed)
+mkdocs==1.6.1
+mkdocs-material==9.7.7
+mkdocstrings==1.0.6
+mkdocstrings-python==2.0.9
+pymdown-extensions==12.1
+markdown==3.11
+pygments==2.21.0
+griffelib==2.3.0
+mkdocs-autorefs==1.4.4
+ruff==0.16.9
+pyyaml==6.0.3
