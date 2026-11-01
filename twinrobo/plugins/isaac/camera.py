@@ -321,6 +321,11 @@ class IsaacCameraTwin:
         if step:
             self._step(0.0 if hold_time else None)
         rgba = self._annotators["rgb"].get_data(device="cuda")
+        for _ in range(20 if step else 0):  # a new camera needs frames first; time holds
+            if rgba is not None and len(rgba.shape) == 3:
+                break
+            self._step(0.0)
+            rgba = self._annotators["rgb"].get_data(device="cuda")
         dist = self._annotators["distance_to_image_plane"].get_data(device="cuda")
         if rgba is None or len(rgba.shape) != 3:
             raise SimulatorError("the renderer has not produced a frame yet; step once more")

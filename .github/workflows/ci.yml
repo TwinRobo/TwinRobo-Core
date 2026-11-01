@@ -22,3 +22,23 @@ jobs:
         run: ruff check .
       - name: Test
         run: pytest -q -m "not gpu and not isaac and not gl and not libero and not robocasa"
+
+  mujoco:
+    # MuJoCo rendering and the adapters, on the CPU with Mesa's software OpenGL
+    runs-on: ubuntu-latest
+    env:
+      MUJOCO_GL: egl
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install OpenGL
+        run: sudo apt-get update && sudo apt-get install -y libegl1 libgl1-mesa-dri
+      - name: Install (CPU torch)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,mujoco]" --extra-index-url https://download.pytorch.org/whl/cpu
+      - name: Test
+        run: pytest -q -m "not gpu and not isaac and not libero and not robocasa"

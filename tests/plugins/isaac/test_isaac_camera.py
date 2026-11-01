@@ -153,3 +153,34 @@ def test_the_standard_api_renders_a_pair_once(stage, twin):
     assert obs["left"].rgb.shape == obs["right"].rgb.shape
     assert (obs["left"].rgb - obs["right"].rgb).abs().mean() < 0.02  # the same pose, the same frame
     rig.close()
+
+
+def test_a_device_captures_one_frame_without_moving_time(stage, twin, monkeypatch):
+    import omni.replicator.core as rep
+    import omni.timeline
+    from pxr import UsdGeom
+
+    from twinrobo import DeviceTwin, StereoTwin
+    from twinrobo.plugins.isaac import IsaacBackend
+    from twinrobo.stereo import ModuleRegistry
+
+    UsdGeom.Camera.Define(stage, "/World/CamRight")
+    stereo = StereoTwin(ModuleRegistry().load("intel/realsense-d435"), twin, twin)
+    device = DeviceTwin({"rgb": twin, "ir": stereo})
+    rig = device.attach(
+        IsaacBackend(),
+        rgb="/World/Cam",
+        ir={"left": "/World/Cam", "right": "/World/CamRight", "rectify": False},
+    )
+    for _ in range(3):  # let RTX settle
+        rig.capture()
+    steps = []
+    real = rep.orchestrator.step
+    monkeypatch.setattr(rep.orchestrator, "step", lambda **k: (steps.append(k), real(**k))[1])
+    time = omni.timeline.get_timeline_interface().get_current_time()
+    obs = rig.capture()
+    assert list(obs) == ["rgb", "ir/left", "ir/right"]
+    assert len(steps) == 1 and steps[0]["delta_time"] == 0.0
+    assert omni.timeline.get_timeline_interface().get_current_time() == time
+    assert obs["rgb"].rgb.shape == obs["ir/left"].rgb.shape
+    rig.close()

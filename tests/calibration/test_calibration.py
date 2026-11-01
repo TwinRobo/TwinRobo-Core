@@ -198,3 +198,61 @@ def test_fit_focus_recovers_a_known_focus():
     fit = fit_focus(optics, ms)
     assert abs(1 / fit.focus_m - 1 / 0.8) < 0.1, fit.focus_m  # within 0.1 diopter
     assert fit.rms_error < 0.02
+
+
+def test_command_line_goes_from_captures_to_a_measured_spec(tmp_path, board_img, capsys):
+    """Every step but `focus`, which needs a lens trace (see the test of `fit_focus`)."""
+    from twinrobo import CameraSpec
+    from twinrobo.calibration.__main__ import main
+    from twinrobo.registry import BUILTIN_CATALOG
+    from twinrobo.stereo import StereoModule
+
+    iio = pytest.importorskip("imageio.v3")
+    results = str(tmp_path / "calib.json")
+
+    def run(*args):
+        assert main(["--results", results, *args]) == 0
+
+    def saved(images, name):
+        paths = []
+        for i, im in enumerate(images):
+            paths.append(str(tmp_path / f"{name}{i}.png"))
+            iio.imwrite(paths[-1], np.asarray(im, np.uint8))
+        return paths
+
+    with pytest.raises(SystemExit, match="no board"):
+        run("geometry", *saved([board_img], "any"))
+    run("board", "--out", str(tmp_path / "board.png"))
+    board = str(tmp_path / "board.json")
+    assert (tmp_path / "board.png").exists()
+
+    views = poses(14)
+    left = saved([render_view(board_img, r, t) for r, t in views], "left")
+    right = [render_view(board_img, r, t - np.array([0.06, 0, 0])) for r, t in views]
+    run("geometry", *left, "--board", board)
+    assert "RMS" in capsys.readouterr().out
+    run("stereo", "--left", *left, "--right", *saved(right, "right"), "--board", board)
+    run("edges", *saved([gaussian_edge(1.2) * 255], "edge"), "--distance-m", "0.4")
+    run("flatfield", *saved([np.full((120, 192), 128)], "flat"))
+
+    src = BUILTIN_CATALOG / "stereolabs" / "zed-x"
+    shutil.copytree(src / "2.2mm", tmp_path / "zed")
+    spec = tmp_path / "zed" / "camera.yaml"
+    module = tmp_path / "zed" / "module.yaml"
+    out = tmp_path / "zed" / "measured.yaml"
+    run("write", "--spec", str(spec), "--out", str(out), "--module", str(module),
+        "--module-out", str(tmp_path / "zed" / "measured_module.yaml"))  # fmt: skip
+
+    measured = CameraSpec.from_yaml(out)
+    assert measured.validation.status == "measured"
+    assert measured.calibration["intrinsic"]["fx"] == pytest.approx(400 * 1920 / W, rel=0.02)
+    m = StereoModule.from_yaml(tmp_path / "zed" / "measured_module.yaml")
+    assert m.baseline_m == pytest.approx(0.06, abs=0.001)
+
+
+def test_command_line_says_what_is_missing(tmp_path):
+    from twinrobo.calibration.__main__ import main
+
+    results = str(tmp_path / "calib.json")
+    with pytest.raises(SystemExit, match="nothing measured"):
+        main(["--results", results, "write", "--spec", "x", "--out", "y"])
