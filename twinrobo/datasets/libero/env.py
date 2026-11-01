@@ -91,7 +91,9 @@ class CameraTwinLiberoEnv:
         return self._replace(obs), reward, done, info
 
     def set_init_state(self, init_state):
-        return self._replace(self.env.set_init_state(init_state))
+        obs = self.env.set_init_state(init_state)
+        self._attached = False  # an episode's first frame owes nothing to an earlier render
+        return self._replace(obs)
 
     def regenerate_obs_from_state(self, state):
         return self._replace(self.env.regenerate_obs_from_state(state))

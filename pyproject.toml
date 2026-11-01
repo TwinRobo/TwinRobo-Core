@@ -22,6 +22,7 @@ dependencies = [
 [project.urls]
 Homepage = "https://twinrobo.github.io/"
 Documentation = "https://twinrobo.github.io/"
+"API reference" = "https://twinrobo-core.readthedocs.io/en/latest/"
 Repository = "https://github.com/TwinRobo/TwinRobo-Core"
 Changelog = "https://github.com/TwinRobo/TwinRobo-Core/blob/main/CHANGELOG.md"
 Issues = "https://github.com/TwinRobo/TwinRobo-Core/issues"
@@ -60,8 +61,15 @@ version = {attr = "twinrobo.version.__version__"}
 include = ["twinrobo*"]
 
 [tool.setuptools.package-data]
-# the built-in camera catalog: specs, lens files, stereo modules
-twinrobo = ["catalog/**/*.yaml", "catalog/**/*.json", "catalog/**/*.md", "catalog/LICENSE"]
+# the built-in camera catalog (specs, lens files, stereo modules) and the ISP tunings
+twinrobo = [
+    "catalog/**/*.yaml",
+    "catalog/**/*.json",
+    "catalog/**/*.md",
+    "catalog/LICENSE",
+    "isp/tunings/*.json",
+    "isp/tunings/LICENSE",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

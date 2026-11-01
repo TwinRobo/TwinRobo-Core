@@ -15,6 +15,7 @@ from ...camera import CameraTwin
 from ...exceptions import SimulatorError
 from ...frame import CameraFrame
 from ...isp.color import linear_to_srgb, srgb_to_linear
+from ...sensor import new_stream
 
 
 class RenderBackend(Protocol):
@@ -29,7 +30,34 @@ class RenderBackend(Protocol):
     def render(self, camera: str, width: int, height: int) -> tuple[np.ndarray, np.ndarray]: ...
 
 
-class MujocoRenderer:
+class MujocoBackend:
+    """What `twinrobo.rig` needs from a MuJoCo render backend: ``model`` and ``data``."""
+
+    capture_options: dict[str, Any] = {}
+    same_frame: dict[str, Any] = {}  # MuJoCo renders each camera on request
+
+    def camera(self, twin: CameraTwin, camera: str, **options: Any) -> MujocoCameraTwin:
+        return MujocoCameraTwin(twin, self, camera=camera, **options)
+
+    def lidar(self, spec: Any, **options: Any) -> Any:
+        from .lidar import MujocoLidar
+
+        return MujocoLidar(spec, self.model, self.data, **options)
+
+    def baseline(self, left: str, right: str) -> float:
+        import mujoco
+
+        ids = [mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_CAMERA, c) for c in (left, right)]
+        if min(ids) < 0:
+            raise SimulatorError(f"no MuJoCo cameras {left!r} / {right!r}")
+        if self.model.cam_bodyid[ids[0]] == self.model.cam_bodyid[ids[1]]:
+            positions = self.model.cam_pos
+        else:
+            positions = self.data.cam_xpos
+        return float(np.linalg.norm(positions[ids[1]] - positions[ids[0]]))
+
+
+class MujocoRenderer(MujocoBackend):
     """``mujoco.Renderer`` backend for plain MuJoCo (``MjModel``/``MjData``) scenes.
 
     Do not use it inside robosuite/LIBERO: a second GL context in the same
@@ -64,7 +92,7 @@ class MujocoRenderer:
         self._renderers.clear()
 
 
-class RobosuiteRenderer:
+class RobosuiteRenderer(MujocoBackend):
     """robosuite backend: renders in robosuite's own GL context.
 
     Pass the robosuite env (or anything with ``.sim``) rather than the sim:
@@ -201,6 +229,7 @@ class MujocoCameraTwin:
         if render != "psf" and getattr(twin, "reference", None) is None:
             raise ValueError(f"render={render!r} needs a CameraTwin with a lens model (DeepLens)")
         self.twin = twin
+        self._stream = new_stream()
         self.rectify = rectify
         self.render_method = render
         self._lens_focus = None
@@ -232,6 +261,10 @@ class MujocoCameraTwin:
             self.attach(camera)
 
     def attach(self, camera: str) -> None:
+        self.camera, self._cam_id = camera, self._camera_id(camera)
+        self.reset()  # a new episode starts with its own exposure
+
+    def _camera_id(self, camera: str) -> int:
         import mujoco
 
         cam_id = mujoco.mj_name2id(self.backend.model, mujoco.mjtObj.mjOBJ_CAMERA, camera)
@@ -242,7 +275,13 @@ class MujocoCameraTwin:
                 f"camera {camera!r} uses sensorsize/focal intrinsics; "
                 "fovy override is not supported"
             )
-        self.camera, self._cam_id = camera, cam_id
+        return cam_id
+
+    def reset(self) -> None:
+        """Start this camera's frames again: its exposure and any ISP state."""
+        self.twin.reset(self._stream)
+        if self.camera is not None:  # robosuite may have rebuilt the model
+            self._cam_id = self._camera_id(self.camera)
 
     @property
     def fovy_deg(self) -> float | None:
@@ -263,10 +302,17 @@ class MujocoCameraTwin:
     def get_frame(
         self, timestamp: float | None = None, status=None, force_depth: bool = False
     ) -> CameraFrame:
-        """Render and process one frame. ``frame.rgb`` is linear ``[1, 3, H, W]`` on ``device``.
+        """Render one frame through the camera.
 
-        ``frame.depth`` is readable only if the camera's depth output is simulated
-        (``outputs.depth`` in its spec) or with ``force_depth=True`` (simulator ground truth).
+        Args:
+            timestamp: Stored on the frame.
+            status (Callable[[str], None] | None): Called with progress messages while ray
+                casting. By default none.
+            force_depth: Make ``frame.depth`` readable even if the camera's spec has no depth
+                output: the simulator's ground truth.
+
+        Returns:
+            The `CameraFrame`. ``frame.rgb`` is linear ``[1, 3, H, W]``.
         """
         if self.render_method != "psf":
             return self._lens_frame(timestamp, status, force_depth)
@@ -278,7 +324,7 @@ class MujocoCameraTwin:
             rgb,
             depth_t,
             timestamp=timestamp,
-            metadata={"camera": self.camera, "fovy_deg": self.fovy_deg},
+            metadata={"camera": self.camera, "stream": self._stream, "fovy_deg": self.fovy_deg},
             rectify=self.rectify,
             force_depth=force_depth,
         )
@@ -339,6 +385,6 @@ class MujocoCameraTwin:
             ideal,
             self.rectify,
             timestamp,
-            {"camera": self.camera},
+            {"camera": self.camera, "stream": self._stream},
             force_depth=force_depth,
         )

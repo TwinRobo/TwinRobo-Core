@@ -10,7 +10,7 @@ Frames follow ROS REP-103: x forward, y left, z up.
 """
 
 from .registry import LidarRegistry
-from .scan import LidarFrame, LidarTwin
+from .scan import LidarFrame, LiDARTwin, LidarTwin
 from .spec import LidarSpec
 
-__all__ = ["LidarFrame", "LidarRegistry", "LidarSpec", "LidarTwin"]
+__all__ = ["LiDARTwin", "LidarFrame", "LidarRegistry", "LidarSpec", "LidarTwin"]

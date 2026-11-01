@@ -8,10 +8,11 @@
 [![Camera catalog: Apache-2.0](https://img.shields.io/badge/camera%20catalog-Apache--2.0-green)](https://github.com/TwinRobo/TwinRobo-Core/blob/main/twinrobo/catalog/LICENSE)
 ![Python 3.12](https://img.shields.io/badge/python-3.12-blue)
 ![Status: alpha](https://img.shields.io/badge/status-alpha-orange)
-[![Docs](https://img.shields.io/badge/docs-API%20reference-indigo)](https://twinrobo.github.io/)
+[![Docs](https://img.shields.io/badge/docs-guides-indigo)](https://twinrobo.github.io/)
+[![API](https://img.shields.io/badge/API-reference-indigo)](https://twinrobo-core.readthedocs.io/en/latest/)
 [![Demo](https://img.shields.io/badge/demo-TwinRobo%20Preview-teal)](https://twinrobo.github.io/TwinRobo-Preview/)
 
-Existing simulators render through a perfect pinhole camera, while in the real world robots see through real cameras: lenses with their own field of view, defocus blur, distortion, aberration and vignetting. Policies trained on pinhole images meet a different image at deployment, causing a significant [domain gap](https://twinrobo.github.io/why/) between simulation and reality. TwinRobo closes that gap: it renders scenes through the actual optics of the camera you will deploy, as a drop-in for the simulators robot learning already uses.
+Existing simulators render through a perfect pinhole camera, while in the real world robots see through real cameras: lenses with their own field of view, defocus blur, distortion, aberration and vignetting. Policies trained on pinhole images meet a different image at deployment, causing a significant [domain gap](https://twinrobo.github.io/why/) between simulation and reality. TwinRobo closes that gap: it renders scenes through physically traced surrogate optics of the camera you will deploy, as a drop-in for the simulators robot learning already uses.
 
 **One environment, any real camera.** TwinRobo is an open environment for aligning
 perception with off-the-shelf cameras: pick a camera from the
@@ -42,7 +43,7 @@ output. Every camera works in every simulator and rendering method.
 
 ## Features
 
-- **Real lens optics.** Lenses are traced with
+- **Traced lens optics.** Lenses are traced with
   [DeepLens](https://github.com/vccimaging/DeepLens): depth- and field-dependent
   blur, aberration and vignetting from a lens prescription instead of a
   hand-tuned filter, and distortion from the camera's calibration or the lens'
@@ -152,30 +153,30 @@ and caches it; after that a frame takes a fraction of a second. The mount moves
 with the link, so it follows the robot as it acts or replays a demo.
 
 [`examples/05_mount_camera_on_robot.py`](https://github.com/TwinRobo/TwinRobo-Core/blob/main/examples/05_mount_camera_on_robot.py)
-does this for three catalog cameras on the same wrist mount and draws what each
+does this for two catalog cameras on the same wrist mount and draws what each
 one gives you:
 
 ```bash
 MUJOCO_GL=egl python examples/05_mount_camera_on_robot.py   # writes outputs/05_mount_camera.jpg
 ```
 
-![Three catalog cameras on the same wrist mount: pinhole vs TwinRobo image, close-up, difference and depth](https://raw.githubusercontent.com/TwinRobo/TwinRobo-Core/main/images/quickstart_cameras.jpg)
+![Two catalog cameras on the same wrist mount: pinhole vs TwinRobo image, close-up, difference and depth](https://raw.githubusercontent.com/TwinRobo/TwinRobo-Core/main/images/quickstart_cameras.jpg)
 
 Read it top to bottom:
 
 - **Simulator pinhole / TwinRobo camera:** the field of view is each lens'
   own. The ZED X 2.2 mm's wide lens shows its barrel distortion, which a
   pinhole cannot.
-- **Close-up:** the same patch at native resolution; the real lens softens the
+- **Close-up:** the same patch at native resolution; the traced lens softens the
   lettering, as the camera would.
 - **Difference ×4:** where the optics change the image: distortion shifts
-  edges for the 2.2 mm lens; blur changes edges and texture for the others.
+  edges for the 2.2 mm lens; blur changes edges and texture for the 4 mm lens.
 - **Ground-truth depth:** the simulator's metric z-depth, aligned pixel for pixel with the
   camera's image; a label for training, not an output of the camera (`force_depth=True`).
 
-### Next steps
+### Try next
 
-- **Ray casting:** pass `render="raycast"` to `MujocoCameraTwin` to trace real
+- **Ray casting:** pass `render="raycast"` to `MujocoCameraTwin` to trace the
   lens rays into the scene (see
   [Rendering methods](#rendering-methods)).
 - **Isaac Sim:** the same twin on any USD camera prim:
@@ -196,6 +197,7 @@ Read it top to bottom:
   ```python
   from twinrobo.datasets.libero import CameraTwinLiberoEnv, make_env
 
+  twin = CameraTwin.from_catalog("stereolabs/zed-x/2.2mm")
   env, task, init_states = make_env("libero_spatial", 0, resolution=128)
   env = CameraTwinLiberoEnv(env, {"agentview": twin})
   obs = env.reset()  # obs["agentview_image"] now comes from the twin
@@ -206,6 +208,31 @@ Read it top to bottom:
   defocus) and returns the camera's image.
 - **Your own camera:** copy a catalog spec, or add one for everyone; see
   [Cameras](https://twinrobo.github.io/cameras/) and [CONTRIBUTING](https://github.com/TwinRobo/TwinRobo-Core/blob/main/CONTRIBUTING.md#adding-a-camera).
+
+## One API for every twin
+
+Cameras, stereo pairs, lidars and whole devices all work the same way:
+
+```python
+from twinrobo import CameraTwin, DeviceTwin, LidarTwin, StereoTwin
+from twinrobo.plugins.mujoco import MujocoRenderer
+
+backend = MujocoRenderer(model, data)
+obs = CameraTwin.from_catalog("logitech/c920").attach(backend, "wrist").capture()
+obs["camera"].rgb
+
+rig = StereoTwin.from_catalog("stereolabs/zed-x/2.2mm").attach(backend, camera="wrist")
+rig.capture()["left"].rgb
+
+rig = LidarTwin.from_catalog("ouster/os1-64").attach(backend, body="robot0_link7")
+rig.capture()["lidar"].points()
+
+device = DeviceTwin.from_catalog("intel/realsense-d435")
+rig = device.attach(backend, rgb="rgb_cam", ir={"left": "ir_l", "right": "ir_r"})
+rig.capture()["ir/left"].rgb
+```
+
+In Isaac Sim, the backend is `twinrobo.plugins.isaac.IsaacBackend()`. LiDAR runs in MuJoCo for now.
 
 ## Rendering methods
 
@@ -293,22 +320,49 @@ the open environment their customers use:
 
 ## Documentation
 
-The documentation site, with the API reference, is at
-**[twinrobo.github.io](https://twinrobo.github.io/)**; its source is in
-[TwinRobo/twinrobo.github.io](https://github.com/TwinRobo/twinrobo.github.io).
+The documentation is at **[twinrobo.github.io](https://twinrobo.github.io/)**; its source is in
+[TwinRobo/twinrobo.github.io](https://github.com/TwinRobo/twinrobo.github.io). The API reference
+is at **[twinrobo-core.readthedocs.io](https://twinrobo-core.readthedocs.io/en/latest/)**, built from this repository for each release.
 
 | | |
 |---|---|
 | [Optics and rendering](https://twinrobo.github.io/rendering/) | PSF pipeline, distortion, the two rendering methods, validation |
 | [Cameras and stereo](https://twinrobo.github.io/cameras/) | CameraSpec, catalog, stereo modules, spec overrides |
+| [Sensor and ISP](https://twinrobo.github.io/sensor-isp/) | tuned ISPs, your own ISP, switching between frames |
 | [Simulators](https://twinrobo.github.io/simulators/) | MuJoCo, LIBERO, RoboCasa and Isaac Sim: setup, behavior, limits |
-| [API reference](https://twinrobo.github.io/api/) | every public class and function, from the docstrings |
+| [API reference](https://twinrobo-core.readthedocs.io/en/latest/) | selected public APIs, from the docstrings |
 | [Development](https://twinrobo.github.io/development/) | layout, tests, status |
+
+## Sensor and ISP
+
+Cameras with a public tuning can output what the real camera would: its auto-exposure, Bayer
+noise, white balance, color and tone. You can also switch to another sensor's tuning or your
+own ISP, even between frames.
+
+```python
+camera = "raspberrypi/camera-module-3/standard"
+twin = CameraTwin.from_catalog(camera, isp=True)       # the camera's own
+twin = CameraTwin.from_catalog(camera, isp="imx477")   # another sensor's
+twin = CameraTwin.from_catalog(camera, isp=MyISP())    # yours: subclass twinrobo.isp.ISPModel
+twin.set_isp("imx219")                                 # from the next frame
+```
+
+The numbers are [libcamera's tunings](https://github.com/raspberrypi/libcamera), measured by
+Raspberry Pi; seven tunings for six sensor models are bundled
+(`twinrobo.isp.list_tunings()`). The Pi's hardware
+kernels and the sensors' spectral responses are not public, so standard methods with the
+tuned strengths stand in for them, and these twins have not been compared with a real camera
+yet. Simulator images have no absolute light level: set `isp.analogue_gain` and `isp.lux` in
+the spec for the light you simulate. Use `shading="corrected"`, as the ISP does not correct
+lens shading. Other catalog cameras have no public tuning, so they have no ISP of their own.
+Another camera's tuning gives a hybrid that models no real camera;
+`frame.metadata["pipeline"]` records what made each frame. See
+[Sensor and ISP](https://twinrobo.github.io/sensor-isp/).
 
 ## Contributing
 
 Beyond cameras, also wanted: new simulator adapters (a lens scene is three
-methods; see `twinrobo.optics.lensrender`), sensor noise and ISP models, and
+methods; see `twinrobo.optics.lensrender`), sensor and ISP tunings, and
 documentation. See [CONTRIBUTING](https://github.com/TwinRobo/TwinRobo-Core/blob/main/CONTRIBUTING.md), and the [ROADMAP](https://github.com/TwinRobo/TwinRobo-Core/blob/main/ROADMAP.md)
 for what is planned (simulated depth cameras first).
 
@@ -316,7 +370,7 @@ for what is planned (simulated depth cameras first).
 
 - Simulated depth cameras: depth from the stereo modules, with a real sensor's errors
 - Faster ray casting in Isaac Sim (fewer, shared shading views)
-- Sensor noise and ISP models (interfaces are in place)
+- Sensor and ISP tunings for more cameras (Raspberry Pi sensors are in)
 - `measured` catalog entries from calibration captures of real units
 - More cameras and lenses in the catalog
 

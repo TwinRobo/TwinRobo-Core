@@ -258,3 +258,44 @@ def test_camera_offset_is_restored():
     with _camera_offset(be.model, be.data, 0, (0.001, 0, 0)):
         assert not np.allclose(be.data.cam_xpos[0], before)
     assert np.allclose(be.data.cam_xpos[0], before)
+
+
+def test_grown_views_keep_their_detail_and_cover_more():
+    from twinrobo.optics.lensrender import PupilViews
+
+    views = PupilViews.__new__(PupilViews)
+    views.width, views.height, views.f = 100, 60, 80.0
+    views.grow(1.1)
+    assert (views.width, views.height) == (112, 68) and views.f == 80.0
+
+
+@pytest.mark.parametrize("render", ["psf", "raycast"])
+def test_switching_the_isp_between_frames(render):
+    from twinrobo.isp import ISPModel
+    from twinrobo.plugins.mujoco import MujocoCameraTwin
+
+    class Half(ISPModel):
+        def process(self, raw, metadata=None):
+            return raw * 0.5
+
+    spec = CameraSpec.from_yaml(SPEC, width=320, height=200, focus_distance_m=3.0)
+    twin = CameraTwin.from_spec(spec, device=DEV, build_psf=render == "psf")
+    cam = MujocoCameraTwin(twin, backend(MARKER), camera="cam", render=render, rays_per_pixel=8)
+    plain = cam.get_frame()
+    assert plain.rgb.mean() > 0.1  # black frames could not tell these ISPs apart
+    renderers = dict(twin.__dict__.get("_lens_renderers", {}))
+    twin.set_isp("imx708")
+    tuned = cam.get_frame()  # the very next frame
+    assert plain.raw.shape[1] == 3 and tuned.raw.shape[1] == 1
+    assert tuned.metadata["pipeline"]["sensor_tuning"] == "imx708"
+    assert tuned.metadata["pipeline"]["isp_tuning"] == "imx708"
+    assert tuned.rgb.shape == plain.rgb.shape and tuned.rgb.isfinite().all()
+    assert not torch.equal(tuned.rgb, plain.rgb)
+    # the optics are untouched, to the FFT's round-off
+    assert torch.allclose(tuned.rgb_optical, plain.rgb_optical, atol=1e-5)
+    twin.set_isp(Half())
+    assert torch.allclose(cam.get_frame().rgb, plain.rgb * 0.5, atol=1e-5)
+    twin.set_isp(False)
+    assert torch.allclose(cam.get_frame().rgb, plain.rgb, atol=1e-5)
+    now = twin.__dict__.get("_lens_renderers", {})
+    assert now.keys() == renderers.keys() and all(now[k] is renderers[k] for k in now)

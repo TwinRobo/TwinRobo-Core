@@ -97,6 +97,7 @@ yet, grows with wavelength: at f/2 the Airy radius goes from about 0.45 px to
 3. **Near-infrared scenes:** materials' near-IR reflectance (skin, fabric and
    plants are bright; some paints and plastics swap), ambient IR (sunlight,
    lamps), and the IR light of an active camera's projector.
-4. **Then** show IR cameras in the docs and the previews, and feed them to the
+4. **Then** replace the visible-light previews of IR cameras with near-IR renders, and
+   feed those images to the
    [depth pipeline](#depth-cameras).
 

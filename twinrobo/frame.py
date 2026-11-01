@@ -3,7 +3,12 @@
 Tensor conventions (the single source of truth for all TwinRobo modules):
 
 - ``rgb``: ``torch.Tensor [B, 3, H, W]``, float, **linear** radiance-like values
-  nominally in ``[0, 1]`` (not sRGB-encoded). Channel order R, G, B.
+  nominally in ``[0, 1]`` (not sRGB-encoded). Channel order R, G, B. A tuned ISP's output
+  is the camera's display image decoded to linear: ``linear_to_srgb`` gives its pixels, and
+  only ``rgb_optical`` stays proportional to scene light.
+- ``raw``: what the sensor gives its ISP: ``[B, 3, H, W]`` scene-linear from an ideal sensor,
+  ``[B, 1, H, W]`` RGGB from a tuned one. Switching the ISP can change its shape:
+  ``metadata["pipeline"]["raw_format"]`` says which it is.
 - ``depth``: ``torch.Tensor [B, 1, H, W]``, float, **metric depth in meters,
   positive**, measured along the optical axis (z-depth, not ray distance).
   Values that are non-finite (``inf``/``nan``, e.g. simulator background) or
@@ -15,7 +20,8 @@ Tensor conventions (the single source of truth for all TwinRobo modules):
   not a depth sensor's reading.
 - Image coordinates: row 0 is the top of the image, column 0 is the left.
 - Device: tensors stay on the producing device (normally CUDA). TwinRobo never
-  moves per-frame data to the CPU unless the caller explicitly asks for it.
+  moves per-frame images to the CPU unless the caller explicitly asks for it. A tuned
+  sensor and ISP read small statistics there: white-balance zones and reported exposure.
 
 Backend-specific units (e.g. DeepLens uses millimeters and negative object
 z) are converted **only** inside the corresponding adapter

@@ -26,6 +26,7 @@ used. Import-time safe without Isaac: Isaac modules are imported inside methods.
 from __future__ import annotations
 
 import copy
+import warnings
 
 import torch
 
@@ -33,14 +34,42 @@ from ...camera import CameraTwin
 from ...exceptions import SimulatorError
 from ...frame import CameraFrame
 from ...isp.color import srgb_to_linear
+from ...sensor import new_stream
 from .bridge import require_isaac
 
 #: Name of the child camera prim that renders the twin's view.
 VIEW_PRIM = "TwinRoboView"
+#: `SimulationApp` setting that keeps textures at full resolution, see `IsaacCameraTwin`.
+TEXTURE_STREAMING = "/rtx-transient/resourcemanager/enableTextureStreaming"
+FULL_TEXTURES_ARG = f"--{TEXTURE_STREAMING}=0"
+#: Growth of views that no longer cover a refocused lens. Isaac keeps about 170 MB per render
+#: product each time one changes size, so they must rarely change.
+VIEW_HEADROOM = 1.1
+
+
+class IsaacBackend:
+    """The simulator backend for Isaac Sim (see `twinrobo.rig`).
+
+    Cameras are USD prim paths. One render fills every camera of a frame, so cameras
+    captured together share it.
+    """
+
+    capture_options = {"hold_time": True}  # the caller's loop owns the simulation's time
+    same_frame = {"step": False}
+
+    def camera(self, twin: CameraTwin, camera: str, **options) -> IsaacCameraTwin:
+        return IsaacCameraTwin(twin, camera, **options)
+
+    def lidar(self, spec, **options):
+        raise SimulatorError("lidars run in MuJoCo for now")
 
 
 class IsaacCameraTwin:
     """A CameraTwin rendering from an Isaac Sim (USD) camera prim.
+
+    Texture streaming lowers texture detail without notice when GPU memory runs low, which
+    blurs frames. It is read at startup, so `attach` warns when it is on; turn it off with
+    ``SimulationApp({"extra_args": [FULL_TEXTURES_ARG]})``.
 
     Args:
         twin: The CameraTwin (``CameraTwin.from_spec`` / ``from_catalog``).
@@ -87,6 +116,7 @@ class IsaacCameraTwin:
         if render != "psf" and not match_fov:
             raise ValueError("lens-ray rendering traces the twin's own lens; use match_fov=True")
         self.twin = twin
+        self._stream = new_stream()
         self.render_method = render
         self.rays_per_pixel = int(rays_per_pixel)
         self.pupil_views = int(pupil_views)
@@ -129,12 +159,20 @@ class IsaacCameraTwin:
     def attach(self, camera: str) -> None:
         """Render from USD camera ``camera`` (a prim path)."""
         require_isaac()
+        import carb
         import omni.replicator.core as rep
         import omni.usd
         from pxr import UsdGeom
 
         if self.camera is not None:
             self.close()
+        if carb.settings.get_settings().get(TEXTURE_STREAMING):
+            warnings.warn(
+                "Isaac's texture streaming is on: frames can lose texture detail when GPU memory "
+                'runs low. Start with SimulationApp({"extra_args": [FULL_TEXTURES_ARG]}) '
+                "(twinrobo.plugins.isaac.camera).",
+                stacklevel=2,
+            )
         stage = omni.usd.get_context().get_stage()
         prim = stage.GetPrimAtPath(camera)
         if not prim.IsValid() or not prim.IsA(UsdGeom.Camera):
@@ -159,10 +197,15 @@ class IsaacCameraTwin:
         for a in self._annotators.values():
             a.attach([self._render_product])
         self.camera, self.view = camera, path
+        self.reset()
         if self.lens_renderer is not None:
             from .lens import IsaacLensScene
 
             self._lens_scene = IsaacLensScene(camera, self.lens_renderer.views, self.near_clip_m)
+
+    def reset(self) -> None:
+        """Start this camera's frames again: its exposure and any ISP state."""
+        self.twin.reset(self._stream)
 
     def _renderer(self):
         """The lens-ray renderer, cached on the twin (it holds the traced rays and views).
@@ -217,6 +260,7 @@ class IsaacCameraTwin:
                 from .lens import IsaacLensScene
 
                 self._lens_scene.close()
+                lr.views.grow(VIEW_HEADROOM)
                 self._lens_scene = IsaacLensScene(self.camera, lr.views, self.near_clip_m)
         self._view_frame = lr.views.width, lr.views.height, lr.views.f
         self._lens_focus = focus
@@ -260,19 +304,22 @@ class IsaacCameraTwin:
         self.camera = self.view = None
 
     # -- frames ------------------------------------------------------------------------------
-    def render_ideal(self, step: bool = True) -> tuple[torch.Tensor, torch.Tensor]:
+    def render_ideal(
+        self, step: bool = True, hold_time: bool = False
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """The pinhole view: ``(rgb linear [1, 3, H, W], depth m [1, 1, H, W])``, upright.
 
-        ``step`` renders a new frame first (`omni.replicator.core.orchestrator.step`,
-        without advancing the timeline). Pass ``False`` if your loop already rendered
-        this frame, e.g. with ``world.step(render=True)``.
+        ``step`` renders a new frame first (`omni.replicator.core.orchestrator.step`, with
+        Replicator's default time step). Pass ``False`` if your loop already rendered this
+        frame, e.g. with ``world.step(render=True)``. ``hold_time`` renders without advancing
+        the timeline.
         """
         if self.camera is None:
             raise SimulatorError("call attach(camera) first")
         import warp as wp
 
         if step:
-            self._step()
+            self._step(0.0 if hold_time else None)
         rgba = self._annotators["rgb"].get_data(device="cuda")
         dist = self._annotators["distance_to_image_plane"].get_data(device="cuda")
         if rgba is None or len(rgba.shape) != 3:
@@ -300,12 +347,24 @@ class IsaacCameraTwin:
         raise SimulatorError("the shading views across the pupil produced no frame")
 
     def get_frame(
-        self, timestamp: float | None = None, step: bool = True, force_depth: bool = False
+        self,
+        timestamp: float | None = None,
+        step: bool = True,
+        force_depth: bool = False,
+        hold_time: bool = False,
     ) -> CameraFrame:
-        """Render and process one frame. ``frame.rgb`` is linear ``[1, 3, H, W]`` on ``device``.
+        """Render one frame through the camera.
 
-        ``frame.depth`` is readable only if the camera's depth output is simulated
-        (``outputs.depth`` in its spec) or with ``force_depth=True`` (simulator ground truth).
+        Args:
+            timestamp: Stored on the frame.
+            step: Render a new frame first (see `render_ideal`). Pass ``False`` if your loop
+                already rendered this frame.
+            hold_time: Render without advancing the timeline.
+            force_depth: Make ``frame.depth`` readable even if the camera's spec has no depth
+                output: the simulator's ground truth.
+
+        Returns:
+            The `CameraFrame`. ``frame.rgb`` is linear ``[1, 3, H, W]``.
         """
         if self.render_method != "psf":
             from ...optics.lensrender import lens_frame
@@ -313,7 +372,7 @@ class IsaacCameraTwin:
             self._follow_focus()
             if self._views_stale and not step:
                 self._step(delta_time=0.0)  # the moved views need a render; the caller's time holds
-            ideal, _ = self.render_ideal(step)
+            ideal, _ = self.render_ideal(step, hold_time)
             self._views_stale = False
             rgb, depth = self.lens_renderer.render_scene(self._lens_scene)
             return lens_frame(
@@ -324,15 +383,15 @@ class IsaacCameraTwin:
                 ideal.to(rgb.device),
                 self.rectify,
                 timestamp,
-                {"camera": self.camera},
+                {"camera": self.camera, "stream": self._stream},
                 force_depth=force_depth,
             )
-        rgb, depth = self.render_ideal(step)
+        rgb, depth = self.render_ideal(step, hold_time)
         return self.twin.process(
             rgb,
             depth,
             timestamp=timestamp,
-            metadata={"camera": self.camera, "fovy_deg": self.fovy_deg},
+            metadata={"camera": self.camera, "stream": self._stream, "fovy_deg": self.fovy_deg},
             rectify=self.rectify,
             force_depth=force_depth,
         )

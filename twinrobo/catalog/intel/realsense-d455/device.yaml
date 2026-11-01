@@ -1,0 +1,11 @@
+# Device (schema 0.1): the sensors of one product, by catalog ID.
+# The RGB sensor's position is left unknown: the D400 series datasheet (Oct 2025) gives the
+# left imager's position but no RGB offset in its text. Add translation_m from a calibration.
+schema_version: 0.1
+id: intel/realsense-d455
+type: device
+manufacturer: Intel
+product: RealSense D455
+parts:
+  rgb: {type: camera, id: intel/realsense-d455/color}
+  ir: {type: stereo, id: intel/realsense-d455}

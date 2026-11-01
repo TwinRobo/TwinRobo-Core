@@ -19,12 +19,18 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import torch
 from torch import Tensor
 
+from ..rig import LidarRig
 from .spec import LidarSpec
+
+if TYPE_CHECKING:
+    from .registry import LidarRegistry
 
 
 @dataclass
@@ -54,6 +60,57 @@ class LidarFrame:
 
 
 class LidarTwin:
+    """A catalog lidar. Build one with `from_catalog`, then `attach` it to a simulator."""
+
+    @classmethod
+    def from_spec(
+        cls, path: str | Path | LidarSpec, device: str | torch.device | None = None
+    ) -> LidarTwin:
+        """Build a lidar from a spec file.
+
+        Args:
+            path: The ``lidar.yaml`` path, or a loaded `LidarSpec`.
+            device: Torch device. By default the GPU if there is one.
+
+        Returns:
+            The lidar.
+        """
+        spec = path if isinstance(path, LidarSpec) else LidarSpec.from_yaml(path)
+        return cls(spec, device or ("cuda" if torch.cuda.is_available() else "cpu"))
+
+    @classmethod
+    def from_catalog(
+        cls,
+        lidar_id: str,
+        registry: LidarRegistry | None = None,
+        device: str | torch.device | None = None,
+    ) -> LidarTwin:
+        """Build a lidar from the catalog.
+
+        Args:
+            lidar_id: The catalog ID, such as ``"ouster/os1-64"``.
+            registry: The catalog to read. By default the bundled one.
+            device: Torch device. By default the GPU if there is one.
+
+        Returns:
+            The lidar.
+        """
+        from .registry import LidarRegistry
+
+        return cls.from_spec((registry or LidarRegistry()).load(lidar_id), device)
+
+    def attach(self, backend: Any, **options: Any) -> LidarRig:
+        """Mount this lidar in a simulator.
+
+        Args:
+            backend: The simulator backend (see `twinrobo.rig`).
+            **options: Where it sits, such as ``body="robot0_link7"`` and ``pos=(0, 0, 0.1)``.
+
+        Returns:
+            A `LidarRig`. Its stream is ``"lidar"``.
+        """
+        return LidarRig(lambda: backend.lidar(self.spec, device=self.device, **options), backend)
+
     def __init__(self, spec: LidarSpec, device: str | torch.device = "cpu"):
         self.spec = spec
         self.device = torch.device(device)
@@ -147,6 +204,9 @@ class LidarTwin:
             azimuth_deg=self.azimuth_deg,
             time_s=self.time_s,
         )
+
+
+LiDARTwin = LidarTwin
 
 
 def luminance(rgb) -> float:

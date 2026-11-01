@@ -4,7 +4,7 @@ Runs a LIBERO task with the agentview camera replaced by the example CameraTwin.
 It saves ideal-vs-CameraTwin frames and prints how much the optics change the
 policy-resolution image.
 
-    export LIBERO_ROOT=/path/to/LIBERO LIBERO_CONFIG_PATH=/dir/with/libero/config.yaml
+    export LIBERO_ROOT=/path/to/LIBERO LIBERO_CONFIG_PATH=/dir/with/libero  # holds config.yaml
     python examples/04_libero_twinrobo.py [--suite libero_spatial --task 0 --resolution 128]
 """
 

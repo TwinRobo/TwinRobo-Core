@@ -56,7 +56,8 @@ sensor_model:
   dark_current: false
 
 isp:
-  enabled: false
+  enabled: false  # CameraTwin.from_catalog(..., isp=True) turns it on
+  tuning: imx708
 
 outputs:
   depth: false  # an image only: the real camera measures no depth

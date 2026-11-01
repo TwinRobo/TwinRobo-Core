@@ -5,6 +5,6 @@ imports Isaac Sim at module import time, so ``import twinrobo.plugins.isaac`` wo
 without Isaac installed; run it inside Isaac (see ``docker/isaac/``).
 """
 
-from .camera import IsaacCameraTwin
+from .camera import IsaacBackend, IsaacCameraTwin
 
-__all__ = ["IsaacCameraTwin"]
+__all__ = ["IsaacBackend", "IsaacCameraTwin"]

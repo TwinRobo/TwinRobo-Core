@@ -20,7 +20,13 @@ from pathlib import Path
 
 from isaacsim import SimulationApp
 
-app = SimulationApp({"headless": True})  # before any omni / pxr import
+# before any omni / pxr import; full-resolution textures (see IsaacCameraTwin)
+app = SimulationApp(
+    {
+        "headless": True,
+        "extra_args": ["--/rtx-transient/resourcemanager/enableTextureStreaming=0"],
+    }
+)
 
 import imageio.v3 as iio  # noqa: E402
 import numpy as np  # noqa: E402

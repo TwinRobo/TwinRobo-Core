@@ -47,3 +47,15 @@ DeepLens (https://github.com/vccimaging/DeepLens)
     DeepLens notes these designs are transcribed from published patents
     (JP 2022-085382 Ex. 3; US 2022/0019061 Ex. 3).
 
+
+libcamera (https://github.com/raspberrypi/libcamera)
+  Copyright 2019-2020 Raspberry Pi Ltd. Copyright (C) 2025, Raspberry Pi Ltd.
+  Licensed under the BSD 2-Clause License (twinrobo/isp/tunings/LICENSE).
+
+  Redistributed files, unmodified (commit c682979b50695b93526adb1e66db33743484b63b):
+    twinrobo/isp/tunings/*.json
+      From src/ipa/rpi/pisp/data.
+
+  Ported to Python:
+    twinrobo/isp/awb.py
+      From src/ipa/rpi/controller/rpi/awb.cpp and awb_bayes.cpp.

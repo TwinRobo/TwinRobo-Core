@@ -84,7 +84,8 @@ camera.yaml with its provenance. See the
 
 - **Simulator adapters:** the rendering methods are simulator independent
   (lens rays + views + a ray caster). An adapter renders a camera's pinhole
-  RGB-D; see `twinrobo/plugins/mujoco/camera.py`. Isaac Sim is next on the roadmap.
+  RGB-D; see `twinrobo/plugins/mujoco/camera.py`. MuJoCo and Isaac Sim adapters
+  support both `psf` and `raycast`; adapters for other simulators are welcome.
 - **Robots:** new robot variants for LIBERO scenes go in
   `twinrobo/datasets/libero/robots.py`.
 - **Optics, sensor noise and ISP models:** interfaces live in
@@ -93,14 +94,15 @@ camera.yaml with its provenance. See the
 
 ## Documentation
 
-The site is built with MkDocs; the API reference comes from the docstrings
-(Google style: `Args:`, `Returns:`, one entry per parameter).
+The guides are on the website, [TwinRobo/twinrobo.github.io](https://github.com/TwinRobo/twinrobo.github.io).
+The API reference is built here with MkDocs and hosted on Read the Docs. It comes from the
+docstrings (Google style: `Args:`, `Returns:`, one entry per parameter).
 
 ```bash
-pip install -e ".[docs]"
+pip install -r docs/requirements.txt
 mkdocs serve          # http://127.0.0.1:8000, rebuilds on save
-mkdocs build --strict # what CI runs: warnings (e.g. a docstring parameter that
-                      # is not in the signature) fail the build
+mkdocs build --strict # what Read the Docs runs: warnings (e.g. a docstring parameter not in
+                      # the signature) fail it
 ```
 
 ## Pull requests

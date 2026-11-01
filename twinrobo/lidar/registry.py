@@ -11,9 +11,9 @@ SPEC_FILENAME = "lidar.yaml"
 
 class LidarRegistry:
     def __init__(self, roots: list[str | Path] | None = None):
-        from ..spec import BUILTIN_CATALOG_DIR
+        from ..registry import CatalogRegistry
 
-        self.roots = [Path(r) for r in (roots or [BUILTIN_CATALOG_DIR])]
+        self.roots = [Path(r) for r in (roots or CatalogRegistry().roots)]
 
     def list(self) -> list[str]:
         out = []

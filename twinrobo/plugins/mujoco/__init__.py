@@ -12,6 +12,20 @@ Rendering goes through a `RenderBackend`:
 MuJoCo is imported lazily; ``import twinrobo.plugins.mujoco`` does not need it.
 """
 
-from .camera import MujocoCameraTwin, MujocoRenderer, RenderBackend, RobosuiteRenderer, to_uint8
+from .camera import (
+    MujocoBackend,
+    MujocoCameraTwin,
+    MujocoRenderer,
+    RenderBackend,
+    RobosuiteRenderer,
+    to_uint8,
+)
 
-__all__ = ["MujocoCameraTwin", "MujocoRenderer", "RobosuiteRenderer", "RenderBackend", "to_uint8"]
+__all__ = [
+    "MujocoBackend",
+    "MujocoCameraTwin",
+    "MujocoRenderer",
+    "RobosuiteRenderer",
+    "RenderBackend",
+    "to_uint8",
+]

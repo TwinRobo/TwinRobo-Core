@@ -10,9 +10,9 @@ from dataclasses import dataclass
 class CameraIntrinsics:
     """Pinhole intrinsics in pixels (pixel-index coordinates: pixel ``(0, 0)`` center is ``0``).
 
-    For a CameraTwin these are the *paraxial* intrinsics of the lens at the spec
-    resolution. They are the right pinhole for the simulator camera while
-    distortion is not rendered.
+    For a CameraTwin these are ``calibration.intrinsic`` from the spec where set, else the
+    lens's paraxial intrinsics at the spec resolution. They are the right pinhole for the
+    simulator camera while distortion is not rendered.
     """
 
     width: int

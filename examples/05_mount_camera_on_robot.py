@@ -118,7 +118,7 @@ def main():
                 ax.set_ylabel(rows[i], fontsize=11)
         axes[0, j].set_title(label, fontsize=12)
         print(f"{camera_id}: depth {finite.min():.2f}-{finite.max():.2f} m")
-    fig.suptitle("One wrist-mounted camera, three lenses (robosuite PickPlace)", fontsize=13)
+    fig.suptitle("One wrist-mounted camera, two lenses (robosuite PickPlace)", fontsize=13)
     fig.tight_layout()
     args.out.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(args.out, dpi=110)

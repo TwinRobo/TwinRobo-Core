@@ -135,3 +135,21 @@ def test_match_fov_false_keeps_the_cameras_lens_and_close_cleans_up(stage, twin)
         cam.close()
     assert not stage.GetPrimAtPath("/World/Cam/TwinRoboView").IsValid()
     assert src.GetFocalLengthAttr().Get() == 18.0  # the camera itself is never changed
+
+
+def test_the_standard_api_renders_a_pair_once(stage, twin):
+    from pxr import UsdGeom
+
+    from twinrobo import StereoTwin
+    from twinrobo.plugins.isaac import IsaacBackend
+    from twinrobo.stereo import ModuleRegistry
+
+    UsdGeom.Camera.Define(stage, "/World/CamRight")
+    stereo = StereoTwin(ModuleRegistry().load("intel/realsense-d435"), twin, twin)
+    rig = stereo.attach(IsaacBackend(), left="/World/Cam", right="/World/CamRight", rectify=False)
+    for _ in range(4):  # let RTX settle on the new cameras
+        obs = rig.capture()
+    assert list(obs) == ["left", "right"]
+    assert obs["left"].rgb.shape == obs["right"].rgb.shape
+    assert (obs["left"].rgb - obs["right"].rgb).abs().mean() < 0.02  # the same pose, the same frame
+    rig.close()

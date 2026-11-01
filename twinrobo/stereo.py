@@ -5,16 +5,18 @@ and the right eye's pose in the left eye's camera frame. The module's pose is
 the LEFT eye's (Stereolabs convention), so placing a module means placing its
 left eye; the right eye follows rigidly (on a robot link it follows the link).
 
-Simulator side, a module is expanded into two ordinary cameras: `eye_mounts`
-turns a module mount into left/right `CameraMount`s, which render like any
+Simulator side, a module is expanded into two ordinary cameras:
+`twinrobo.plugins.mujoco.mounts.expand_mount` turns a module mount into left/right
+`CameraMount`s, which render like any
 other custom camera. Rectified output (what vendor SDKs deliver) is handled per
-eye by `CameraTwin.process(rectify=True)`; with identical eye intrinsics and a
-pure translation the rectified pair is row-aligned.
+eye by `CameraTwin.process(rectify=True)`; with parallel eyes, identical
+intrinsics and a horizontal baseline the rectified pair is row-aligned.
 """
 
 from __future__ import annotations
 
 import math
+import warnings
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any
@@ -23,6 +25,7 @@ import numpy as np
 import yaml
 
 from .exceptions import SpecError
+from .rig import GroupRig
 
 MODULE_FILENAME = "module.yaml"
 EYES = ("left", "right")
@@ -165,6 +168,139 @@ def eye_poses(
 
 def eye_name(module_camera: str, eye: str) -> str:
     return f"{module_camera}_{'L' if eye == 'left' else 'R'}"
+
+
+class StereoTwin:
+    """A stereo module: two `CameraTwin` eyes that are captured together.
+
+    Build one with `from_catalog`, then `attach` it to the simulator's two cameras. Eyes with
+    the same spec share one `CameraTwin`.
+
+    Args:
+        module: The module.
+        left: The left eye's twin.
+        right: The right eye's twin.
+    """
+
+    def __init__(self, module: StereoModule, left: Any, right: Any):
+        self.module = module
+        self.left = left
+        self.right = right
+
+    @classmethod
+    def from_module(
+        cls,
+        module: StereoModule,
+        device: Any = None,
+        cache: Any = None,
+        build_psf: bool = True,
+        isp: Any = None,
+        *,
+        sensor: Any = None,
+    ) -> StereoTwin:
+        """Build the eyes of a module.
+
+        Args:
+            module: The module.
+            device: Torch device.
+            cache: Where PSF banks are stored.
+            build_psf: ``False`` skips the PSF banks, for ray casting only.
+            isp: The sensor and ISP (see `twinrobo.camera.build_sensor_isp`).
+            sensor: Your sensor, used only with your own `ISPModel`.
+
+        Returns:
+            The stereo twin.
+        """
+        from .camera import CameraTwin
+
+        twins: dict[Path, CameraTwin] = {}
+        for eye in (module.left, module.right):
+            if eye.spec is None:
+                raise SpecError(f"{module.id}: an eye without a spec has no twin")
+            if eye.spec not in twins:
+                twins[eye.spec] = CameraTwin.from_spec(
+                    eye.spec, device, cache, build_psf, isp, sensor=sensor
+                )
+        return cls(module, twins[module.left.spec], twins[module.right.spec])
+
+    @classmethod
+    def from_spec(cls, path: str | Path, **options: Any) -> StereoTwin:
+        """Build a stereo twin from a ``module.yaml``; ``options`` are those of `from_module`."""
+        return cls.from_module(StereoModule.from_yaml(path), **options)
+
+    @classmethod
+    def from_catalog(
+        cls, module_id: str, registry: ModuleRegistry | None = None, **options: Any
+    ) -> StereoTwin:
+        """Build a stereo twin from the catalog.
+
+        Args:
+            module_id: The catalog ID, such as ``"stereolabs/zed-x/2.2mm"``.
+            registry: The catalog to read. By default the bundled one.
+            **options: Passed to `from_module`.
+
+        Returns:
+            The stereo twin.
+        """
+        return cls.from_module((registry or ModuleRegistry()).load(module_id), **options)
+
+    @property
+    def baseline_m(self) -> float:
+        return self.module.baseline_m
+
+    def set_isp(self, isp: Any, sensor: Any = None) -> None:
+        """Switch both eyes' sensor and ISP (see `twinrobo.camera.CameraTwin.set_isp`)."""
+        from .camera import build_sensor_isp
+
+        twins = {id(t): t for t in (self.left, self.right)}.values()
+        for twin in twins:  # a selection one eye cannot use changes neither
+            build_sensor_isp(twin.spec, isp, sensor)
+        for twin in twins:
+            twin.set_isp(isp, sensor)
+
+    def attach(
+        self,
+        backend: Any,
+        camera: str | None = None,
+        *,
+        left: str | None = None,
+        right: str | None = None,
+        **options: Any,
+    ) -> GroupRig:
+        """Bind the eyes to two simulator cameras.
+
+        Name both cameras, or give ``camera`` for a pair made by
+        `twinrobo.plugins.mujoco.mounts.expand_mount`: ``<camera>_L`` and ``<camera>_R``. The
+        cameras stay where the simulator has them, so they set the real baseline.
+
+        Args:
+            backend: The simulator backend (see `twinrobo.rig`).
+            camera: The pair's name.
+            left: The left eye's camera.
+            right: The right eye's camera.
+            **options: Passed to each eye. ``rectify`` defaults to the module's output.
+
+        Returns:
+            A `GroupRig`. Its streams are ``"left"`` and ``"right"``.
+        """
+        left = left or (eye_name(camera, "left") if camera else None)
+        right = right or (eye_name(camera, "right") if camera else None)
+        if left is None or right is None:
+            raise ValueError("give camera=, or both left= and right=")
+        baseline = getattr(backend, "baseline", lambda *_: None)(left, right)
+        if baseline is not None and abs(baseline - self.baseline_m) > 1e-3:
+            warnings.warn(
+                f"{left!r} and {right!r} are {baseline * 1000:.1f} mm apart; "
+                f"{self.module.id} has a {self.baseline_m * 1000:.1f} mm baseline",
+                stacklevel=2,
+            )
+        options.setdefault("rectify", self.module.output == "rectified")
+        return GroupRig(
+            {
+                "left": self.left.attach(backend, left, **options),
+                "right": self.right.attach(backend, right, **options),
+            }
+        )
 
 
 class ModuleRegistry:

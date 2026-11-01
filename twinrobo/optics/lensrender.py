@@ -153,6 +153,12 @@ class PupilViews:
         self.fovy_deg = math.degrees(2 * math.atan(height / 2 / f))
         return True
 
+    def grow(self, factor: float) -> None:
+        """Widen the views at the same focal length (the same detail, more field)."""
+        self.width = int(math.ceil(self.width * factor)) // 2 * 2 + 2
+        self.height = int(math.ceil(self.height * factor)) // 2 * 2 + 2
+        self.fovy_deg = math.degrees(2 * math.atan(self.height / 2 / self.f))
+
     def set_views(self, rgb: Tensor, depth: Tensor) -> None:
         """Install rendered views: ``rgb [k, 3, h, w]`` linear, ``depth [k, 1, h, w]`` m."""
         self.rgb, self.depth = rgb, depth
@@ -603,8 +609,11 @@ def lens_frame(
     from ..frame import CameraFrame
 
     rgb, ideal = twin.sensor_color(rgb), twin.sensor_color(ideal)  # mono sensors: luminance
-    raw = twin.sensor.capture(rgb, 1.0, None)
-    out = twin.isp.process(raw, None)
+    metadata = dict(metadata or {})  # the sensor and ISP report into it
+    if renderer.shading == "corrected":
+        metadata["illumination"] = renderer.rays.illumination.to(rgb.device)
+    raw, out = twin.develop(rgb, 1.0, metadata)
+    metadata.pop("illumination", None)
     if rectify:
         grid = renderer.rays.rectify_grid()
         out = F.grid_sample(out, grid, mode="bilinear", padding_mode="zeros", align_corners=False)
@@ -622,7 +631,7 @@ def lens_frame(
             "camera_id": twin.spec.id if twin.spec else None,
             "render": renderer.method,
             "rectified": bool(rectify),
-            **(metadata or {}),
+            **metadata,
             **renderer.stats,
         },
         has_depth=twin.outputs_depth or force_depth,

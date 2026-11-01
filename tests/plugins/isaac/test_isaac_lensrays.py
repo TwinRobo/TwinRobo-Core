@@ -237,3 +237,79 @@ def test_close_removes_the_pupil_views(app):
     cam.close()
     kids = [p.GetName() for p in stage.GetPrimAtPath("/World/Cam").GetChildren()]
     assert kids == [], kids
+
+
+def test_attach_warns_when_texture_streaming_is_on(app):
+    import carb
+
+    from twinrobo.plugins.isaac import IsaacCameraTwin
+    from twinrobo.plugins.isaac.camera import TEXTURE_STREAMING
+
+    settings = carb.settings.get_settings()
+    old = settings.get(TEXTURE_STREAMING)
+    new_stage(app)
+    try:
+        settings.set(TEXTURE_STREAMING, True)
+        with pytest.warns(UserWarning, match="texture streaming"):
+            cam = IsaacCameraTwin(small_twin(), "/World/Cam", render="psf")
+        cam.close()
+    finally:
+        settings.set(TEXTURE_STREAMING, bool(old))
+
+
+def test_tuned_isp_on_a_ray_cast_frame(app):
+    """The tuned sensor and ISP on a real Isaac frame, with the lens' shading in the noise."""
+    from twinrobo.isp import TunedISP, load_tuning
+    from twinrobo.plugins.isaac import IsaacCameraTwin
+    from twinrobo.sensor import TunedSensor
+
+    new_stage(app)
+    twin = small_twin()
+    tuning = load_tuning("imx708")
+    twin.sensor, twin.isp = TunedSensor(tuning), TunedISP(tuning)
+    cam = IsaacCameraTwin(twin, "/World/Cam", render="raycast", rt_subframes=2, pupil_views=3)
+    try:
+        f = frame_of(cam)
+        assert f.raw.shape[1] == 1 and f.rgb.shape[1] == 3
+        assert f.metadata["sensor"]["tuning"] == "imx708" and "awb_ct_k" in f.metadata["isp"]
+        assert "illumination" not in f.metadata
+        assert f.rgb.isfinite().all()
+    finally:
+        cam.close()
+
+
+def test_switching_the_isp_between_frames(app):
+    """Ray-cast frames keep their lens render when the ISP changes."""
+    import torch
+
+    from twinrobo.isp import ISPModel
+    from twinrobo.plugins.isaac import IsaacCameraTwin
+
+    class Half(ISPModel):
+        def process(self, raw, metadata=None):
+            return raw * 0.5
+
+    new_stage(app)
+    twin = small_twin()
+    cam = IsaacCameraTwin(twin, "/World/Cam", render="raycast", rt_subframes=2, pupil_views=3)
+    try:
+        plain = frame_of(cam)
+        assert plain.rgb.mean() > 0.01  # black frames could not tell these ISPs apart
+        renderer = cam.lens_renderer
+        twin.set_isp("imx708")
+        tuned = cam.get_frame()  # the very next frame
+        assert plain.raw.shape[1] == 3 and tuned.raw.shape[1] == 1
+        assert tuned.metadata["pipeline"]["sensor_tuning"] == "imx708"
+        assert tuned.metadata["pipeline"]["isp_tuning"] == "imx708"
+        assert tuned.rgb.shape == plain.rgb.shape and tuned.rgb.isfinite().all()
+        twin.set_isp(Half())
+        half = cam.get_frame()
+        assert half.metadata["pipeline"]["isp"] == "Half"
+        assert torch.allclose(half.rgb, half.raw * 0.5)
+        twin.set_isp(False)
+        off = cam.get_frame()
+        assert off.metadata["pipeline"]["isp"] == "IdentityISP"
+        assert torch.equal(off.rgb, off.raw)
+        assert cam.lens_renderer is renderer
+    finally:
+        cam.close()
