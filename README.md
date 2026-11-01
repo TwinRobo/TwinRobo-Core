@@ -76,7 +76,7 @@ output. Every camera works in every simulator and rendering method.
 TwinRobo requires **Python 3.12** (inherited from DeepLens) and a CUDA GPU
 for practical speeds.
 
-The current release, v0.1.0 ([changes](https://github.com/TwinRobo/TwinRobo-Core/blob/main/CHANGELOG.md)),
+The current release, v0.1.1 ([changes](https://github.com/TwinRobo/TwinRobo-Core/blob/main/CHANGELOG.md)),
 from PyPI:
 
 ```bash
