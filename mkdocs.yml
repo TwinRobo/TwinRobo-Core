@@ -5,8 +5,7 @@ repo_url: https://github.com/TwinRobo/TwinRobo-Core
 repo_name: TwinRobo/TwinRobo-Core
 edit_uri: edit/main/docs/
 copyright: >-
-  TwinRobo contributors · AGPL-3.0 or commercial license · camera catalog Apache-2.0 ·
-  <a href="#__consent">Change cookie settings</a>
+  TwinRobo contributors · AGPL-3.0 or commercial license · camera catalog Apache-2.0
 
 theme:
   name: material
@@ -51,22 +50,11 @@ extra:
       link: https://github.com/TwinRobo/TwinRobo-Core
       name: TwinRobo on GitHub
   generator: false
-  analytics:             # Google Analytics 4; runs only after the visitor accepts (consent)
-    provider: google
-    property: G-9RZVTJ0ZJ3
-  consent:
-    title: Cookie consent
-    description: >-
-      We use cookies to see which pages are read and how people find them, so we
-      can improve the documentation. You can change your choice at any time from
-      the link at the bottom of every page.
-    actions: [accept, reject, manage]   # declining is one click, like accepting
 
 exclude_docs: requirements.txt
 
 nav:
   - Overview: index.md
-  - Using a twin: cameras/using.md
   - Specs and catalog: cameras/specs.md
   - Cameras:
       - Devices: cameras/devices.md
