@@ -48,6 +48,10 @@ class SensorSpec:
 @dataclass
 class DeepLensModelRef:
     path: Path  # resolved relative to the spec file
+    # For a lens design file (.zmx, .seq, ...; see twinrobo.lensio): extra .agf glass catalogs,
+    # resolved like ``path``, and whether the file's nd/vd may stand in for an unknown glass.
+    glass_catalogs: list[Path] = field(default_factory=list)
+    allow_model_glass: bool = False
 
 
 @dataclass
@@ -153,14 +157,21 @@ class CameraSpec:
         dl_d = lens_d.get("deeplens_model")
         deeplens_model = None
         if dl_d is not None:
-            ref = str(_require(dl_d, "path", ctx="lens.deeplens_model"))
-            if ref.startswith(CATALOG_LENS_PREFIX):  # a lens of the built-in catalog
-                model_path = (BUILTIN_CATALOG_DIR / ref[len(CATALOG_LENS_PREFIX) :]).resolve()
-            else:
-                model_path = Path(ref)
-                if not model_path.is_absolute():
-                    model_path = (base_dir / model_path).resolve()
-            deeplens_model = DeepLensModelRef(path=model_path)
+
+            def resolve(ref: str) -> Path:
+                if ref.startswith(CATALOG_LENS_PREFIX):  # a file of the built-in catalog
+                    return (BUILTIN_CATALOG_DIR / ref[len(CATALOG_LENS_PREFIX) :]).resolve()
+                path = Path(ref)
+                return path if path.is_absolute() else (base_dir / path).resolve()
+
+            catalogs = dl_d.get("glass_catalogs") or []
+            if not isinstance(catalogs, list):
+                raise SpecError("lens.deeplens_model.glass_catalogs must be a list of .agf files")
+            deeplens_model = DeepLensModelRef(
+                path=resolve(str(_require(dl_d, "path", ctx="lens.deeplens_model"))),
+                glass_catalogs=[resolve(str(c)) for c in catalogs],
+                allow_model_glass=bool(dl_d.get("allow_model_glass", False)),
+            )
         lens = LensSpec(
             manufacturer=lens_d.get("manufacturer"),
             model=lens_d.get("model"),
@@ -244,12 +255,12 @@ def apply_overrides(
         w0, h0 = res["width"], res["height"]
         res["width"], res["height"] = int(width or w0), int(height or h0)
         intr = (raw.get("calibration") or {}).get("intrinsic") or {}
+        sx, sy = res["width"] / w0, res["height"] / h0
         if all(intr.get(k) is not None for k in ("fx", "fy", "cx", "cy")):
-            sx, sy = res["width"] / w0, res["height"] / h0
             intr["fx"], intr["fy"] = intr["fx"] * sx, intr["fy"] * sy
             intr["cx"], intr["cy"] = (intr["cx"] + 0.5) * sx - 0.5, (intr["cy"] + 0.5) * sy - 0.5
-            if raw["sensor"].get("pixel_pitch_um"):
-                raw["sensor"]["pixel_pitch_um"] = raw["sensor"]["pixel_pitch_um"] / sx
+        if raw["sensor"].get("pixel_pitch_um"):
+            raw["sensor"]["pixel_pitch_um"] = raw["sensor"]["pixel_pitch_um"] / sx
     if focus_distance_m is not None:
         raw["lens"]["focus_distance_m"] = float(focus_distance_m)
     if any(v is not None for v in (near_m, far_m, depth_samples, field_samples)):

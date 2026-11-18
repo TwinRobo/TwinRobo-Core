@@ -1,0 +1,33 @@
+! TwinRobo test triplet (made up for tests, not a real product), entered by hand
+RDM;LEN "TwinRobo test"
+TITLE 'TwinRobo test triplet'
+EPD 10.0
+DIM M
+WL 656.3 587.6 486.1
+REF 2
+WTW 1 2 1
+XAN 0.0 0.0 0.0
+YAN 0.0 10.0 14.0
+WTF 1.0 1.0 1.0
+SO 0.0 1e10
+S 22.0 3.5 NSK16_SCHOTT
+  CIR 9.0
+S -435.0 4.0
+  CIR 9.0
+S -22.0 1.2 F2_SCHOTT ; CIR 7.0
+S 20.5 1.5
+  CIR 7.0
+S 0.0 3.0
+  STO ! the aperture stop
+  CIR 5.8
+S 79.0 3.0 NSK16_SCHOTT
+  ASP
+  K -0.5
+  A -2.0e-6; B &
+    1.0e-9
+  CIR 7.5
+S -18.0 44.9
+  CIR 7.5
+SI 0.0 0.0
+  CIR 13.0
+GO

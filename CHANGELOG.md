@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+**New**
+
+- Lens design files: `twinrobo.lensio` reads Zemax `.zmx` and `.zar`, CODE V `.seq`, prescription
+  tables (`.csv`) and DeepLens `.json`, and writes all of them but `.zar`. A spec's
+  `lens.deeplens_model.path` and `CameraTwin.from_lens` take any of them; `python -m
+  twinrobo.lensio` prints and converts them. Unsupported features are refused with the file and
+  line. Checked against RayOptics, an independent reader and tracer: image heights agree within
+  0.01 µm. Not yet checked against files from OpticStudio or CODE V.
+- `lens.geometry: lens` puts the lens on a sensor of the spec's resolution and pixel pitch.
+- `deeplens_model.glass_catalogs` and `allow_model_glass` choose where a design file's glasses
+  come from.
+
 ## v0.1.1 (2026-11-01)
 
 **New**

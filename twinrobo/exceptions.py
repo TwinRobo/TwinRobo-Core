@@ -23,3 +23,7 @@ class DepthUnavailableError(CameraTwinError):
 
 class SimulatorError(CameraTwinError):
     """A simulator adapter (e.g. Isaac Sim) is unavailable or failed."""
+
+
+class LensFileError(CameraTwinError):
+    """A lens design file cannot be read or written faithfully (`twinrobo.lensio`)."""

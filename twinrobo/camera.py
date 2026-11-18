@@ -38,12 +38,24 @@ def build_reference_optics(spec: CameraSpec, device: str | torch.device | None =
     from .optics.deeplens import DeepLensOptics
 
     res = spec.sensor.resolution
+    model = spec.lens.deeplens_model
+    pitch = spec.sensor.pixel_pitch_um
+    # A real lens prescription images onto the real sensor: its size is the resolution times
+    # the pitch. A surrogate lens (geometry "calibration") keeps the sensor it was fitted to.
+    size = (
+        (res.width * pitch / 1000.0, res.height * pitch / 1000.0)
+        if spec.lens.geometry == "lens" and pitch
+        else None
+    )
     return DeepLensOptics(
-        spec.lens.deeplens_model.path,
+        model.path,
         sensor_resolution=(res.width, res.height),
         focus_distance_m=spec.lens.focus_distance_m,  # YAML `.inf` = infinity focus
         device=device,
         psf_ks=int(spec.calibration.get("psf", {}).get("ks", 65)),
+        sensor_size_mm=size,
+        glass_catalogs=model.glass_catalogs,
+        allow_model_glass=model.allow_model_glass,
     )
 
 
@@ -270,6 +282,67 @@ class CameraTwin:
             isp=isp,
             sensor=sensor,
         )
+
+    @classmethod
+    def from_lens(
+        cls,
+        lens: str | Path,
+        resolution: tuple[int, int],
+        pixel_pitch_um: float,
+        focus_distance_m: float | None = None,
+        device: str | torch.device | None = None,
+        cache: PSFCache | None = None,
+        build_psf: bool = True,
+        glass_catalogs: list[str | Path] = (),
+        allow_model_glass: bool = False,
+        isp: ISPSelection = None,
+    ) -> CameraTwin:
+        """A camera from a lens design file and a sensor.
+
+        The lens is traced as designed (`twinrobo.lensio` reads ``.zmx``, ``.zar``, ``.seq``,
+        ``.csv`` and DeepLens ``.json``): its focal length, distortion and blur come from the
+        prescription, on a sensor of ``resolution`` pixels of ``pixel_pitch_um``. For a camera
+        to keep, write a ``camera.yaml`` with ``lens.geometry: lens`` instead (see
+        `docs/imaging/lens-files.md`).
+
+        Args:
+            lens: The lens file.
+            resolution: ``(width, height)`` in pixels.
+            pixel_pitch_um: The sensor's pixel pitch in micrometers.
+            focus_distance_m: Object distance to focus at; ``None`` keeps the file's image
+                distance.
+            device, cache, build_psf, isp: As for `from_spec`.
+            glass_catalogs: ``.agf`` catalogs for glasses DeepLens does not have.
+            allow_model_glass: Let the file's nd/vd stand in for a glass in no catalog.
+
+        Returns:
+            The camera.
+        """
+        lens = Path(lens).resolve()
+        spec = CameraSpec.from_dict(
+            {
+                "schema_version": "0.1",
+                "id": f"lens:{lens.stem}",
+                "product": lens.stem,
+                "sensor": {
+                    "resolution": {"width": int(resolution[0]), "height": int(resolution[1])},
+                    "pixel_pitch_um": float(pixel_pitch_um),
+                },
+                "lens": {
+                    "model": lens.name,
+                    "focus_distance_m": focus_distance_m,
+                    "geometry": "lens",
+                    "deeplens_model": {
+                        "path": str(lens),
+                        "glass_catalogs": [str(Path(c).resolve()) for c in glass_catalogs],
+                        "allow_model_glass": allow_model_glass,
+                    },
+                },
+                "validation": {"status": "estimated"},
+            },
+            base_dir=lens.parent,
+        )
+        return cls.from_spec(spec, device=device, cache=cache, build_psf=build_psf, isp=isp)
 
     def set_isp(self, isp: ISPSelection, sensor: SensorModel | None = None) -> None:
         """Switch the sensor and ISP from the next frame, for example between episodes.

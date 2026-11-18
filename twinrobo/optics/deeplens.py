@@ -79,14 +79,23 @@ class DeepLensOptics(OpticsModel):
     """Physical optics backed by a DeepLens geometric lens (``GeoLens``).
 
     Args:
-        model_path: DeepLens lens file (``.json``, ``.zmx`` or ``.seq``).
+        model_path: A DeepLens lens file (``.json``), or a lens design file
+            `twinrobo.lensio` reads (``.zmx``, ``.zar``, ``.seq``, ``.csv``).
         sensor_resolution: ``(width, height)`` in pixels. DeepLens keeps the
             sensor diagonal fixed and adapts the sensor size to this aspect ratio.
             When ``None``, the lens file's sensor is used.
+        sensor_size_mm: ``(width, height)`` of the sensor's active area in mm, for a lens
+            whose sensor is real rather than fitted (``lens.geometry: lens``). Needs
+            ``sensor_resolution`` with the same aspect ratio. ``None`` keeps the lens file's
+            sensor diagonal.
         focus_distance_m: Object focus distance in meters (``None`` keeps the
             focus stored in the lens file; ``float('inf')`` focuses at infinity).
         device: Torch device. Defaults to CUDA when available.
         dtype: Torch dtype for the lens.
+        glass_catalogs: ``.agf`` glass catalogs for a design file's glasses, beside
+            DeepLens' own (see `twinrobo.lensio.materials`).
+        allow_model_glass: Let a design file's nd/vd stand in for a glass that is in no
+            catalog, approximating its dispersion.
         psf_ks: PSF kernel size in pixels. DeepLens centers even-size PSFs between
             pixels (on-axis centroid at ``ks/2 - 0.5``), while PSF convolution treats
             index ``ks // 2`` as zero shift. `generate_psf` therefore traces an even
@@ -102,24 +111,54 @@ class DeepLensOptics(OpticsModel):
         device: str | torch.device | None = None,
         dtype: torch.dtype = torch.float32,
         psf_ks: int = 65,
+        sensor_size_mm: tuple[float, float] | None = None,
+        glass_catalogs: Sequence[str | Path] = (),
+        allow_model_glass: bool = False,
     ):
         model_path = Path(model_path)
         if not model_path.is_file():
             raise OpticsBackendError(f"DeepLens lens file not found: {model_path}")
         if device is None:
             device = "cuda" if torch.cuda.is_available() else "cpu"
+        if sensor_size_mm is not None and sensor_resolution is None:
+            raise ValueError("sensor_size_mm needs sensor_resolution")
 
         GeoLens = _import_geolens()
         self.model_path = model_path
         self.psf_ks = psf_ks
+        self.sensor_size_mm = None if sensor_size_mm is None else tuple(map(float, sensor_size_mm))
+        self.prescription = None  # the design file's prescription, for an imported lens
         # Requested focus; None = focus stored in the lens file (d_sensor as given).
         self.focus_distance_m = None if focus_distance_m is None else float(focus_distance_m)
         if focus_distance_m is not None and focus_distance_m <= 0:
             raise ValueError("focus_distance_m must be positive (meters) or inf")
+        lens_file = model_path
+        tmp = None
+        self._requested_res = None if sensor_resolution is None else tuple(sensor_resolution)
+        if model_path.suffix.lower() != ".json":
+            lens_file = tmp = self._import(model_path, glass_catalogs, allow_model_glass)
+        else:
+            self._register_glasses(model_path)
+        self._lens_sha256 = hash_file(lens_file)
         with seeded(device):  # the same lens state (focus, pupils) every time it is loaded
-            self._lens = GeoLens(filename=str(model_path), device=torch.device(device), dtype=dtype)
+            try:
+                self._lens = GeoLens(
+                    filename=str(lens_file), device=torch.device(device), dtype=dtype
+                )
+            finally:
+                if tmp is not None:
+                    tmp.unlink(missing_ok=True)
+            if sensor_size_mm is not None:
+                w, h = self.sensor_size_mm
+                self._lens.r_sensor = math.hypot(w, h) / 2
             if sensor_resolution is not None:
                 self._lens.set_sensor_res(tuple(int(v) for v in sensor_resolution))
+            if sensor_size_mm is not None:
+                W, H = self.sensor_resolution
+                if abs(w * H - h * W) > 1e-6 * w * H:
+                    raise ValueError(
+                        f"sensor_size_mm {w} x {h} does not match the resolution {W} x {H}"
+                    )
             if focus_distance_m is not None:
                 foc = (
                     float("inf")
@@ -127,6 +166,41 @@ class DeepLensOptics(OpticsModel):
                     else -float(focus_distance_m) * M_TO_MM
                 )
                 self._lens.refocus(foc_dist=foc)
+
+    @staticmethod
+    def _register_glasses(path: Path) -> None:
+        """Glasses a converted lens carries (``glass_data``, see `twinrobo.lensio`)."""
+        import json
+
+        with open(path) as f:
+            glass = json.load(f).get("glass_data")
+        if glass:
+            from ..lensio.materials import register
+
+            register(glass)
+
+    def _import(self, path: Path, glass_catalogs, allow_model_glass: bool) -> Path:
+        """Convert a design file to a temporary DeepLens JSON file (`twinrobo.lensio`)."""
+        import json
+        import tempfile
+
+        from ..lensio import catalogs_for, load_lens
+        from ..lensio.deeplens_json import to_deeplens
+
+        p = load_lens(path)
+        data, _ = to_deeplens(
+            p,
+            catalogs=catalogs_for(p, list(glass_catalogs)),
+            allow_model_glass=allow_model_glass,
+            sensor_size_mm=self.sensor_size_mm,
+            sensor_res=self._requested_res,
+        )
+        self.prescription = p
+        with tempfile.NamedTemporaryFile(
+            "w", suffix=".json", prefix="twinrobo-lens-", delete=False
+        ) as f:
+            json.dump(data, f, indent=1)
+        return Path(f.name)
 
     # ------------------------------------------------------------------
     # Properties (TwinRobo units)
@@ -281,8 +355,9 @@ class DeepLensOptics(OpticsModel):
         return {
             "backend": "deeplens",
             "deeplens": deeplens_version(),
-            "lens_sha256": hash_file(self.model_path),
+            "lens_sha256": self._lens_sha256,
             "sensor_resolution": list(self.sensor_resolution),
+            **({"sensor_size_mm": list(self.sensor_size_mm)} if self.sensor_size_mm else {}),
             # Requested focus, not d_sensor: DeepLens' refocus jitters d_sensor by ~1 um.
             "focus": self.focus_distance_m
             if self.focus_distance_m is not None
@@ -302,8 +377,9 @@ class DeepLensOptics(OpticsModel):
         return {
             "backend": "deeplens",
             "deeplens": deeplens_version(),
-            "lens_sha256": hash_file(self.model_path),
+            "lens_sha256": self._lens_sha256,
             "sensor_resolution": list(self.sensor_resolution),
+            **({"sensor_size_mm": list(self.sensor_size_mm)} if self.sensor_size_mm else {}),
             "focus": self.focus_distance_m
             if self.focus_distance_m is not None
             else f"file:d_sensor={float(self._lens.d_sensor):.9f}",

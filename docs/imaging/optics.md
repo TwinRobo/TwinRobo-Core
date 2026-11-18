@@ -59,7 +59,9 @@ The `psf` method runs your model. The `raycast` method traces a lens file instea
 
 ### Your own lens
 
-A lens is a DeepLens JSON file. Put it beside your spec and name it there:
+A lens from optical design software (Zemax `.zmx` or `.zar`, CODE V `.seq`, or a prescription
+table) is read as it is: see [Lens files](lens-files.md). Otherwise a lens is a DeepLens JSON
+file. Put it beside your spec and name it there:
 
 ```yaml
 lens:

@@ -64,6 +64,7 @@ nav:
       - Frames: cameras/frames.md
   - Imaging:
       - Optics: imaging/optics.md
+      - Lens files: imaging/lens-files.md
       - Sensor and ISP: imaging/sensor-isp.md
   - Simulators:
       - MuJoCo: simulators/mujoco.md
